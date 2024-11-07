@@ -5,6 +5,7 @@ import router from './router'; // Importa el router
 // Importa Bootstrap CSS y JS aquí
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap/dist/js/bootstrap.bundle.min.js';
+import 'bootstrap-icons/font/bootstrap-icons.css'; // Importa Bootstrap Icons aquí
 
 // Inicializa la aplicación
 const app = createApp(App);
