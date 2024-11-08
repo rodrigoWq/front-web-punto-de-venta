@@ -1,10 +1,18 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import ClientesView from '../components/ClientesView.vue';
 import PantallaInicio from '../components/PantallaInicio.vue'; // Importa la nueva pantalla
+import LoginView from '../components/LoginView.vue'; // Importa correctamente LoginView
+
 
 const routes = [
   {
     path: '/',
+    name: 'Login',
+    component: LoginView
+
+  },
+  {
+    path: '/pantalla-inicio',
     name: 'Inicio',
     component: PantallaInicio
   },
