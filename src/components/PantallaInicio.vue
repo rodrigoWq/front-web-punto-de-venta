@@ -29,7 +29,7 @@
                 </router-link>
               </li>
               <li class="nav-item">
-                <router-link class="nav-link" to="/comprobantes">
+                <router-link class="nav-link" to="/listar-comprobantes">
                   <i class="bi bi-receipt"></i> Comprobantes
                 </router-link>
               </li>
@@ -113,64 +113,212 @@
           </table>
         </div>
       </div>
+
+      <div class="modal fade" id="searchProductModal" tabindex="-1" aria-labelledby="searchProductModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="searchProductModalLabel">Buscar Producto</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <div class="mb-3">
+                <label for="productCodeSearch" class="form-label">Código del producto</label>
+                <input type="text" class="form-control" v-model="productCodeSearch" @keydown.enter.prevent="buscarProducto" placeholder="Ingresa el código">
+              </div>
+              <div class="mb-3">
+                <label for="productNameSearch" class="form-label">Nombre del producto</label>
+                <input type="text" class="form-control" v-model="productNameSearch" @keydown.enter.prevent="buscarProducto" placeholder="Ingresa el nombre del producto">
+              </div>
+              <div id="searchResult" class="mt-3" v-html="searchResult"></div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+              <button type="button" class="btn btn-primary" @click="buscarProducto">Buscar</button>
+            </div>
+          </div>
+        </div>
+      </div>
+          <!-- Modal para Ventas en Espera -->
+      <div class="modal fade" id="onHoldSalesModal" tabindex="-1" aria-labelledby="onHoldSalesModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="onHoldSalesModalLabel">Ventas en Espera</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <ul class="list-group">
+                <li v-for="venta in ventasEnEspera" :key="venta.id" class="list-group-item">
+                  {{ venta.descripcion }} - {{ formatCurrency(venta.monto_total) }}
+                  <button class="btn btn-primary btn-sm" @click="retomarVenta(venta.id)">Retomar</button>
+                </li>
+              </ul>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+            </div>
+          </div>
+        </div>
+      </div>
   
       <!-- Modales y Otros Componentes (configurados en los métodos de Vue) -->
     </div>
 </template>
   
 <script>
-    export default {
-    name: "PantallaInicio",
-    data() {
-        return {
-        productCode: '',
-        productQuantity: 1,
-        rucCliente: '',
-        productos: []
-        };
-    },
-    computed: {
-        totalAmount() {
-            return this.productos.reduce((acc, producto) => {
-                return acc + producto.cantidad * producto.precio;
-            }, 0).toFixed(2);
-        }
-    },
-    methods: {
-        agregarProducto() {
-        if (!this.productCode) {
-            alert("Por favor, ingresa un código de producto");
-            return;
-        }
-
-        fetch(`https://apimocha.com/producttest/inventory/product/check/codigo_barras=${this.productCode}`)
-            .then((response) => response.json())
-            .then((product) => {
-            if (product) {
-                const productoNuevo = {
-                codigo: product.producto_id,
-                nombre: product.nombre,
-                cantidad: this.productQuantity,
-                unidad_medida: product.unidad_medida,
-                precio: product.precio
-                };
-                this.productos.push(productoNuevo);
-            } else {
-                alert("Producto no encontrado");
-            }
-            })
-            .catch((error) => console.error("Error al obtener el producto:", error));
-        },
-        eliminarProducto(index) {
-            if (confirm("¿Estás seguro de que deseas eliminar este producto?")) {
-                this.productos.splice(index, 1);
-            }
-        }
+export default {
+  name: "PantallaInicio",
+  data() {
+    return {
+      productCode: '',
+      productQuantity: 1,
+      rucCliente: '',
+      productos: [],
+      // Nuevas propiedades para la funcionalidad de búsqueda
+      productCodeSearch: '',
+      productNameSearch: '',
+      searchResult: '',
+      ventasEnEspera: []  // Lista de ventas en espera
+    };
+  },
+  computed: {
+    totalAmount() {
+      return this.productos.reduce((acc, producto) => {
+        return acc + producto.cantidad * producto.precio;
+      }, 0).toFixed(2);
     }
+  },
+  methods: {
+    agregarProducto() {
+      if (!this.productCode) {
+        alert("Por favor, ingresa un código de producto");
+        return;
+      }
+
+      fetch(`https://apimocha.com/producttest/inventory/product/check/codigo_barras=${this.productCode}`)
+        .then((response) => response.json())
+        .then((product) => {
+          if (product) {
+            const productoNuevo = {
+              codigo: product.producto_id,
+              nombre: product.nombre,
+              cantidad: this.productQuantity,
+              unidad_medida: product.unidad_medida,
+              precio: product.precio
+            };
+            this.productos.push(productoNuevo);
+          } else {
+            alert("Producto no encontrado");
+          }
+        })
+        .catch((error) => console.error("Error al obtener el producto:", error));
+    },
+    eliminarProducto(index) {
+      if (confirm("¿Estás seguro de que deseas eliminar este producto?")) {
+        this.productos.splice(index, 1);
+      }
+    },
+    // Nueva funcionalidad de búsqueda de producto
+    buscarProducto() {
+      this.searchResult = "";
+      const codigo = this.productCodeSearch.trim();
+      const nombre = this.productNameSearch.trim();
+
+      if (!codigo && !nombre) {
+        this.searchResult = '<div class="alert alert-warning">Por favor, ingresa el código o el nombre del producto.</div>';
+        return;
+      }
+
+      const url = codigo
+        ? `https://apimocha.com/producttest/inventory/product/check/${codigo}`
+        : `https://apimocha.com/producttest/inventory/product/check/nombre=${encodeURIComponent(nombre)}`;
+
+      fetch(url)
+        .then((response) => response.json())
+        .then((producto) => {
+          if (producto) {
+            this.searchResult = `
+              <div class="alert alert-success">
+                <strong>Producto encontrado:</strong><br>
+                <strong>Nombre:</strong> ${producto.nombre}<br>
+                <strong>Código:</strong> ${producto.codigo_barras}<br>
+                <strong>Precio:</strong> $${producto.precio.toFixed(2)}<br>
+                <strong>Stock:</strong> ${producto.stock_disponible}<br>
+                <strong>Unidad de Medida:</strong> ${producto.unidad_medida}<br>
+              </div>`;
+          } else {
+            this.searchResult = '<div class="alert alert-danger">Producto no encontrado.</div>';
+          }
+        })
+        .catch((error) => {
+          console.error("Error al buscar el producto:", error);
+          this.searchResult = '<div class="alert alert-danger">Error al buscar el producto.</div>';
+        });
+    },
+    async ponerVentaEnEspera() {
+      const confirmacion = confirm("¿Estás seguro de que deseas poner esta venta en espera?");
+      if (!confirmacion) return;
+
+      const data = {
+        venta_id: null,
+        cliente_id: 1,
+        items_venta: this.productos.map((producto) => ({
+          producto_id: producto.codigo,
+          cantidad: producto.cantidad,
+          precio: producto.precio
+        })),
+        monto_total: this.totalAmount,
+        fecha_venta: new Date().toISOString().slice(0, 10)
+      };
+
+      try {
+        const response = await fetch("https://apimocha.com/example122/sales/pending", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data)
+        });
+        const result = await response.json();
+        if (result.message) {
+          alert("Venta puesta en espera correctamente.");
+          this.productos = [];  // Limpiar productos en tabla después de poner en espera
+        }
+      } catch (error) {
+        console.error("Error:", error);
+        alert("Hubo un error al poner la venta en espera.");
+      }
+    },
+    async obtenerVentasEnEspera() {
+      try {
+        const response = await fetch("https://apimocha.com/producttest/obtenerLista/pending/id=33");
+        const data = await response.json();
+        this.ventasEnEspera = data.ventas;  // Suponiendo que el formato es data.ventas
+      } catch (error) {
+        console.error("Error al obtener ventas en espera:", error);
+      }
+    },
+    async retomarVenta(ventaId) {
+      try {
+        const response = await fetch(`https://apimocha.com/example122/sales/pending/id=${ventaId}`);
+        const data = await response.json();
+        this.productos = data.items_venta;  // Cargar productos de la venta retomada
+        alert("Venta retomada con éxito.");
+      } catch (error) {
+        console.error("Error al retomar la venta:", error);
+      }
+    },
+    formatCurrency(value) {
+      return new Intl.NumberFormat("es-ES", {
+        style: "currency",
+        currency: "USD"
+      }).format(value);
+    }
+  }
 };
 </script>
+
   
-  <style scoped>
+<style scoped>
   /* Incluye aquí el contenido de pantalla_inicial.css */
 /* Asegurarse de que el body ocupe todo el viewport */
 body {
