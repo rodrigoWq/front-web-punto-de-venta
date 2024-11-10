@@ -34,16 +34,18 @@
           </tr>
         </thead>
         <tbody>
-          <tr v-for="(cliente, index) in clientesFiltrados" :key="index">
+          <tr v-for="cliente in clientesFiltrados" :key="cliente.id">
             <td>{{ cliente.nombre }}</td>
             <td>{{ cliente.ruc }}</td>
             <td>{{ cliente.telefono }}</td>
             <td>{{ cliente.tipo }}</td>
             <td>{{ cliente.tipo === 'credito' ? cliente.saldo : '-' }}</td>
-            <td>
-              <button class="btn btn-primary btn-sm" @click="editarCliente(index)">✏️</button>
-              <button class="btn btn-danger btn-sm" @click="eliminarCliente(index)">🗑️</button>
-            </td>
+           <td>
+            <button class="btn btn-primary btn-sm" @click="editarCliente(cliente)">✏️</button>
+            <button class="btn btn-danger btn-sm" @click="eliminarCliente(cliente.id)">🗑️</button>
+            <button v-if="cliente.tipo === 'credito'" class="btn btn-warning btn-sm" @click="abrirModalCredito(cliente)">Línea de Crédito</button>
+          </td>
+
           </tr>
         </tbody>
       </table>
@@ -72,14 +74,10 @@
                 </div>
                 <div class="mb-3">
                   <label for="tipoCliente" class="form-label">Tipo de Cliente</label>
-                  <select v-model="cliente.tipo" class="form-select" @change="toggleSaldo">
+                  <select v-model="cliente.tipo" class="form-select">
                     <option value="normal">Normal</option>
                     <option value="credito">Crédito</option>
                   </select>
-                </div>
-                <div class="mb-3" v-if="cliente.tipo === 'credito'">
-                  <label for="saldoCliente" class="form-label">Saldo</label>
-                  <input type="number" v-model="cliente.saldo" class="form-control" />
                 </div>
                 <button type="submit" class="btn btn-primary">Guardar Cliente</button>
               </form>
@@ -87,89 +85,153 @@
           </div>
         </div>
       </div>
+      <!-- Modal para Línea de Crédito -->
+      <div class="modal fade" id="creditoModal" tabindex="-1">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title">Cargar Línea de Crédito</h5>
+              <button type="button" class="btn-close" @click="cerrarModalCredito"></button>
+            </div>
+            <div class="modal-body">
+              <form @submit.prevent="guardarCredito">
+                <div class="mb-3">
+                  <label for="creditoMonto" class="form-label">Monto de Línea de Crédito</label>
+                  <input type="number" v-model="creditoMonto" class="form-control" required />
+                </div>
+                <button type="submit" class="btn btn-primary">Guardar</button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+
     </div>
 </template>
   
 <script>
-  import { Modal } from 'bootstrap';
-  export default {
-    name: 'ClientesView',
-    data() {
-      return {
-        clientes: [
-          { nombre: 'Juan Pérez', ruc: '12345678', telefono: '0987654321', tipo: 'normal', saldo: null },
-          { nombre: 'María López', ruc: '87654321', telefono: '0987654322', tipo: 'credito', saldo: 5000 },
-          { nombre: 'Carlos García', ruc: '65432123', telefono: '0987654323', tipo: 'normal', saldo: null },
-          { nombre: 'Ana Torres', ruc: '43218765', telefono: '0987654324', tipo: 'credito', saldo: 3000 }
-        ],
-        cliente: { nombre: '', ruc: '', telefono: '', tipo: 'normal', saldo: null },
-        clienteActual: null,
-        modalTitle: 'Registrar Cliente',
-        searchInput: '',
-        filtroTipo: 'all'
-      };
-    },
-    computed: {
-      clientesFiltrados() {
-        return this.clientes.filter(cliente => {
-          const search = this.searchInput.toLowerCase();
-          const nombreCoincide = cliente.nombre.toLowerCase().includes(search);
-          const rucCoincide = cliente.ruc.toLowerCase().includes(search);
-          const tipoCoincide = this.filtroTipo === 'all' || cliente.tipo === this.filtroTipo;
-          return tipoCoincide && (nombreCoincide || rucCoincide);
-        });
+import { Modal } from 'bootstrap';
+import Cliente from '@/models/Cliente'; // Importa la clase Cliente
+import ClienteService from '@/services/ClienteServiceMock'; // Importa el servicio ClienteService
+
+export default {
+  name: 'ClientesView',
+  data() {
+    return {
+      clientes: [], // Lista de clientes
+      cliente: new Cliente('', '', '', 'normal'), // Cliente actual
+      clienteActual: null,
+      modalTitle: 'Registrar Cliente',
+      searchInput: '',
+      filtroTipo: 'all',
+      creditoMonto: null // Monto de línea de crédito
+    };  
+  },
+  computed: {
+    clientesFiltrados() {
+      return [...this.clientes].filter(cliente => {
+        const search = this.searchInput.toLowerCase();
+        const nombreCoincide = cliente.nombre.toLowerCase().includes(search);
+        const rucCoincide = cliente.ruc.toLowerCase().includes(search);
+        const tipoCoincide = this.filtroTipo === 'all' || cliente.tipo === this.filtroTipo;
+        return tipoCoincide && (nombreCoincide || rucCoincide);
+      });
+    }
+  },
+  methods: {
+    async cargarClientes() {
+      try {
+        this.clientes = await ClienteService.obtenerClientes();
+      } catch (error) {
+        console.error('Error al cargar los clientes:', error);
       }
     },
-    methods: {
-      abrirModal() {
-        this.modalTitle = 'Registrar Cliente';
-        this.cliente = { nombre: '', ruc: '', telefono: '', tipo: 'normal', saldo: null };
-        this.clienteActual = null;
-
-         // Usa el Modal importado
-        const modalInstance = new Modal(document.getElementById('clienteModal'));
-        modalInstance.show();
-
-      },
-      cerrarModal() {
-        const modalInstance = Modal.getInstance(document.getElementById('clienteModal'));
-        if (modalInstance) {
-          modalInstance.hide();
+    abrirModal() {
+      this.modalTitle = this.clienteActual ? 'Editar Cliente' : 'Registrar Cliente';
+      this.cliente = this.clienteActual ? Object.assign({}, this.clienteActual) : new Cliente('', '', '', 'normal');
+      const modalInstance = new Modal(document.getElementById('clienteModal'));
+      modalInstance.show();
+    },
+    editarCliente(cliente) {
+      this.clienteActual = cliente; // Almacena la referencia del cliente actual
+      this.cliente = { ...cliente }; // Crea una copia para edición sin afectar el original
+      this.modalTitle = 'Editar Cliente';
+      this.abrirModal();
+    },
+    cerrarModal() {
+      const modalInstance = Modal.getInstance(document.getElementById('clienteModal'));
+      if (modalInstance) {
+        modalInstance.hide();
+      }
+      this.cliente = new Cliente('', '', '', 'normal'); // Limpiar el formulario al cerrar
+      this.clienteActual = null; // Reiniciar clienteActual al cerrar
+    },
+    setFiltro(tipo) {
+      this.filtroTipo = tipo;
+    },
+    async guardarCliente() {
+      try {
+        if (this.clienteActual && this.clienteActual.id) {
+          // Actualiza el cliente existente en la lista
+          Object.assign(this.clienteActual, this.cliente); // Actualiza los datos en la referencia del cliente actual
+          await ClienteService.actualizarCliente(this.clienteActual); // Llama al servicio para guardar cambios
         } else {
-          console.error('Bootstrap modal no está disponible.');
+          // Crea un nuevo cliente si no existe clienteActual
+          const listaActualizada = await ClienteService.crearCliente(this.cliente);
+          this.clientes = [...listaActualizada]; // Actualiza la lista completa
         }
-      },
-      setFiltro(tipo) {
-        this.filtroTipo = tipo;
-      },
-      guardarCliente() {
-        if (this.clienteActual !== null) {
-          this.clientes.splice(this.clienteActual, 1, { ...this.cliente });
-        } else {
-          this.clientes.push({ ...this.cliente });
-        }
+        console.log('Cliente actualizado o agregado:', this.clienteActual || this.cliente);
         this.cerrarModal();
-      },
-      editarCliente(index) {
-        this.clienteActual = index;
-        this.cliente = { ...this.clientes[index] };
-        this.modalTitle = 'Editar Cliente';
-        this.abrirModal();
-      },
-      eliminarCliente(index) {
-        if (confirm('¿Estás seguro de que deseas eliminar este cliente?')) {
-          this.clientes.splice(index, 1);
+      } catch (error) {
+        console.error('Error al guardar el cliente:', error);
+      }
+    },
+    async eliminarCliente(clienteId) {
+      if (confirm('¿Estás seguro de que deseas eliminar este cliente?')) {
+        try {
+          const listaActualizada = await ClienteService.eliminarCliente(clienteId);
+          this.clientes = [...listaActualizada]; // Actualiza la lista con la versión más reciente
+          console.log('Lista de clientes después de eliminar:', this.clientes);
+        } catch (error) {
+          console.error('Error al eliminar el cliente:', error);
         }
-      },
-      aplicarFiltros() {
-        // Método para aplicar los filtros en el input y botones
-      },
-      toggleSaldo() {
-        if (this.cliente.tipo !== 'credito') this.cliente.saldo = null;
+      }
+    },
+    aplicarFiltros() {
+      // Método para aplicar los filtros en el input y botones
+    },
+    toggleSaldo() {
+      if (this.cliente.tipo !== 'credito') {
+        this.cliente.saldo = null;
+      }
+    },
+    abrirModalCredito(cliente) {
+      this.clienteActual = cliente;
+      this.creditoMonto = cliente.saldo || 0; // Cargar el saldo existente o inicializar en 0
+      const modalInstance = new Modal(document.getElementById('creditoModal'));
+      modalInstance.show();
+    },
+    cerrarModalCredito() {
+      const modalInstance = Modal.getInstance(document.getElementById('creditoModal'));
+      if (modalInstance) {
+        modalInstance.hide();
+      }
+    },
+    guardarCredito() {
+      if (this.clienteActual) {
+        this.clienteActual.saldo = this.creditoMonto; // Asigna el nuevo monto de crédito al cliente actual
+        console.log(`Línea de crédito actualizada para ${this.clienteActual.nombre}: ${this.creditoMonto}`);
+        this.cerrarModalCredito();
       }
     }
-  };
+  },
+
+  async mounted() {
+    await this.cargarClientes(); // Carga los clientes al montar el componente
+  }
+};
 </script>
+
   
 
 <style scoped>
