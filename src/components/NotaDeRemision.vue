@@ -90,71 +90,62 @@
 </template>
   
 <script>
-  export default {
-    name: 'NotaDeRemision',
-    data() {
-      return {
-        notaData: {
-          timbrado: '',
-          razonSocial: '',
-          ruc: '',
-          nroNotaRemision: '',
-          fechaEmision: '',
-        },
-        producto: {
-          codigo: '',
-          descripcion: '',
-          cantidad: 0,
-          unidadMedida: '',
-          fechaVencimiento: '',
-        },
-        productos: []
-      };
+import NotaDeRemision from '@/models/NotaDeRemision';
+import NotaDeRemisionService from '@/services/NotaDeRemisionServiceMock';
+
+export default {
+  name: 'NotaDeRemision',
+  data() {
+    return {
+      nota: new NotaDeRemision({}), // Instancia de NotaDeRemision
+      productoData: {
+        codigo: '',
+        descripcion: '',
+        cantidad: 0,
+        unidadMedida: '',
+        fechaVencimiento: '',
+      },
+      notasDeRemision: [] // Lista de notas cargadas
+    };
+  },
+  methods: {
+    async cargarNotasDeRemision() {
+      try {
+        this.notasDeRemision = await NotaDeRemisionService.obtenerNotas();
+      } catch (error) {
+        console.error('Error al cargar las notas de remisión:', error);
+      }
     },
-    methods: {
-      agregarProducto() {
-        // Crear una copia del producto actual y agregarlo a la lista
-        const nuevoProducto = { ...this.producto };
-        this.productos.push(nuevoProducto);
-        this.limpiarCamposProducto();
-      },
-      eliminarProducto(index) {
-        this.productos.splice(index, 1);
-      },
-      limpiarCamposProducto() {
-        this.producto = {
-          codigo: '',
-          descripcion: '',
-          cantidad: 0,
-          unidadMedida: '',
-          fechaVencimiento: ''
-        };
-      },
-      guardarNotaRemision() {
-        // Guardar los datos en el localStorage (similar al script original)
-        const notaRemision = {
-          ...this.notaData,
-          productos: this.productos
-        };
-        const comprobantes = JSON.parse(localStorage.getItem('comprobantes')) || [];
-        comprobantes.push(notaRemision);
-        localStorage.setItem('comprobantes', JSON.stringify(comprobantes));
+    agregarProducto() {
+      // Agregar producto usando la instancia de nota de remisión
+      this.nota.agregarProducto(this.productoData);
+      this.limpiarCamposProducto();
+    },
+    eliminarProducto(index) {
+      this.nota.eliminarProducto(index); // Eliminar producto de la nota de remisión
+    },
+    limpiarCamposProducto() {
+      this.productoData = { codigo: '', descripcion: '', cantidad: 0, unidadMedida: '', fechaVencimiento: '' };
+    },
+    async guardarNotaRemision() {
+      try {
+        // Guarda la nota de remisión usando el servicio
+        const notasActualizadas = await NotaDeRemisionService.guardarNotaRemision(this.nota);
+        this.notasDeRemision = notasActualizadas;
         alert('Nota de remisión guardada correctamente');
-        this.resetForm();
-      },
-      resetForm() {
-        this.notaData = {
-          timbrado: '',
-          razonSocial: '',
-          ruc: '',
-          nroNotaRemision: '',
-          fechaEmision: '',
-        };
-        this.productos = [];
+        this.nota.reset(); // Reinicia la nota después de guardarla
+      } catch (error) {
+        console.error('Error al guardar la nota de remisión:', error);
       }
     }
-  };
+  },
+  async mounted() {
+    await this.cargarNotasDeRemision();
+  }
+};
 </script>
+
+
   
 <style scoped>
   /* Estilos generales */
