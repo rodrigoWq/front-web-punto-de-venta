@@ -6,14 +6,15 @@ class FacturaServiceMock {
     constructor() {
       // Datos de prueba: Crear facturas con productos de ejemplo
       const factura1 = new Factura('12345678-9', 'Proveedor S.A.', '2024-11-10', '001-12345', 'F001-000001', 'contado');
+      factura1.id = 1; // Asigna un id único a la factura
       factura1.agregarProducto(new Producto({ codigo: 'P001', descripcion: 'Producto A', cantidad: 2, valorUnitario: 50000, tipoImpuesto: 'iva10' }));
-      factura1.agregarProducto(new Producto({ codigo: 'P002', descripcion: 'Producto B', cantidad: 1, valorUnitario: 100000, tipoImpuesto: 'iva5' }));
-  
+
       const factura2 = new Factura('98765432-1', 'Distribuidor XYZ', '2024-11-11', '002-54321', 'F002-000002', 'credito');
+      factura2.id = 2; // Asigna un id único a la factura
       factura2.agregarProducto(new Producto({ codigo: 'P003', descripcion: 'Producto C', cantidad: 5, valorUnitario: 15000, tipoImpuesto: 'exenta' }));
-      factura2.agregarProducto(new Producto({ codigo: 'P004', descripcion: 'Producto D', cantidad: 3, valorUnitario: 30000, tipoImpuesto: 'iva5' }));
-  
-      this.facturas = [factura1, factura2]; // Facturas de prueba
+
+      this.facturas = [factura1, factura2];
+
     }
 
   async obtenerFacturas() {

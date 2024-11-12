@@ -24,7 +24,7 @@ const routes = [
     component: ClientesView
   },
   {
-    path: '/factura',
+    path: '/factura/:id(\\d+)', // El regex (\\d+) fuerza que id sea un número
     name: 'Factura',
     component: FacturaView
   },

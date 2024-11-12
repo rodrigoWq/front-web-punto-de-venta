@@ -158,21 +158,33 @@ export default {
               console.error('Error al cargar las facturas:', error);
           }
       },
-      cargarFacturaDesdeParams() {
-        if (this.$route.params.facturaData) {
-          console.log("Loaded facturaData from params:", this.$route.params.facturaData); // Debug line
-          const facturaData = this.$route.params.facturaData;
-          this.factura = new Factura(
-            facturaData.ruc,
-            facturaData.razonSocial,
-            facturaData.fechaEmision,
-            facturaData.timbrado,
-            facturaData.nroFactura,
-            facturaData.condicionVenta
-          );
-          this.factura.productos = facturaData.productos || [];
-          this.factura.calcularTotales(); // Calcula el total de la factura
-        }
+      async cargarFacturaDesdeParams() {
+          const id = parseInt(this.$route.params.id, 10); // Convertir el id a un número
+          try {
+              // Cargar todas las facturas si no están cargadas
+              if (this.facturas.length === 0) {
+                  this.facturas = await FacturaService.obtenerFacturas();
+              }
+              // Buscar la factura con el id proporcionado
+              const facturaData = this.facturas.find(factura => factura.id === id);
+              if (facturaData) {
+                  // Asignar los datos de la factura al modelo `factura`
+                  this.factura = new Factura(
+                      facturaData.ruc,
+                      facturaData.razonSocial,
+                      facturaData.fechaEmision,
+                      facturaData.timbrado,
+                      facturaData.nroFactura,
+                      facturaData.condicionVenta
+                  );
+                  this.factura.productos = facturaData.productos || [];
+                  this.factura.calcularTotales();
+              } else {
+                  console.error('Factura no encontrada');
+              }
+          } catch (error) {
+              console.error('Error al cargar la factura desde parámetros:', error);
+          }
       },
       agregarProducto() {
           const producto = new Producto(this.productoData); // Crear una instancia de Producto
@@ -197,18 +209,17 @@ export default {
       }
   },
   async mounted() {
-      await this.cargarFacturas(); // Cargar las facturas al montar el componente
-      this.cargarFacturaDesdeParams(); // Cargar datos de factura desde los parámetros si existen
+    await this.cargarFacturas();
+    await this.cargarFacturaDesdeParams(); // Cargar la factura seleccionada en función del parámetro `id`
+
   },
   watch: {
-    '$route.params.facturaData': {
-      handler(newVal) {
-        if (newVal) {
-          this.cargarFacturaDesdeParams(); // Reload data if params change
-        }
-      },
-      immediate: true
-    }
+      '$route.params.id': {
+          handler() {
+              this.cargarFacturaDesdeParams();
+          },
+          immediate: true
+      }
   }
 };
 </script>

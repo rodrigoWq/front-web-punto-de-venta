@@ -43,7 +43,7 @@
           <td>{{ comprobante.estado || 'activo' }}</td>
           <td>{{ comprobante.tipo === 'nota_remision' ? 'Nota de Remisión' : 'Factura' }}</td>
           <td>
-            <button class="btn btn-primary btn-sm me-1" @click="verDetalleComprobante(index)">Ver</button>
+            <button class="btn btn-primary btn-sm me-1" @click="verDetalleComprobante(comprobante.id)">Ver</button>
             <button class="btn btn-danger btn-sm me-1" :disabled="comprobante.estado === 'anulado'" @click="anularComprobante(index)">Anular</button>
             <button v-if="comprobante.tipo === 'nota_remision'" class="btn btn-info btn-sm" @click="generarFacturaDesdeNotaRemision(comprobante)">Generar Factura</button>
           </td>
@@ -132,20 +132,12 @@ export default {
         alert('Comprobante anulado correctamente.');
       }
     },
-    verDetalleComprobante(index) {
-      const comprobante = this.comprobantes[index];
-      console.log("Navigating to factura view with:", comprobante); // Debug line
-
-      if (comprobante.tipo === 'factura') {
-        this.$router.push({
-          name: 'Factura',
-          params: { facturaData: comprobante }
-        });
-      } else if (comprobante.tipo === 'nota_remision') {
-        this.$router.push({
-          name: 'NotaDeRemision',
-          params: { notaData: comprobante }
-        });
+    verDetalleComprobante(facturaId) {
+      if (facturaId) {
+        console.log("Navigating to factura with id:", facturaId); // Debug: confirm facturaId
+        this.$router.push({ name: 'Factura', params: { id: Number(facturaId) } });
+      } else {
+        console.warn("Invalid factura id:", facturaId);
       }
     },
     generarFacturaDesdeNotaRemision(notaRemision) {
