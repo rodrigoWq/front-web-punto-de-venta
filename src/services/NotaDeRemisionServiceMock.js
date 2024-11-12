@@ -44,12 +44,9 @@ class NotaDeRemisionServiceMock {
 
   async guardarNotaRemision(notaData) {
     return new Promise((resolve) => {
-      setTimeout(() => {
-        const nuevaNota = new NotaDeRemision(notaData);
-        nuevaNota.id = Date.now(); // Genera un ID único
-        this.notasDeRemision.push(nuevaNota);
-        resolve([...this.notasDeRemision]);
-      }, 500);
+      notaData.id = Date.now(); // Genera un id único
+      this.notasDeRemision.push(notaData);
+      resolve([...this.notasDeRemision]);
     });
   }
 }

@@ -121,7 +121,7 @@ export default {
       try {
         const nota = await NotaDeRemisionService.obtenerNotaPorId(id);
         if (nota) {
-          // Asigna los datos de la nota encontrada a `notaData` y `productos`
+          // Cargar los datos de la nota en notaData y productos
           this.notaData = {
             timbrado: nota.timbrado,
             razonSocial: nota.razonSocial,
@@ -129,12 +129,25 @@ export default {
             nroNotaRemision: nota.nroNotaRemision,
             fechaEmision: nota.fechaEmision
           };
-          this.productos = nota.productos || [];
-        } else {
-          console.warn('Nota de remisión no encontrada');
+          this.productos = nota.productos || []; // Cargar productos si existen
         }
       } catch (error) {
         console.error('Error al cargar la nota de remisión:', error);
+      }
+    },
+    async guardarNotaRemision() {
+      try {
+        // Crear una nueva nota de remisión incluyendo los productos
+        const nuevaNota = {
+          ...this.notaData,
+          productos: this.productos // Añade los productos actuales a la nota
+        };
+        const notasActualizadas = await NotaDeRemisionService.guardarNotaRemision(nuevaNota);
+        this.notasDeRemision = notasActualizadas;
+        alert('Nota de remisión guardada correctamente');
+        this.resetNota(); // Reinicia los campos después de guardar
+      } catch (error) {
+        console.error('Error al guardar la nota de remisión:', error);
       }
     },
     agregarProducto() {
@@ -146,20 +159,6 @@ export default {
     },
     limpiarCamposProducto() {
       this.productoData = { codigo: '', descripcion: '', cantidad: 0, unidadMedida: '', fechaVencimiento: '' };
-    },
-    async guardarNotaRemision() {
-      try {
-        const nuevaNota = {
-          ...this.notaData,
-          productos: this.productos
-        };
-        const notasActualizadas = await NotaDeRemisionService.guardarNotaRemision(nuevaNota);
-        this.notasDeRemision = notasActualizadas;
-        alert('Nota de remisión guardada correctamente');
-        this.resetNota();
-      } catch (error) {
-        console.error('Error al guardar la nota de remisión:', error);
-      }
     },
     resetNota() {
       this.notaData = {
