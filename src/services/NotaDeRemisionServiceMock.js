@@ -35,6 +35,13 @@ class NotaDeRemisionServiceMock {
     });
   }
 
+  async obtenerNotaPorId(id) {
+    return new Promise((resolve) => {
+      const nota = this.notasDeRemision.find(n => n.id === Number(id));
+      resolve(nota);
+    });
+  }
+
   async guardarNotaRemision(notaData) {
     return new Promise((resolve) => {
       setTimeout(() => {

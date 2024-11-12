@@ -36,7 +36,8 @@ const routes = [
   {
     path: '/nota-de-remision/:id',
     name: 'NotaDeRemision',
-    component: NotaDeRemision
+    component: NotaDeRemision,
+    props: true
   },
   {
     path: '/nota-de-remision', // Ruta para registrar una nueva nota de remisión
