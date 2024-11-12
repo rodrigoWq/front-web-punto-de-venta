@@ -26,7 +26,7 @@ class FacturaServiceMock {
   async guardarFactura(facturaData) {
     return new Promise((resolve) => {
       setTimeout(() => {
-        facturaData.id = Date.now();
+        const nuevoId = Date.now(); // Genera un id único basado en el tiempo
         const nuevaFactura = new Factura(
           facturaData.ruc,
           facturaData.razonSocial,
@@ -35,14 +35,15 @@ class FacturaServiceMock {
           facturaData.nroFactura,
           facturaData.condicionVenta
         );
+        nuevaFactura.id = nuevoId; // Asigna el id a la nueva factura
         nuevaFactura.productos = facturaData.productos;
-        // Calcula el total después de asignar los productos
         nuevaFactura.calcularTotales();
         this.facturas.push(nuevaFactura);
         resolve([...this.facturas]);
       }, 500);
     });
   }
+  
   
 
   async eliminarFactura(facturaId) {

@@ -24,8 +24,13 @@ const routes = [
     component: ClientesView
   },
   {
-    path: '/factura/:id(\\d+)', // El regex (\\d+) fuerza que id sea un número
+    path: '/factura/:id(\\d+)', // Ruta para ver una factura existente
     name: 'Factura',
+    component: FacturaView
+  },
+  {
+    path: '/factura', // Ruta para registrar una nueva factura
+    name: 'RegistrarFactura',
     component: FacturaView
   },
   {

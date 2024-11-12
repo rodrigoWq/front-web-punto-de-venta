@@ -159,7 +159,7 @@ export default {
           }
       },
       async cargarFacturaDesdeParams() {
-          const id = parseInt(this.$route.params.id, 10); // Convertir el id a un número
+          const id = Number(this.$route.params.id);
           try {
               // Cargar todas las facturas si no están cargadas
               if (this.facturas.length === 0) {
@@ -179,8 +179,6 @@ export default {
                   );
                   this.factura.productos = facturaData.productos || [];
                   this.factura.calcularTotales();
-              } else {
-                  console.error('Factura no encontrada');
               }
           } catch (error) {
               console.error('Error al cargar la factura desde parámetros:', error);
@@ -209,9 +207,13 @@ export default {
       }
   },
   async mounted() {
-    await this.cargarFacturas();
-    await this.cargarFacturaDesdeParams(); // Cargar la factura seleccionada en función del parámetro `id`
-
+    if (this.$route.params.id) {
+      // Cargar la factura existente si hay un id
+      await this.cargarFacturaDesdeParams();
+    } else {
+      // Nueva factura, inicializar `factura` con valores por defecto
+      this.factura = new Factura();
+    }
   },
   watch: {
       '$route.params.id': {
