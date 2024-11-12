@@ -1,15 +1,23 @@
 // src/models/Factura.js
+import Comprobante from './Comprobante';
 import Producto from './Producto';
 
-export default class Factura {
-  constructor(ruc = '', razonSocial = '', fechaEmision = '', timbrado = '', nroFactura = '', condicionVenta = 'contado') {
-    this.ruc = ruc;
-    this.razonSocial = razonSocial;
-    this.fechaEmision = fechaEmision;
+export default class Factura extends Comprobante {
+  constructor({ 
+    ruc = '', 
+    razonSocial = '', 
+    fechaEmision = '', 
+    timbrado = '', 
+    nroFactura = '', 
+    condicionVenta = 'contado', 
+    productos = [] 
+  } = {}) {
+    super({ ruc, razonSocial, fechaEmision, tipo: 'factura' });
     this.timbrado = timbrado;
     this.nroFactura = nroFactura;
     this.condicionVenta = condicionVenta;
-    this.productos = [];
+    this.productos = productos.map(product => new Producto(product));
+    this.calcularTotales();
   }
 
   agregarProducto(productoData) {

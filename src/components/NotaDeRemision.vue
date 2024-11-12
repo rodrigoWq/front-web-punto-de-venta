@@ -91,59 +91,65 @@
   
 <script>
 import NotaDeRemision from '@/models/NotaDeRemision';
-import NotaDeRemisionService from '@/services/NotaDeRemisionServiceMock';
+import Producto from '@/models/Producto';
+import ComprobanteServiceMock from '@/services/ComprobanteServiceMock';
 
 export default {
-  name: 'NotaDeRemision',
+  name: 'NotaDeRemisionView',
   data() {
-    return {
-      nota: new NotaDeRemision({}), // Instancia de NotaDeRemision
-      productoData: {
-        codigo: '',
-        descripcion: '',
-        cantidad: 0,
-        unidadMedida: '',
-        fechaVencimiento: '',
-      },
-      notasDeRemision: [] // Lista de notas cargadas
-    };
+      return {
+          nota: new NotaDeRemision(), // Instancia de Nota de Remisión
+          productoData: {
+              codigo: '',
+              descripcion: '',
+              cantidad: 0,
+              unidadMedida: '',
+              fechaVencimiento: '',
+          },
+          notas: [] // Almacenará las notas de remisión
+      };
   },
   methods: {
-    async cargarNotasDeRemision() {
-      try {
-        this.notasDeRemision = await NotaDeRemisionService.obtenerNotas();
-      } catch (error) {
-        console.error('Error al cargar las notas de remisión:', error);
+      async cargarNotaDesdeParams() {
+          if (this.$route.params.notaData) {
+              const notaData = this.$route.params.notaData;
+              this.nota = new NotaDeRemision({
+                  ruc: notaData.ruc,
+                  razonSocial: notaData.razonSocial,
+                  fechaEmision: notaData.fechaEmision,
+                  timbrado: notaData.timbrado,
+                  nroNotaRemision: notaData.nroNotaRemision,
+                  productos: notaData.productos || []
+              });
+          }
+      },
+      agregarProducto() {
+          const producto = new Producto(this.productoData);
+          this.nota.agregarProducto(producto);
+          this.limpiarCamposProducto();
+      },
+      eliminarProducto(index) {
+          this.nota.eliminarProducto(index);
+      },
+      limpiarCamposProducto() {
+          this.productoData = { codigo: '', descripcion: '', cantidad: 0, unidadMedida: '', fechaVencimiento: '' };
+      },
+      async guardarNotaRemision() {
+          try {
+              this.notas = await ComprobanteServiceMock.guardarComprobante(this.nota);
+              alert('Nota de remisión guardada correctamente');
+              this.nota = new NotaDeRemision();
+          } catch (error) {
+              console.error('Error al guardar la nota de remisión:', error);
+          }
       }
-    },
-    agregarProducto() {
-      // Agregar producto usando la instancia de nota de remisión
-      this.nota.agregarProducto(this.productoData);
-      this.limpiarCamposProducto();
-    },
-    eliminarProducto(index) {
-      this.nota.eliminarProducto(index); // Eliminar producto de la nota de remisión
-    },
-    limpiarCamposProducto() {
-      this.productoData = { codigo: '', descripcion: '', cantidad: 0, unidadMedida: '', fechaVencimiento: '' };
-    },
-    async guardarNotaRemision() {
-      try {
-        // Guarda la nota de remisión usando el servicio
-        const notasActualizadas = await NotaDeRemisionService.guardarNotaRemision(this.nota);
-        this.notasDeRemision = notasActualizadas;
-        alert('Nota de remisión guardada correctamente');
-        this.nota.reset(); // Reinicia la nota después de guardarla
-      } catch (error) {
-        console.error('Error al guardar la nota de remisión:', error);
-      }
-    }
   },
   async mounted() {
-    await this.cargarNotasDeRemision();
+      await this.cargarNotaDesdeParams(); // Cargar datos de nota desde los parámetros si existen
   }
 };
 </script>
+
 
 
   

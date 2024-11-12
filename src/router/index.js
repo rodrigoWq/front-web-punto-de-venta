@@ -26,8 +26,10 @@ const routes = [
   {
     path: '/factura',
     name: 'Factura',
-    component: FacturaView
+    component: FacturaView,
+    props: route => ({ facturaData: route.params.facturaData }) // Pass params as props
   },
+  
   {
     path: '/nota-de-remision',
     name: 'NotaDeRemision',

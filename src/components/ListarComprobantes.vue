@@ -61,8 +61,7 @@
 </template>
 
 <script>
-import FacturaService from '@/services/FacturaServiceMock';
-import NotaDeRemisionService from '@/services/NotaDeRemisionServiceMock';
+import ComprobanteServiceMock from '@/services/ComprobanteServiceMock';
 
 export default {
   name: 'ListarComprobantes',
@@ -78,13 +77,11 @@ export default {
   computed: {
     comprobantesFiltrados() {
       return this.comprobantes.filter(comprobante => {
-        const numero = (comprobante.numeroComprobante || comprobante.nroFactura || '').toLowerCase();
+        const numero = (comprobante.numeroComprobante || comprobante.nroFactura || comprobante.nroNotaRemision || '').toLowerCase();
         const ruc = (comprobante.rucCliente || comprobante.ruc || '').toLowerCase();
         const tipo = comprobante.tipo || '';
-
         const matchesSearch = numero.includes(this.searchInput.toLowerCase()) || ruc.includes(this.searchInput.toLowerCase());
         const matchesFilter = this.filtroTipo === 'all' || tipo === this.filtroTipo;
-
         return matchesSearch && matchesFilter;
       });
     },
@@ -100,9 +97,7 @@ export default {
   methods: {
     async cargarComprobantes() {
       try {
-        const facturas = await FacturaService.obtenerFacturas();
-        const notas = await NotaDeRemisionService.obtenerNotas();
-        this.comprobantes = [...facturas, ...notas];
+        this.comprobantes = await ComprobanteServiceMock.obtenerComprobantes();
       } catch (error) {
         console.error('Error al cargar comprobantes:', error);
       }
@@ -137,15 +132,19 @@ export default {
       console.log("Navigating to factura view with:", comprobante); // Debug line
 
       if (comprobante.tipo === 'factura') {
+        console.log("tipo : factura")
         this.$router.push({
           name: 'Factura',
           params: { facturaData: comprobante }
         });
       } else if (comprobante.tipo === 'nota_remision') {
+        console.log("tipo : nota de remision:"); // Debug line
         this.$router.push({
           name: 'NotaDeRemision',
           params: { notaData: comprobante }
         });
+      } else{
+        console.log("tipo : NO ES FACTURA")
       }
     },
     generarFacturaDesdeNotaRemision(notaRemision) {
