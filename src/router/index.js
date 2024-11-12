@@ -34,8 +34,13 @@ const routes = [
     component: FacturaView
   },
   {
-    path: '/nota-de-remision',
+    path: '/nota-de-remision/:id',
     name: 'NotaDeRemision',
+    component: NotaDeRemision
+  },
+  {
+    path: '/nota-de-remision', // Ruta para registrar una nueva nota de remisión
+    name: 'RegistrarNotaDeRemision',
     component: NotaDeRemision
   },
   {

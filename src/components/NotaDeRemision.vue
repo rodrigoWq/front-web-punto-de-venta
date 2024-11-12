@@ -31,26 +31,27 @@
   
         <!-- Datos de la Mercadería -->
         <h3>Datos de la Mercadería</h3>
+        <!-- Cambiar v-model de producto a productoData -->
         <div class="row g-3 mb-3">
           <div class="col-md-2">
             <label class="form-label">Código de Barra</label>
-            <input type="text" v-model="producto.codigo" class="form-control" placeholder="Código de Barra">
+            <input type="text" v-model="productoData.codigo" class="form-control" placeholder="Código de Barra">
           </div>
           <div class="col-md-2">
             <label class="form-label">Cantidad</label>
-            <input type="number" v-model="producto.cantidad" class="form-control" placeholder="Cantidad">
+            <input type="number" v-model="productoData.cantidad" class="form-control" placeholder="Cantidad">
           </div>
           <div class="col-md-2">
             <label class="form-label">Unidad de Medida</label>
-            <input type="text" v-model="producto.unidadMedida" class="form-control" placeholder="Unidad de medida">
+            <input type="text" v-model="productoData.unidadMedida" class="form-control" placeholder="Unidad de medida">
           </div>
           <div class="col-md-4">
             <label class="form-label">Descripción</label>
-            <input type="text" v-model="producto.descripcion" class="form-control" placeholder="Descripción de la mercadería">
+            <input type="text" v-model="productoData.descripcion" class="form-control" placeholder="Descripción de la mercadería">
           </div>
           <div class="col-md-2">
             <label class="form-label">Fecha de Vencimiento</label>
-            <input type="date" v-model="producto.fechaVencimiento" class="form-control">
+            <input type="date" v-model="productoData.fechaVencimiento" class="form-control">
           </div>
         </div>
         <div class="d-grid gap-2 mb-3">
@@ -90,57 +91,92 @@
 </template>
   
 <script>
-import NotaDeRemision from '@/models/NotaDeRemision';
 import NotaDeRemisionService from '@/services/NotaDeRemisionServiceMock';
 
 export default {
   name: 'NotaDeRemision',
+  props: ['id'], // Recibe el id como prop
   data() {
     return {
-      nota: new NotaDeRemision({}), // Instancia de NotaDeRemision
+      notaData: {
+        timbrado: '',
+        razonSocial: '',
+        ruc: '',
+        nroNotaRemision: '',
+        fechaEmision: ''
+      },
       productoData: {
         codigo: '',
         descripcion: '',
         cantidad: 0,
         unidadMedida: '',
-        fechaVencimiento: '',
+        fechaVencimiento: ''
       },
-      notasDeRemision: [] // Lista de notas cargadas
+      productos: [],
+      notasDeRemision: [] // Lista de notas cargadas si es necesario
     };
   },
   methods: {
-    async cargarNotasDeRemision() {
+    async cargarNotaDeRemision(id) {
       try {
-        this.notasDeRemision = await NotaDeRemisionService.obtenerNotas();
+        const nota = await NotaDeRemisionService.obtenerNotaPorId(id);
+        if (nota) {
+          // Asigna los datos de la nota encontrada a `notaData` y `productos`
+          this.notaData = {
+            timbrado: nota.timbrado,
+            razonSocial: nota.razonSocial,
+            ruc: nota.ruc,
+            nroNotaRemision: nota.nroNotaRemision,
+            fechaEmision: nota.fechaEmision
+          };
+          this.productos = nota.productos || [];
+        } else {
+          console.warn('Nota de remisión no encontrada');
+        }
       } catch (error) {
-        console.error('Error al cargar las notas de remisión:', error);
+        console.error('Error al cargar la nota de remisión:', error);
       }
     },
     agregarProducto() {
-      // Agregar producto usando la instancia de nota de remisión
-      this.nota.agregarProducto(this.productoData);
+      this.productos.push({ ...this.productoData });
       this.limpiarCamposProducto();
     },
     eliminarProducto(index) {
-      this.nota.eliminarProducto(index); // Eliminar producto de la nota de remisión
+      this.productos.splice(index, 1);
     },
     limpiarCamposProducto() {
       this.productoData = { codigo: '', descripcion: '', cantidad: 0, unidadMedida: '', fechaVencimiento: '' };
     },
     async guardarNotaRemision() {
       try {
-        // Guarda la nota de remisión usando el servicio
-        const notasActualizadas = await NotaDeRemisionService.guardarNotaRemision(this.nota);
+        const nuevaNota = {
+          ...this.notaData,
+          productos: this.productos
+        };
+        const notasActualizadas = await NotaDeRemisionService.guardarNotaRemision(nuevaNota);
         this.notasDeRemision = notasActualizadas;
         alert('Nota de remisión guardada correctamente');
-        this.nota.reset(); // Reinicia la nota después de guardarla
+        this.resetNota();
       } catch (error) {
         console.error('Error al guardar la nota de remisión:', error);
       }
+    },
+    resetNota() {
+      this.notaData = {
+        timbrado: '',
+        razonSocial: '',
+        ruc: '',
+        nroNotaRemision: '',
+        fechaEmision: ''
+      };
+      this.productos = [];
     }
   },
   async mounted() {
-    await this.cargarNotasDeRemision();
+    // Si hay un id, carga los datos de la nota de remisión específica
+    if (this.id) {
+      await this.cargarNotaDeRemision(this.id);
+    }
   }
 };
 </script>

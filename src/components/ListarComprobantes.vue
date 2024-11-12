@@ -3,8 +3,8 @@
     <header class="d-flex justify-content-between align-items-center">
       <h1>Gestión de Documentos</h1>
       <div class="header-buttons">
-        <router-link class="btn btn-success me-2" to="/factura">Registrar Factura   </router-link>
-        <router-link class="btn btn-success" to="/nota-de-remision">Registrar Nota de Remisión</router-link>
+        <router-link class="btn btn-success me-2" :to="{ name: 'RegistrarFactura' }">Registrar Factura</router-link>
+        <router-link class="btn btn-success" :to="{ name: 'RegistrarNotaDeRemision' }">Registrar Nota de Remisión</router-link>
       </div>
     </header>
 
@@ -36,20 +36,21 @@
       </thead>
       <tbody>
         <tr v-for="(comprobante, index) in comprobantesFiltradosPaginados" :key="index">
-          <td>{{ comprobante.numeroComprobante || comprobante.nroFactura || 'N/A' }}</td>
+          <td>{{ comprobante.nroNotaRemision || comprobante.nroFactura || 'N/A' }}</td>
           <td>{{ comprobante.rucCliente || comprobante.ruc || 'N/A' }}</td>
           <td>{{ comprobante.fecha || comprobante.fechaEmision || 'N/A' }}</td>
           <td>{{ comprobante.montoTotal || comprobante.totalFactura || '0,00' }}</td>
           <td>{{ comprobante.estado || 'activo' }}</td>
           <td>{{ comprobante.tipo === 'nota_remision' ? 'Nota de Remisión' : 'Factura' }}</td>
           <td>
-            <button class="btn btn-primary btn-sm me-1" @click="verDetalleComprobante(comprobante.id)">Ver</button>
+            <button class="btn btn-primary btn-sm me-1" @click="verDetalleComprobante(comprobante)">Ver</button>
             <button class="btn btn-danger btn-sm me-1" :disabled="comprobante.estado === 'anulado'" @click="anularComprobante(index)">Anular</button>
             <button v-if="comprobante.tipo === 'nota_remision'" class="btn btn-info btn-sm" @click="generarFacturaDesdeNotaRemision(comprobante)">Generar Factura</button>
           </td>
         </tr>
       </tbody>
     </table>
+
 
     <!-- Controles de Paginación -->
     <div class="d-flex justify-content-center mt-3">
@@ -102,6 +103,12 @@ export default {
       try {
         const facturas = await FacturaService.obtenerFacturas();
         const notas = await NotaDeRemisionService.obtenerNotas();
+        
+        // Añadir tipo a cada comprobante para distinguirlos
+        facturas.forEach(factura => factura.tipo = 'factura');
+        notas.forEach(nota => nota.tipo = 'nota_remision');
+        
+        // Combinar facturas y notas de remisión
         this.comprobantes = [...facturas, ...notas];
       } catch (error) {
         console.error('Error al cargar comprobantes:', error);
@@ -132,12 +139,13 @@ export default {
         alert('Comprobante anulado correctamente.');
       }
     },
-    verDetalleComprobante(facturaId) {
-      if (facturaId) {
-        console.log("Navigating to factura with id:", facturaId); // Debug: confirm facturaId
-        this.$router.push({ name: 'Factura', params: { id: Number(facturaId) } });
+    verDetalleComprobante(comprobante) {
+      if (comprobante.tipo === 'nota_remision') {
+        console.log("tipo: nota_remision")
+        this.$router.push({ name: 'NotaDeRemision', params: { id: comprobante.id } });
       } else {
-        console.warn("Invalid factura id:", facturaId);
+        console.log("tipo: factura")
+        this.$router.push({ name: 'Factura', params: { id: comprobante.id } });
       }
     },
     generarFacturaDesdeNotaRemision(notaRemision) {
