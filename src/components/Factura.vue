@@ -85,20 +85,64 @@
                   </tr>
               </thead>
               <tbody>
-                  <tr v-for="(producto, index) in factura.productos" :key="index">
-                      <td>{{ producto.codigo }}</td>
-                      <td>{{ producto.descripcion }}</td>
-                      <td>{{ producto.cantidad }}</td>
-                      <td>{{ producto.valorUnitario }}</td>
-                      <!-- Conditional content within each column to maintain alignment -->
-                      <td>{{ producto.tipoImpuesto === 'exenta' ? producto.totalProducto : '' }}</td>
-                      <td>{{ producto.tipoImpuesto === 'iva5' ? producto.totalProducto : '' }}</td>
-                      <td>{{ producto.tipoImpuesto === 'iva10' ? producto.totalProducto : '' }}</td>
-                      <td>
-                          <button class="btn btn-danger" @click="eliminarProducto(index)">Eliminar</button>
-                      </td>
-                  </tr>
-              </tbody>
+                    <tr v-for="(producto, index) in factura.productos" :key="index">
+                        <td>
+                        <input 
+                            v-if="productoEditandoIndex === index"
+                            v-model="productoData.codigo"
+                            class="form-control form-control-sm"
+                        />
+                        <span v-else>{{ producto.codigo }}</span>
+                        </td>
+                        <td>
+                        <input 
+                            v-if="productoEditandoIndex === index"
+                            v-model="productoData.descripcion"
+                            class="form-control form-control-sm"
+                        />
+                        <span v-else>{{ producto.descripcion }}</span>
+                        </td>
+                        <td>
+                        <input 
+                            v-if="productoEditandoIndex === index"
+                            v-model.number="productoData.cantidad"
+                            type="number"
+                            class="form-control form-control-sm"
+                        />
+                        <span v-else>{{ producto.cantidad }}</span>
+                        </td>
+                        <td>
+                        <input 
+                            v-if="productoEditandoIndex === index"
+                            v-model.number="productoData.valorUnitario"
+                            type="number"
+                            class="form-control form-control-sm"
+                        />
+                        <span v-else>{{ producto.valorUnitario }}</span>
+                        </td>
+                        <td>{{ producto.tipoImpuesto === 'exenta' ? producto.totalProducto : '' }}</td>
+                        <td>{{ producto.tipoImpuesto === 'iva5' ? producto.totalProducto : '' }}</td>
+                        <td>{{ producto.tipoImpuesto === 'iva10' ? producto.totalProducto : '' }}</td>
+                        <td>
+                        <button
+                            v-if="productoEditandoIndex === index"
+                            class="btn btn-success btn-sm me-1"
+                            @click="guardarEdicionProducto"
+                        >
+                            Guardar
+                        </button>
+                        <button
+                            v-else
+                            class="btn btn-primary btn-sm me-1"
+                            @click="editarProducto(index)"
+                        >
+                            Editar
+                        </button>
+                        <button class="btn btn-danger btn-sm" @click="eliminarProducto(index)">Eliminar</button>
+                        </td>
+                    </tr>
+                </tbody>
+
           </table>
           <!-- Totales -->
           <h3>Liquidación del IVA</h3>
@@ -147,7 +191,8 @@ export default {
               valorUnitario: 0,
               tipoImpuesto: 'exenta',
           },
-          facturas: [] // Almacenará las facturas cargadas desde el servicio
+          facturas: [], // Almacenará las facturas cargadas desde el servicio
+          productoEditandoIndex: null // Índice para identificar el producto que se está editando
       };
   },
   methods: {
@@ -185,15 +230,34 @@ export default {
           }
       },
       agregarProducto() {
-          const producto = new Producto(this.productoData); // Crear una instancia de Producto
-          this.factura.agregarProducto(producto); // Agregar producto a la factura
+          const producto = new Producto(this.productoData);
+          if (this.productoEditandoIndex !== null) {
+              // Guardar cambios del producto editado
+              this.factura.productos.splice(this.productoEditandoIndex, 1, producto);
+              this.productoEditandoIndex = null;
+          } else {
+              // Agregar un nuevo producto
+              this.factura.agregarProducto(producto);
+          }
+          this.factura.calcularTotales(); // Actualizar los totales después de agregar o editar
           this.limpiarCamposProducto();
       },
       eliminarProducto(index) {
-          this.factura.eliminarProducto(index); // Eliminar producto de la factura
+        this.factura.eliminarProducto(index); // Eliminar producto de la factura
       },
       limpiarCamposProducto() {
-          this.productoData = { codigo: '', descripcion: '', cantidad: 0, valorUnitario: 0, tipoImpuesto: 'exenta' };
+        this.productoData = { codigo: '', descripcion: '', cantidad: 0, valorUnitario: 0, tipoImpuesto: 'exenta' };
+        this.productoEditandoIndex = null; // Limpiar el modo edición
+      },
+      editarProducto(index) {
+          // Cargar el producto en el formulario para editar
+          const producto = this.factura.productos[index];
+          this.productoData = { ...producto };
+          this.productoEditandoIndex = index; // Indicar que estamos en modo edición
+      },
+      guardarEdicionProducto() {
+          // Llama a agregarProducto para guardar los cambios
+          this.agregarProducto();
       },
       async guardarFactura() {
         try {
@@ -251,4 +315,12 @@ export default {
       background-color: #eaffea;
       border: 1px solid #5cb85c;
   }
+
+    .btn-accion {
+        width: 80px; /* Ajusta el ancho deseado */
+        height: 40px; /* Ajusta el alto deseado */
+        padding: 0; /* Ajusta el relleno si es necesario */
+        font-size: 14px; /* Ajusta el tamaño de fuente */
+    }
+
 </style>
