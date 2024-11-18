@@ -33,7 +33,7 @@
       <div class="row g-3 mb-3">
         <div class="col-md-2">
           <label class="form-label">Código de Barra</label>
-          <input type="text" v-model="productoData.codigo" class="form-control" placeholder="Código de Barra">
+          <input type="text" v-model="productoData.codigo" class="form-control" placeholder="Código de Barra" @blur="autocompletarProducto">
         </div>
         <div class="col-md-2">
           <label class="form-label">Cantidad</label>
@@ -54,6 +54,47 @@
       </div>
       <div class="d-grid gap-2 mb-3">
         <button type="button" class="btn btn-secondary" @click="agregarProducto">Agregar Producto</button>
+      </div>
+
+        <!-- Fondo Oscurecido -->
+      <div v-if="showRegisterModal" class="modal-backdrop"></div>
+
+      <!-- Modal de Registro de Producto -->
+      <div v-if="showRegisterModal" class="modal d-block" tabindex="-1">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title">Registrar Nuevo Producto</h5>
+              <button type="button" class="btn-close" @click="closeRegisterModal"></button>
+            </div>
+            <div class="modal-body">
+              <div class="mb-3">
+                <label class="form-label">Código</label>
+                <input type="text" v-model="nuevoProducto.codigo" class="form-control" placeholder="Código" />
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Descripción</label>
+                <input type="text" v-model="nuevoProducto.descripcion" class="form-control" placeholder="Descripción" />
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Cantidad</label>
+                <input type="number" v-model="nuevoProducto.cantidad" class="form-control" placeholder="Cantidad" />
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Unidad de Medida</label>
+                <input type="text" v-model="nuevoProducto.unidadMedida" class="form-control" placeholder="Unidad de Medida" />
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Fecha de Vencimiento</label>
+                <input type="date" v-model="nuevoProducto.fechaVencimiento" class="form-control" />
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-primary" @click="registrarProducto">Registrar</button>
+              <button type="button" class="btn btn-secondary" @click="closeRegisterModal">Cancelar</button>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- Tabla de productos agregados -->
@@ -153,11 +194,47 @@ export default {
         unidadMedida: '',
         fechaVencimiento: ''
       },
+      showRegisterModal: false,
+      nuevoProducto: {
+        codigo: '',
+        descripcion: '',
+        cantidad: 0,
+        unidadMedida: '',
+        fechaVencimiento: '',
+      },
       productos: [],
       notasDeRemision: [] // Lista de notas cargadas si es necesario
     };
   },
   methods: {
+    async autocompletarProducto() {
+      if (!this.productoData.codigo) return;
+      const producto = await NotaDeRemisionService.obtenerProductoPorCodigo(this.productoData.codigo);
+      if (producto) {
+        this.productoData.descripcion = producto.descripcion;
+        this.productoData.cantidad = producto.cantidad;
+        this.productoData.unidadMedida = producto.unidadMedida;
+        this.productoData.fechaVencimiento = producto.fechaVencimiento;
+      } else {
+        this.nuevoProducto.codigo = this.productoData.codigo; // Autocompletar el código en el modal
+        this.showRegisterModal = true; // Mostrar modal si no se encuentra el producto
+      }
+    },
+    closeRegisterModal() {
+      this.showRegisterModal = false;
+      this.nuevoProducto = {
+        codigo: '',
+        descripcion: '',
+        cantidad: 0,
+        unidadMedida: '',
+        fechaVencimiento: '',
+      };
+    },
+    registrarProducto() {
+      NotaDeRemisionService.guardarProducto(this.nuevoProducto); // Implementa esta función en el servicio mock
+      this.productoData = { ...this.nuevoProducto }; // Copiar datos del nuevo producto al formulario principal
+      this.closeRegisterModal(); // Cerrar el modal
+    },
     async cargarNotaDeRemision(id) {
       try {
         const nota = await NotaDeRemisionService.obtenerNotaPorId(id);
@@ -268,5 +345,15 @@ export default {
     border-radius: 5px;
     border: 1px solid #ced4da;
   }
+  .modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5); /* Fondo semitransparente */
+  z-index: 1040;
+}
+
 </style>
   

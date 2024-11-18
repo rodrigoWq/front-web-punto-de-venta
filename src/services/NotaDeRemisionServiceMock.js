@@ -49,7 +49,25 @@ class NotaDeRemisionServiceMock {
       resolve([...this.notasDeRemision]);
     });
   }
+
+  async obtenerProductoPorCodigo(codigo) {
+    return new Promise((resolve) => {
+      const productosSimulados = [
+        { codigo: 'PR001', descripcion: 'Producto X', cantidad: 0, unidadMedida: 'kg', fechaVencimiento: '2025-05-10' },
+        { codigo: 'PR002', descripcion: 'Producto Y', cantidad: 0, unidadMedida: 'kg', fechaVencimiento: '2025-06-15' },
+      ];
+      const productoEncontrado = productosSimulados.find((producto) => producto.codigo === codigo);
+      setTimeout(() => resolve(productoEncontrado || null), 300);
+    });
+  }
+  
+  guardarProducto(producto) {
+    console.log('Producto registrado:', producto);
+  }
+  
 }
+
+
 
 export default new NotaDeRemisionServiceMock();
 

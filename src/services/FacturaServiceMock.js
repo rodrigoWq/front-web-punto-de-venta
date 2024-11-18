@@ -44,6 +44,19 @@ class FacturaServiceMock {
     });
   }
   
+  async obtenerProductoPorCodigo(codigo) {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        const productosSimulados = [
+          { codigo: 'P001', descripcion: 'Producto A', cantidad: 1, valorUnitario: 50000, tipoImpuesto: 'iva10' },
+          { codigo: 'P003', descripcion: 'Producto C', cantidad: 1, valorUnitario: 15000, tipoImpuesto: 'exenta' },
+        ];
+        const productoEncontrado = productosSimulados.find((producto) => producto.codigo === codigo);
+        resolve(productoEncontrado || null);
+      }, 300);
+    });
+  }
+  
   
 
   async eliminarFactura(facturaId) {

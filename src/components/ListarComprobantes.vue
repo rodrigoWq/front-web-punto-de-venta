@@ -114,6 +114,17 @@ export default {
         console.error('Error al cargar comprobantes:', error);
       }
     },
+    generarFacturaDesdeNotaRemision(comprobante) {
+      const datosParaFactura = {
+        productos: comprobante.productos, // Productos de la nota de remisión
+        ruc: comprobante.ruc,            // RUC asociado
+        razonSocial: comprobante.razonSocial, // Razón social asociada
+      };
+      this.$router.push({
+        name: 'RegistrarFactura',
+        query: { datosParaFactura: encodeURIComponent(JSON.stringify(datosParaFactura)) },
+      });
+    },
     setFiltroTipo(tipo) {
       this.filtroTipo = tipo;
       this.paginaActual = 1;
@@ -148,21 +159,6 @@ export default {
         this.$router.push({ name: 'Factura', params: { id: comprobante.id } });
       }
     },
-    generarFacturaDesdeNotaRemision(notaRemision) {
-      if (confirm('¿Desea generar una factura a partir de esta nota de remisión?')) {
-        const facturaData = {
-          ruc: notaRemision.rucCliente,
-          razonSocial: notaRemision.razonSocial || 'Nombre desconocido',
-          fechaEmision: new Date().toISOString().split('T')[0],
-          productos: notaRemision.productos || [],
-          totalFactura: notaRemision.montoTotal,
-          condicionVenta: 'contado',
-          direccion: notaRemision.direccion || 'Sin dirección',
-          tipoOriginal: 'nota_remision'
-        };
-        this.$router.push({ name: 'factura', params: { facturaData } });
-      }
-    }
   },
   async mounted() {
     await this.cargarComprobantes();

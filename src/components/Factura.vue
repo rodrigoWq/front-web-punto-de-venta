@@ -37,37 +37,85 @@
                   </select>
               </div>
           </div>
-          <!-- Detalles de Productos -->
-          <h3>Detalles de Productos</h3>
-          <div class="row g-3 mb-3">
-              <div class="col-md-2">
-                  <label class="form-label">Código</label>
-                  <input type="text" v-model="productoData.codigo" class="form-control" placeholder="Código">
-              </div>
-              <div class="col-md-3">
-                  <label class="form-label">Descripción</label>
-                  <input type="text" v-model="productoData.descripcion" class="form-control" placeholder="Descripción">
-              </div>
-              <div class="col-md-2">
-                  <label class="form-label">Cantidad</label>
-                  <input type="number" v-model="productoData.cantidad" class="form-control" placeholder="Cantidad">
-              </div>
-              <div class="col-md-2">
-                  <label class="form-label">Valor Unitario</label>
-                  <input type="number" v-model="productoData.valorUnitario" class="form-control" placeholder="Valor Unitario">
-              </div>
-              <div class="col-md-3">
-                  <label class="form-label">Tipo de Impuesto</label>
-                  <select v-model="productoData.tipoImpuesto" class="form-control">
-                      <option value="exenta">Exenta</option>
-                      <option value="iva5">IVA 5%</option>
-                      <option value="iva10">IVA 10%</option>
-                  </select>
-              </div>
-          </div>
-          <div class="d-grid gap-2 mb-3">
+
+        <!-- Detalles de Productos -->
+        <h3>Detalles de Productos</h3>
+        <div class="row g-3 mb-3">
+            <div class="col-md-2">
+            <label class="form-label">Código</label>
+            <input
+                type="text"
+                v-model="productoData.codigo"
+                class="form-control"
+                placeholder="Código"
+                @blur="autocompletarProducto"
+            />
+            </div>
+            <div class="col-md-3">
+            <label class="form-label">Descripción</label>
+            <input type="text" v-model="productoData.descripcion" class="form-control" placeholder="Descripción" />
+            </div>
+            <div class="col-md-2">
+            <label class="form-label">Cantidad</label>
+            <input type="number" v-model="productoData.cantidad" class="form-control" placeholder="Cantidad" />
+            </div>
+            <div class="col-md-2">
+            <label class="form-label">Valor Unitario</label>
+            <input type="number" v-model="productoData.valorUnitario" class="form-control" placeholder="Valor Unitario" />
+            </div>
+            <div class="col-md-3">
+            <label class="form-label">Tipo de Impuesto</label>
+            <select v-model="productoData.tipoImpuesto" class="form-control">
+                <option value="exenta">Exenta</option>
+                <option value="iva5">IVA 5%</option>
+                <option value="iva10">IVA 10%</option>
+            </select>
+            </div>
+        </div>
+        <div class="d-grid gap-2 mb-3">
             <button type="button" class="btn btn-secondary" @click="agregarProducto">Agregar Producto</button>
-          </div>
+        </div>
+
+         <!-- Fondo Oscurecido -->
+        <div v-if="showRegisterModal" class="modal-backdrop"></div>
+
+        <!-- Modal de Registro de Producto -->
+        <div v-if="showRegisterModal" class="modal d-block" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                    <h5 class="modal-title">Registrar Nuevo Producto</h5>
+                    <button type="button" class="btn-close" @click="closeRegisterModal"></button>
+                    </div>
+                    <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Código</label>
+                        <input type="text" v-model="nuevoProducto.codigo" class="form-control" placeholder="Código" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Descripción</label>
+                        <input type="text" v-model="nuevoProducto.descripcion" class="form-control" placeholder="Descripción" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Valor Unitario</label>
+                        <input type="number" v-model="nuevoProducto.valorUnitario" class="form-control" placeholder="Valor Unitario" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Tipo de Impuesto</label>
+                        <select v-model="nuevoProducto.tipoImpuesto" class="form-control">
+                        <option value="exenta">Exenta</option>
+                        <option value="iva5">IVA 5%</option>
+                        <option value="iva10">IVA 10%</option>
+                        </select>
+                    </div>
+                    </div>
+                    <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" @click="registrarProducto">Registrar</button>
+                    <button type="button" class="btn btn-secondary" @click="closeRegisterModal">Cancelar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
 
           <!-- Productos Agregados -->
           <h3>Productos Agregados</h3>
@@ -191,11 +239,36 @@ export default {
               valorUnitario: 0,
               tipoImpuesto: 'exenta',
           },
+        showRegisterModal: false,
+        nuevoProducto: {
+            codigo: '',
+            descripcion: '',
+            valorUnitario: 0,
+            tipoImpuesto: 'exenta',
+        },
+        facturaData: {
+            ruc: '',
+            razonSocial: '',
+            productos: [],
+        },
           facturas: [], // Almacenará las facturas cargadas desde el servicio
           productoEditandoIndex: null // Índice para identificar el producto que se está editando
       };
   },
   methods: {
+      async autocompletarProducto() {
+            if (!this.productoData.codigo) return;
+            const producto = await FacturaService.obtenerProductoPorCodigo(this.productoData.codigo);
+            if (producto) {
+                this.productoData.descripcion = producto.descripcion;
+                this.productoData.valorUnitario = producto.valorUnitario;
+                this.productoData.tipoImpuesto = producto.tipoImpuesto;
+            } else {
+                this.nuevoProducto.codigo = this.productoData.codigo; // Autocompletar el código en el modal
+                this.showRegisterModal = true; // Mostrar modal si no se encuentra el producto
+
+            }
+       },
       async cargarFacturas() {
           try {
               this.facturas = await FacturaService.obtenerFacturas(); // Carga las facturas iniciales
@@ -229,7 +302,39 @@ export default {
               console.error('Error al cargar la factura desde parámetros:', error);
           }
       },
-      agregarProducto() {
+      closeRegisterModal() {
+        this.showRegisterModal = false;
+        this.nuevoProducto = { codigo: '', descripcion: '', valorUnitario: 0, tipoImpuesto: 'exenta' };
+      },
+      registrarProducto() {
+        // Guardar el nuevo producto en el array de productos simulados
+        FacturaService.guardarProducto(this.nuevoProducto); // Implementa esta función en el servicio mock
+        this.productoData = { ...this.nuevoProducto, cantidad: 1 }; // Copiar datos del nuevo producto al formulario principal
+        this.closeRegisterModal(); // Cerrar el modal
+       },
+       created() {
+        try {
+            const queryData = this.$route.query.datosParaFactura
+            ? JSON.parse(decodeURIComponent(this.$route.query.datosParaFactura))
+            : null;
+
+            if (queryData) {
+            this.factura.ruc = queryData.ruc;
+            this.factura.razonSocial = queryData.razonSocial;
+
+            this.factura.productos = queryData.productos.map(producto => ({
+                ...producto,
+                valorUnitario: producto.valorUnitario || 0,
+                tipoImpuesto: producto.tipoImpuesto || 'exenta',
+            }));
+
+            this.factura.calcularTotales();
+            }
+        } catch (error) {
+            console.error('Error al deserializar los datos de la factura:', error);
+        }
+        },
+        agregarProducto() {
           const producto = new Producto(this.productoData);
           if (this.productoEditandoIndex !== null) {
               // Guardar cambios del producto editado
@@ -300,6 +405,17 @@ export default {
       margin-bottom: 30px;
   }
   
+  .modal-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5); /* Fondo semitransparente */
+    z-index: 1040;
+}
+
+
   .container {
       background-color: #fff;
       padding: 20px;
