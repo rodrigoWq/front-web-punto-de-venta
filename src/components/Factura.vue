@@ -1,6 +1,9 @@
 <template>
   <div class="container mt-5">
       <h1 class="text-center">Formulario de Carga de Factura</h1>
+
+       <!-- Inspección de Datos -->
+      <pre>{{ factura }}</pre> <!-- Aquí puedes inspeccionar los datos -->
       <form @submit.prevent="guardarFactura">
           <!-- Información de factura -->
           <div class="row g-3 mb-3">
@@ -229,6 +232,12 @@ import FacturaService from '@/services/FacturaServiceMock';
 
 export default {
   name: 'FacturaView',
+  props: {
+    datosParaFactura: {
+      type: Object,
+      default: () => null,
+    },
+  },
   data() {
       return {
           factura: new Factura(), // Instancia de Factura
@@ -312,28 +321,6 @@ export default {
         this.productoData = { ...this.nuevoProducto, cantidad: 1 }; // Copiar datos del nuevo producto al formulario principal
         this.closeRegisterModal(); // Cerrar el modal
        },
-       created() {
-        try {
-            const queryData = this.$route.query.datosParaFactura
-            ? JSON.parse(decodeURIComponent(this.$route.query.datosParaFactura))
-            : null;
-
-            if (queryData) {
-            this.factura.ruc = queryData.ruc;
-            this.factura.razonSocial = queryData.razonSocial;
-
-            this.factura.productos = queryData.productos.map(producto => ({
-                ...producto,
-                valorUnitario: producto.valorUnitario || 0,
-                tipoImpuesto: producto.tipoImpuesto || 'exenta',
-            }));
-
-            this.factura.calcularTotales();
-            }
-        } catch (error) {
-            console.error('Error al deserializar los datos de la factura:', error);
-        }
-        },
         agregarProducto() {
           const producto = new Producto(this.productoData);
           if (this.productoEditandoIndex !== null) {
@@ -379,19 +366,43 @@ export default {
     if (this.$route.params.id) {
       // Cargar la factura existente si hay un id
       await this.cargarFacturaDesdeParams();
-    } else {
-      // Nueva factura, inicializar `factura` con valores por defecto
-      this.factura = new Factura();
-    }
+    } 
   },
   watch: {
-      '$route.params.id': {
-          handler() {
-              this.cargarFacturaDesdeParams();
-          },
-          immediate: true
+  '$route.query.datosParaFactura': {
+    handler(newQuery) {
+      try {
+        const queryData = newQuery
+          ? JSON.parse(decodeURIComponent(newQuery))
+          : null;
+
+        console.log('Datos recibidos en FacturaView desde ListarComprobantes.vue:', queryData);
+
+        if (queryData) {
+          this.factura.ruc = queryData.ruc || this.factura.ruc;
+          this.factura.razonSocial = queryData.razonSocial || this.factura.razonSocial;
+
+          console.log('Factura después de asignar RUC y Razón Social:', this.factura);
+
+          // Limpia productos existentes y carga los nuevos
+          this.factura.productos = [];
+          queryData.productos.forEach(producto => {
+            this.factura.agregarProducto({
+              ...producto,
+              valorUnitario: producto.valorUnitario || 0,
+              tipoImpuesto: producto.tipoImpuesto || 'exenta',
+            });
+          });
+
+          this.factura.calcularTotales();
+        }
+      } catch (error) {
+        console.error('Error al procesar los datos de la factura:', error);
       }
-  }
+    },
+    immediate: true,
+  },
+},
 };
 </script>
 

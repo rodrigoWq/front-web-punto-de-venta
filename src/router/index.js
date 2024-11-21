@@ -31,8 +31,10 @@ const routes = [
   {
     path: '/factura', // Ruta para registrar una nueva factura
     name: 'RegistrarFactura',
-    component: FacturaView,
-    props: route => ({ datosParaFactura: route.params.datosParaFactura }),
+    component: () => import('@/components/Factura.vue'), // Ruta al componente Factura
+    props: route => ({
+      datosParaFactura: route.query.datosParaFactura ? JSON.parse(decodeURIComponent(route.query.datosParaFactura)) : null,
+    }),
   },
   {
     path: '/nota-de-remision/:id',

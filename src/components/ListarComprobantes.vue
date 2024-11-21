@@ -106,7 +106,12 @@ export default {
         
         // Añadir tipo a cada comprobante para distinguirlos
         facturas.forEach(factura => factura.tipo = 'factura');
-        notas.forEach(nota => nota.tipo = 'nota_remision');
+        notas.forEach(nota => {
+          nota.tipo = 'nota_remision';
+          nota.productos = nota.productos || []; // Asegúrate de que tiene productos
+          nota.ruc = nota.ruc || 'N/A'; // Valor por defecto si no tiene RUC
+          nota.razonSocial = nota.razonSocial || 'N/A'; // Valor por defecto si no tiene razón social
+        });
         
         // Combinar facturas y notas de remisión
         this.comprobantes = [...facturas, ...notas];
@@ -115,6 +120,12 @@ export default {
       }
     },
     generarFacturaDesdeNotaRemision(comprobante) {
+      if (!comprobante || !comprobante.productos || !comprobante.ruc || !comprobante.razonSocial) {
+        console.error('Faltan datos en el comprobante:', comprobante);
+        alert('Este comprobante no tiene todos los datos necesarios para generar una factura.');
+        return;
+      }
+
       const datosParaFactura = {
         productos: comprobante.productos, // Productos de la nota de remisión
         ruc: comprobante.ruc,            // RUC asociado
