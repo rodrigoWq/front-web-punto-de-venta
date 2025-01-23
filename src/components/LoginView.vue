@@ -80,6 +80,7 @@
   
         if (!hasError) {
           // Datos para la solicitud al backend
+          /*
           const loginData = {
             nombre_usuario: this.username,
             password: this.password
@@ -116,6 +117,27 @@
               console.error("Error:", error);
               this.passwordError = "Ocurrió un error al intentar iniciar sesión.";
             });
+            */
+        }
+        // Simulación de respuesta de la API para seguir con el flujo
+        const simulatedResponse = {
+          token: "simulated-token-12345",
+          rol_id: 1 // Cambia según el rol que necesites simular
+        };
+
+        if (simulatedResponse.token) {
+          // Guardar token y rol en localStorage
+          localStorage.setItem("token", simulatedResponse.token);
+          localStorage.setItem("rol_id", simulatedResponse.rol_id);
+
+          // Redirigir según el rol_id
+          if (simulatedResponse.rol_id === 1) {
+            this.$router.push("/pantalla-inicio");
+          } else {
+            this.$router.push("/pantalla-inicio");
+          }
+        } else {
+          this.passwordError = "Usuario o contraseña incorrectos.";
         }
       }
     },
