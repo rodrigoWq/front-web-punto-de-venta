@@ -9,17 +9,12 @@
     </AppHeader>
 
 
-    <!-- Barra de Filtros -->
-    <div class="filter-section mt-4 mb-4">
-      <div class="d-flex justify-content-start mb-3">
-        <input type="text" v-model="searchInput" @input="actualizarListaComprobantes" class="form-control w-25" placeholder="Buscar por número de comprobante o RUC...">
-      </div>
-      <div class="filters d-flex justify-content-end">
-        <button class="btn btn-outline-secondary me-2" :class="{ active: filtroTipo === 'all' }" @click="setFiltroTipo('all')">Todos los Tipos</button>
-        <button class="btn btn-outline-secondary me-2" :class="{ active: filtroTipo === 'factura' }" @click="setFiltroTipo('factura')">Factura</button>
-        <button class="btn btn-outline-secondary" :class="{ active: filtroTipo === 'nota_remision' }" @click="setFiltroTipo('nota_remision')">Nota de Remisión</button>
-      </div>
-    </div>
+    <AppFilter v-model="searchInput" placeholder="Buscar por número de comprobante o RUC..." customClasses="mt-4 mb-4">
+      <AppButton variant="outline-secondary" customClass="me-2" :class="{ active: filtroTipo === 'all' }" @click="setFiltroTipo('all')">Todos los Tipos</AppButton>
+      <AppButton variant="outline-secondary" customClass="me-2" :class="{ active: filtroTipo === 'factura' }" @click="setFiltroTipo('factura')">Factura</AppButton>
+      <AppButton variant="outline-secondary" :class="{ active: filtroTipo === 'nota_remision' }" @click="setFiltroTipo('nota_remision')">Nota de Remisión</AppButton>
+    </AppFilter>
+
 
     <!-- Tabla de Comprobantes -->
     <h2>Lista de Comprobantes</h2>
@@ -67,12 +62,16 @@ import FacturaService from '@/services/FacturaServiceMock';
 import NotaDeRemisionService from '@/services/NotaDeRemisionServiceMock';
 import AppNavbar from './common/AppNavbar.vue';
 import AppHeader from './common/AppHeader.vue';
+import AppFilter from './common/AppFilter.vue';
+import AppButton from './common/AppButton.vue';
 
 export default {
   name: 'ListarComprobantes',
   components: {
     AppNavbar,
-    AppHeader
+    AppHeader,
+    AppFilter,  
+    AppButton 
   },
   data() {
     return {

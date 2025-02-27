@@ -9,43 +9,32 @@
       </AppHeader>
 
   
-      <!-- Sección de Filtros -->
-      <div class="filter-section">
-        <input type="text" v-model="filtroNombre" placeholder="Search by name..." />
-        <div class="filters">
-          <button @click="filtrarRol('all')">All Roles</button>
-          <button @click="filtrarRol('Admin')">Admin</button>
-          <button @click="filtrarRol('Manager')">Manager</button>
-          <button @click="filtrarRol('User')">User</button>
-          <button @click="filtrarEstado('active')">Active</button>
-          <button @click="filtrarEstado('inactive')">Inactive</button>
-        </div>
-      </div>
+      <AppFilter v-model="filtroNombre" placeholder="Search by name..." customClasses="filter-section">
+        <AppButton variant="outline-secondary" customClass="me-2" @click="filtrarRol('all')">All Roles</AppButton>
+        <AppButton variant="outline-secondary" customClass="me-2" @click="filtrarRol('Admin')">Admin</AppButton>
+        <AppButton variant="outline-secondary" customClass="me-2" @click="filtrarRol('Manager')">Manager</AppButton>
+        <AppButton variant="outline-secondary" customClass="me-2" @click="filtrarRol('User')">User</AppButton>
+        <AppButton variant="outline-secondary" customClass="me-2" @click="filtrarEstado('active')">Active</AppButton>
+        <AppButton variant="outline-secondary" @click="filtrarEstado('inactive')">Inactive</AppButton>
+      </AppFilter>
+
   
       <!-- Tabla de Usuarios -->
-      <table>
-        <thead>
-          <tr>
-            <th>Name</th>
-            <th>Teléfono</th>
-            <th>Role</th>
-            <th>Status</th>
-            <th class="admin-only">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="usuario in usuariosFiltrados" :key="usuario.id">
-            <td>{{ usuario.nombre }}</td>
-            <td>{{ usuario.telefono }}</td>
-            <td>{{ usuario.rol }}</td>
-            <td><span :class="['status', usuario.status]">{{ usuario.status }}</span></td>
-            <td>
-              <button class="edit-btn admin-only" @click="abrirModalEditarUsuario(usuario)">✏️</button>
-              <button class="delete-btn admin-only" @click="eliminarUsuario(usuario.id)">🗑️</button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+      <AppTable :headers="['Name', 'Teléfono', 'Role', 'Status', 'Actions']">
+        <tr v-for="usuario in usuariosFiltrados" :key="usuario.id">
+          <td>{{ usuario.nombre }}</td>
+          <td>{{ usuario.telefono }}</td>
+          <td>{{ usuario.rol }}</td>
+          <td>
+            <span :class="['status', usuario.status]">{{ usuario.status }}</span>
+          </td>
+          <td>
+            <AppButton variant="primary" customClass="admin-only" @click="abrirModalEditarUsuario(usuario)">✏️</AppButton>
+            <AppButton variant="danger" customClass="admin-only" @click="eliminarUsuario(usuario.id)">🗑️</AppButton>
+          </td>
+        </tr>
+      </AppTable>
+
   
       <!-- Modal Crear Usuario -->
       <div v-if="mostrarModalCrear" class="modal">
@@ -90,12 +79,18 @@
 <script>
   import AppNavbar from './common/AppNavbar.vue';
   import AppHeader from './common/AppHeader.vue';
+  import AppFilter from './common/AppFilter.vue';
+  import AppTable from './common/AppTable.vue';
+  import AppButton from './common/AppButton.vue';
 
   export default {
     name: 'UserManagement',
     components: {
     AppNavbar,
     AppHeader,
+    AppFilter,
+    AppTable,
+    AppButton
     },
     data() {
       return {

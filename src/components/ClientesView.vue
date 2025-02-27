@@ -10,16 +10,12 @@
 
   
       <!-- Barra de Filtros -->
-      <div class="filter-section mt-4 mb-4">
-        <div class="d-flex justify-content-start mb-3">
-          <input type="text" v-model="searchInput" class="form-control w-25" placeholder="Buscar por nombre..." @input="aplicarFiltros" />
-        </div>
-        <div class="filters d-flex justify-content-end">
-          <button class="btn btn-outline-secondary me-2" :class="{ active: filtroTipo === 'all' }" @click="setFiltro('all')">Todos los Tipos</button>
-          <button class="btn btn-outline-secondary me-2" :class="{ active: filtroTipo === 'normal' }" @click="setFiltro('normal')">Normal</button>
-          <button class="btn btn-outline-secondary me-2" :class="{ active: filtroTipo === 'credito' }" @click="setFiltro('credito')">Crédito</button>
-        </div>
-      </div>
+      <AppFilter v-model="searchInput" placeholder="Buscar por nombre..." customClasses="mt-4 mb-4">
+        <AppButton variant="outline-secondary" customClass="me-2" :class="{ active: filtroTipo === 'all' }" @click="setFiltro('all')">Todos los Tipos</AppButton>
+        <AppButton variant="outline-secondary" customClass="me-2" :class="{ active: filtroTipo === 'normal' }" @click="setFiltro('normal')">Normal</AppButton>
+        <AppButton variant="outline-secondary" customClass="me-2" :class="{ active: filtroTipo === 'credito' }" @click="setFiltro('credito')">Crédito</AppButton>
+      </AppFilter>
+
   
       <!-- Tabla de Clientes -->
       <h2>Lista de Clientes</h2>
@@ -104,13 +100,16 @@ import ClienteService from '@/services/ClienteServiceMock'; // Importa el servic
 import AppNavbar from './common/AppNavbar.vue';
 import AppHeader from './common/AppHeader.vue';
 import AppTable from './common/AppTable.vue';
-
+import AppFilter from './common/AppFilter.vue';
+import AppButton from './common/AppButton.vue';
 export default {
   name: 'ClientesView',
   components: {
     AppNavbar,
     AppHeader,
-    AppTable
+    AppTable,
+    AppFilter,
+    AppButton
   },
   data() {
     return {
