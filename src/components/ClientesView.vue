@@ -1,12 +1,13 @@
 /* eslint-disable no-undef */
 <template>
+    <AppNavbar />
     <div class="container mt-5">
-      <header class="d-flex justify-content-between align-items-center">
-        <h1>Gestión de Clientes</h1>
-        <div class="header-buttons">
+      <AppHeader title="Gestión de Clientes">
+        <template #buttons>
           <button class="btn btn-success" @click="abrirModal">Registrar Cliente</button>
-        </div>
-      </header>
+        </template>
+      </AppHeader>
+
   
       <!-- Barra de Filtros -->
       <div class="filter-section mt-4 mb-4">
@@ -22,34 +23,21 @@
   
       <!-- Tabla de Clientes -->
       <h2>Lista de Clientes</h2>
-      <table class="table table-striped">
-        <thead>
-          <tr>
-            <th>Nombre y Apellido</th>
-            <th>RUC / CI</th>
-            <th>Teléfono</th>
-            <th>Tipo</th>
-            <th>Saldo</th>
-            <th>Acciones</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="cliente in clientesFiltrados" :key="cliente.id">
-            <td>{{ cliente.nombre }}</td>
-            <td>{{ cliente.ruc }}</td>
-            <td>{{ cliente.telefono }}</td>
-            <td>{{ cliente.tipo }}</td>
-            <td>{{ cliente.tipo === 'credito' ? cliente.saldo : '-' }}</td>
-           <td>
+      <AppTable :headers="['Nombre y Apellido', 'RUC / CI', 'Teléfono', 'Tipo', 'Saldo', 'Acciones']">
+        <tr v-for="cliente in clientesFiltrados" :key="cliente.id">
+          <td>{{ cliente.nombre }}</td>
+          <td>{{ cliente.ruc }}</td>
+          <td>{{ cliente.telefono }}</td>
+          <td>{{ cliente.tipo }}</td>
+          <td>{{ cliente.tipo === 'credito' ? cliente.saldo : '-' }}</td>
+          <td>
             <button class="btn btn-primary btn-sm" @click="editarCliente(cliente)">✏️</button>
             <button class="btn btn-danger btn-sm" @click="eliminarCliente(cliente.id)">🗑️</button>
             <button v-if="cliente.tipo === 'credito'" class="btn btn-warning btn-sm" @click="abrirModalCredito(cliente)">Línea de Crédito</button>
           </td>
+        </tr>
+      </AppTable>
 
-          </tr>
-        </tbody>
-      </table>
-  
       <!-- Modal para Registrar / Editar Cliente -->
       <div class="modal fade" id="clienteModal" tabindex="-1">
         <div class="modal-dialog">
@@ -113,9 +101,17 @@
 import { Modal } from 'bootstrap';
 import Cliente from '@/models/Cliente'; // Importa la clase Cliente
 import ClienteService from '@/services/ClienteServiceMock'; // Importa el servicio ClienteService
+import AppNavbar from './common/AppNavbar.vue';
+import AppHeader from './common/AppHeader.vue';
+import AppTable from './common/AppTable.vue';
 
 export default {
   name: 'ClientesView',
+  components: {
+    AppNavbar,
+    AppHeader,
+    AppTable
+  },
   data() {
     return {
       clientes: [], // Lista de clientes

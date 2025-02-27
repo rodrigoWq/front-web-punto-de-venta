@@ -1,12 +1,13 @@
 <template>
+  <AppNavbar />
   <div class="container mt-5">
-    <header class="d-flex justify-content-between align-items-center">
-      <h1>Gestión de Documentos</h1>
-      <div class="header-buttons">
+    <AppHeader title="Gestión de Documentos">
+      <template #buttons>
         <router-link class="btn btn-success me-2" :to="{ name: 'RegistrarFactura' }">Registrar Factura</router-link>
         <router-link class="btn btn-success" :to="{ name: 'RegistrarNotaDeRemision' }">Registrar Nota de Remisión</router-link>
-      </div>
-    </header>
+      </template>
+    </AppHeader>
+
 
     <!-- Barra de Filtros -->
     <div class="filter-section mt-4 mb-4">
@@ -64,9 +65,15 @@
 <script>
 import FacturaService from '@/services/FacturaServiceMock';
 import NotaDeRemisionService from '@/services/NotaDeRemisionServiceMock';
+import AppNavbar from './common/AppNavbar.vue';
+import AppHeader from './common/AppHeader.vue';
 
 export default {
   name: 'ListarComprobantes',
+  components: {
+    AppNavbar,
+    AppHeader
+  },
   data() {
     return {
       comprobantes: [],

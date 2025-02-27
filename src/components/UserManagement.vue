@@ -1,12 +1,13 @@
 <template>
+    <AppNavbar />
     <div class="container">
-      <header>
-        <h1>User Management</h1>
-        <div class="header-buttons">
+      <AppHeader title="User Management">
+        <template #buttons>
           <button class="admin-only create-user-btn" @click="abrirModalCrearUsuario">Create User</button>
           <button id="goToInicio" @click="volverAPantallaInicio">Volver a Pantalla Inicio</button>
-        </div>
-      </header>
+        </template>
+      </AppHeader>
+
   
       <!-- Sección de Filtros -->
       <div class="filter-section">
@@ -87,8 +88,15 @@
 </template>
   
 <script>
+  import AppNavbar from './common/AppNavbar.vue';
+  import AppHeader from './common/AppHeader.vue';
+
   export default {
     name: 'UserManagement',
+    components: {
+    AppNavbar,
+    AppHeader,
+    },
     data() {
       return {
         filtroNombre: '',
