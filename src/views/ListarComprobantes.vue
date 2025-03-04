@@ -60,10 +60,10 @@
 <script>
 import FacturaService from '@/services/FacturaServiceMock';
 import NotaDeRemisionService from '@/services/NotaDeRemisionServiceMock';
-import AppNavbar from './common/AppNavbar.vue';
-import AppHeader from './common/AppHeader.vue';
-import AppFilter from './common/AppFilter.vue';
-import AppButton from './common/AppButton.vue';
+import AppNavbar from '../components/AppNavbar.vue';
+import AppHeader from '../components/AppHeader.vue';
+import AppFilter from '../components/AppFilter.vue';
+import AppButton from '../components/AppButton.vue';
 
 export default {
   name: 'ListarComprobantes',

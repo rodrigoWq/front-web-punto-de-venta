@@ -56,9 +56,9 @@
 </template>
 
 <script>
-import AppButton from './common/AppButton.vue';
-import AppTable from './common/AppTable.vue';
-import AppNavbar from './common/AppNavbar.vue';
+import AppButton from '../components/AppButton.vue';
+import AppTable from '../components/AppTable.vue';
+import AppNavbar from '../components/AppNavbar.vue';
 
 export default {
   name: "PantallaInicio",

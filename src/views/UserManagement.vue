@@ -77,11 +77,11 @@
 </template>
   
 <script>
-  import AppNavbar from './common/AppNavbar.vue';
-  import AppHeader from './common/AppHeader.vue';
-  import AppFilter from './common/AppFilter.vue';
-  import AppTable from './common/AppTable.vue';
-  import AppButton from './common/AppButton.vue';
+  import AppNavbar from '../components/AppNavbar.vue';
+  import AppHeader from '../components/AppHeader.vue';
+  import AppFilter from '../components/AppFilter.vue';
+  import AppTable from '../components/AppTable.vue';
+  import AppButton from '../components/AppButton.vue';
 
   export default {
     name: 'UserManagement',

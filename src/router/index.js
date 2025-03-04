@@ -1,11 +1,11 @@
 import { createRouter, createWebHistory } from 'vue-router';
-import ClientesView from '../components/ClientesView.vue';
-import PantallaInicio from '../components/PantallaInicio.vue'; 
-import LoginView from '../components/LoginView.vue';
-import FacturaView from '../components/Factura.vue'; // Importa la pantalla de Factura
-import NotaDeRemision from '../components/NotaDeRemision.vue'; // Importa la pantalla de NotaDeRemision
-import ListarComprobantes from '../components/ListarComprobantes.vue'; // Importa la pantalla de ListarComprobantes
-import UserManagement from '../components/UserManagement.vue'; // Importa UserManagement
+import ClientesView from '../views/ClientesView.vue'; // Importa la vista de Clientes
+import PantallaInicio from '../views/PantallaInicio.vue'; 
+import LoginView from '../views/LoginView.vue';
+import FacturaView from '../views/Factura.vue'; // Importa la pantalla de Factura
+import NotaDeRemision from '../views/NotaDeRemision.vue'; // Importa la pantalla de NotaDeRemision
+import ListarComprobantes from '../views/ListarComprobantes.vue'; // Importa la pantalla de ListarComprobantes
+import UserManagement from '../views/UserManagement.vue'; // Importa UserManagement
 
 const routes = [
   {
@@ -31,7 +31,7 @@ const routes = [
   {
     path: '/factura', // Ruta para registrar una nueva factura
     name: 'RegistrarFactura',
-    component: () => import('@/components/Factura.vue'), // Ruta al componente Factura
+    component: () => import('@/views/Factura.vue'), // Ruta al componente Factura
     props: route => ({
       datosParaFactura: route.query.datosParaFactura ? JSON.parse(decodeURIComponent(route.query.datosParaFactura)) : null,
     }),

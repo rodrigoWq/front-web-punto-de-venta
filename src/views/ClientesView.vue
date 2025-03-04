@@ -97,11 +97,11 @@
 import { Modal } from 'bootstrap';
 import Cliente from '@/models/Cliente'; // Importa la clase Cliente
 import ClienteService from '@/services/ClienteServiceMock'; // Importa el servicio ClienteService
-import AppNavbar from './common/AppNavbar.vue';
-import AppHeader from './common/AppHeader.vue';
-import AppTable from './common/AppTable.vue';
-import AppFilter from './common/AppFilter.vue';
-import AppButton from './common/AppButton.vue';
+import AppNavbar from '../components/AppNavbar.vue';
+import AppHeader from '../components/AppHeader.vue';
+import AppTable from '../components/AppTable.vue';
+import AppFilter from '../components/AppFilter.vue';
+import AppButton from '../components//AppButton.vue';
 export default {
   name: 'ClientesView',
   components: {
