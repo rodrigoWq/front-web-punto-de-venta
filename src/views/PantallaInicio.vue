@@ -88,7 +88,7 @@ export default {
         alert("Por favor, ingresa un código de producto");
         return;
       }
-      fetch(`https://apimocha.com/producttest/inventory/product/check/codigo_barras=${this.productCode}`)
+      fetch(`${process.env.VUE_APP_PRODUCT_CHECK_URL_CODE}codigo_barras=${this.productCode}`)
         .then(response => response.json())
         .then(product => {
           if (product) {
@@ -130,7 +130,7 @@ export default {
         fecha_venta: new Date().toISOString().slice(0, 10)
       };
       try {
-        const response = await fetch("https://apimocha.com/example122/sales/pending", {
+        const response = await fetch(`${process.env.VUE_APP_PENDING_SALES_URL}`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(data)

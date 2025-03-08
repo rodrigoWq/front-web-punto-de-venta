@@ -49,11 +49,7 @@
 
 
     <!-- Controles de Paginación -->
-    <div class="d-flex justify-content-center mt-3">
-      <button class="btn btn-secondary me-2" @click="cambiarPagina(paginaActual - 1)" :disabled="paginaActual === 1">Anterior</button>
-      <button v-for="page in totalPaginas" :key="page" class="btn btn-outline-secondary me-2" @click="cambiarPagina(page)" :disabled="page === paginaActual">{{ page }}</button>
-      <button class="btn btn-secondary" @click="cambiarPagina(paginaActual + 1)" :disabled="paginaActual === totalPaginas">Siguiente</button>
-    </div>
+    <AppPagination :currentPage="paginaActual" :totalPages="totalPaginas" @page-changed="cambiarPagina" />
   </div>
 </template>
 
@@ -64,6 +60,7 @@ import AppNavbar from '../components/AppNavbar.vue';
 import AppHeader from '../components/AppHeader.vue';
 import AppFilter from '../components/AppFilter.vue';
 import AppButton from '../components/AppButton.vue';
+import AppPagination from '../components/AppPagination.vue';
 
 export default {
   name: 'ListarComprobantes',
@@ -71,7 +68,8 @@ export default {
     AppNavbar,
     AppHeader,
     AppFilter,  
-    AppButton 
+    AppButton,
+    AppPagination 
   },
   data() {
     return {

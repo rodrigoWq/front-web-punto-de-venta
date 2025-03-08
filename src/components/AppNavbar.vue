@@ -125,9 +125,11 @@ export default {
           this.searchResult = '<div class="alert alert-warning">Por favor, ingresa el código o el nombre del producto.</div>';
           return;
         }
+        console.log( `${process.env.VUE_APP_PRODUCT_CHECK_URL_CODE}${codigo}`)
         const url = codigo
-          ? `https://apimocha.com/producttest/inventory/product/check/${codigo}`
-          : `https://apimocha.com/producttest/inventory/product/check/nombre=${encodeURIComponent(nombre)}`;
+          ? `${process.env.VUE_APP_PRODUCT_CHECK_URL_CODE}${codigo}`
+          : `${process.env.VUE_APP_PRODUCT_CHECK_URL_NAME}nombre=${encodeURIComponent(nombre)}`;
+
         fetch(url)
           .then(response => response.json())
           .then(producto => {
@@ -152,7 +154,7 @@ export default {
       },
       async retomarVenta(ventaId) {
         try {
-          const response = await fetch(`https://apimocha.com/example122/sales/pending/id=${ventaId}`);
+          const response = await fetch(`${process.env.VUE_APP_PENDING_SALES_URL}/id=${ventaId}`);
           const data = await response.json();
           alert("Venta retomada con éxito.");
           // Emit event to parent if needed:
@@ -169,7 +171,7 @@ export default {
       },
       async obtenerVentasEnEspera() {
         try {
-          const response = await fetch("https://apimocha.com/producttest/obtenerLista/pending/id=33");
+          const response = await fetch(`${process.env.VUE_APP_PENDING_SALES_LIST_URL}`);
           const data = await response.json();
           this.ventasEnEspera = data.ventas;
         } catch (error) {

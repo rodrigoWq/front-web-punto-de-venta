@@ -20,7 +20,7 @@
       <!-- Tabla de Clientes -->
       <h2>Lista de Clientes</h2>
       <AppTable :headers="['Nombre y Apellido', 'RUC / CI', 'Teléfono', 'Tipo', 'Saldo', 'Acciones']">
-        <tr v-for="cliente in clientesFiltrados" :key="cliente.id">
+        <tr v-for="cliente in clientesFiltradosPaginados" :key="cliente.id">
           <td>{{ cliente.nombre }}</td>
           <td>{{ cliente.ruc }}</td>
           <td>{{ cliente.telefono }}</td>
@@ -33,6 +33,8 @@
           </td>
         </tr>
       </AppTable>
+      <AppPagination :currentPage="paginaActual" :totalPages="totalPaginas" @page-changed="cambiarPagina" />
+
 
       <!-- Modal para Registrar / Editar Cliente -->
       <div class="modal fade" id="clienteModal" tabindex="-1">
@@ -102,6 +104,7 @@ import AppHeader from '../components/AppHeader.vue';
 import AppTable from '../components/AppTable.vue';
 import AppFilter from '../components/AppFilter.vue';
 import AppButton from '../components//AppButton.vue';
+import AppPagination from '../components/AppPagination.vue';
 export default {
   name: 'ClientesView',
   components: {
@@ -109,7 +112,8 @@ export default {
     AppHeader,
     AppTable,
     AppFilter,
-    AppButton
+    AppButton,
+    AppPagination
   },
   data() {
     return {
@@ -119,6 +123,8 @@ export default {
       modalTitle: 'Registrar Cliente',
       searchInput: '',
       filtroTipo: 'all',
+      paginaActual: 1,
+      itemsPorPagina: 5,
       creditoMonto: null // Monto de línea de crédito
     };  
   },
@@ -131,6 +137,14 @@ export default {
         const tipoCoincide = this.filtroTipo === 'all' || cliente.tipo === this.filtroTipo;
         return tipoCoincide && (nombreCoincide || rucCoincide);
       });
+    },
+    totalPaginas() {
+    return Math.ceil(this.clientesFiltrados.length / this.itemsPorPagina);
+    },
+    clientesFiltradosPaginados() {
+      const start = (this.paginaActual - 1) * this.itemsPorPagina;
+      const end = start + this.itemsPorPagina;
+      return this.clientesFiltrados.slice(start, end);
     }
   },
   methods: {
@@ -146,6 +160,9 @@ export default {
       this.cliente = this.clienteActual ? Object.assign({}, this.clienteActual) : new Cliente('', '', '', 'normal');
       const modalInstance = new Modal(document.getElementById('clienteModal'));
       modalInstance.show();
+    },
+    cambiarPagina(page) {
+      this.paginaActual = page;
     },
     editarCliente(cliente) {
       this.clienteActual = cliente; // Almacena la referencia del cliente actual

@@ -80,15 +80,14 @@
   
         if (!hasError) {
           // Datos para la solicitud al backend
-          /*
+          
           const loginData = {
             nombre_usuario: this.username,
             password: this.password
           };
   
-          fetch(
-            `https://apimocha.com/example122/api/auth/login/${loginData.nombre_usuario}`,
-            {
+          fetch(`${process.env.VUE_APP_LOGIN_URL}${loginData.nombre_usuario}`,
+           {
               method: "POST",
               headers: {
                 "Content-Type": "application/json"
@@ -117,7 +116,7 @@
               console.error("Error:", error);
               this.passwordError = "Ocurrió un error al intentar iniciar sesión.";
             });
-            */
+            
         }
         // Simulación de respuesta de la API para seguir con el flujo
         const simulatedResponse = {
