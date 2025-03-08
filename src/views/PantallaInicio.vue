@@ -35,8 +35,8 @@
       <!-- Tabla de Productos -->
       <div class="table-container">
         <AppTable :headers="['No. de Producto', 'Código', 'Nombre', 'Cantidad', 'Unidad de Medida', 'Precio Unitario', 'Acciones']">
-          <tr v-for="(producto, index) in productos" :key="index">
-            <td>{{ index + 1 }}</td>
+          <tr v-for="(producto, index) in productosPaginados" :key="index">
+            <td>{{ ((paginaActual - 1) * itemsPorPagina) + (index + 1) }}</td>
             <td>{{ producto.codigo }}</td>
             <td>{{ producto.nombre }}</td>
             <td>{{ producto.cantidad }}</td>
@@ -49,9 +49,37 @@
             </td>
           </tr>
         </AppTable>
+        <AppPagination :currentPage="paginaActual" :totalPages="totalPaginas" @page-changed="cambiarPagina" />
       </div>
     </div>
-  
+
+      <!-- Sección de Total y Acciones (justo por encima del footer real) -->
+    <div class="total-footer-section">
+      <h4>
+        Total: <span>{{ totalAmount }}</span>
+      </h4>
+      <div class="button-container">
+        <AppButton variant="warning" @click="ponerVentaEnEspera">Poner Venta en Espera</AppButton>
+        <AppButton variant="danger" @click="cancelarVenta">Cancelar Venta</AppButton>
+        <AppButton variant="success" @click="confirmarVenta">Confirmar Venta</AppButton>
+      </div>
+    </div>
+
+    <!-- Footer Fijo al Final -->
+    <div class="footer d-flex w-100 align-items-center">
+
+      <div class="flex-grow-1 text-center">
+        Cajero en turno: Juan Pérez | Hora: 10:45 AM
+      </div>
+
+
+      <AppButton variant="primary" class="ms-auto">
+        Reimprimir último ticket
+      </AppButton>
+
+    </div>
+
+
   </div>
 </template>
 
@@ -59,6 +87,8 @@
 import AppButton from '../components/AppButton.vue';
 import AppTable from '../components/AppTable.vue';
 import AppNavbar from '../components/AppNavbar.vue';
+import AppPagination from '../components/AppPagination.vue';
+
 
 export default {
   name: "PantallaInicio",
@@ -66,13 +96,16 @@ export default {
     AppButton,
     AppTable,
     AppNavbar,
+    AppPagination
   },
   data() {
     return {
       productCode: '',
       productQuantity: 1,
       rucCliente: '',
-      productos: []
+      productos: [],
+      paginaActual: 1,
+      itemsPorPagina: 6
     };
   },
   computed: {
@@ -80,6 +113,14 @@ export default {
       return this.productos.reduce((acc, producto) => {
         return acc + producto.cantidad * producto.precio;
       }, 0).toFixed(2);
+    },
+    productosPaginados() {
+    const start = (this.paginaActual - 1) * this.itemsPorPagina;
+    const end = start + this.itemsPorPagina;
+    return this.productos.slice(start, end);
+    },
+    totalPaginas() {
+      return Math.ceil(this.productos.length / this.itemsPorPagina);
     }
   },
   methods: {
@@ -88,7 +129,7 @@ export default {
         alert("Por favor, ingresa un código de producto");
         return;
       }
-      fetch(`${process.env.VUE_APP_PRODUCT_CHECK_URL_CODE}codigo_barras=${this.productCode}`)
+      fetch(`${process.env.VUE_APP_ADD_PRODUCTO_TABLE_SALES}codigo_barras=${this.productCode}`)
         .then(response => response.json())
         .then(product => {
           if (product) {
@@ -114,6 +155,9 @@ export default {
       if (confirm("¿Estás seguro de que deseas eliminar este producto?")) {
         this.productos.splice(index, 1);
       }
+    },
+    cambiarPagina(page) {
+      this.paginaActual = page;
     },
     async ponerVentaEnEspera() {
       const confirmacion = confirm("¿Estás seguro de que deseas poner esta venta en espera?");

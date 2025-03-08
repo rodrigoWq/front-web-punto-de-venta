@@ -42,9 +42,19 @@
               </router-link>
             </li>
           </ul>
-          <span class="navbar-text comercial-graciela">
-            COMERCIAL GRACIELA
-          </span>
+          <li class="nav-item position-relative">
+            <!-- Texto que dispara el menú al hacer clic -->
+            <span class="navbar-text comercial-graciela" style="cursor: pointer;" @click="toggleMenu">
+              COMERCIAL GRACIELA
+            </span>
+
+            <!-- Menú personalizado, se muestra solo si showMenu es true -->
+            <div v-if="showMenu" class="position-absolute p-2 border border-light rounded" style="right: 0; top: 100%; background-color: black;"> 
+              <AppButton variant="link" customClass="text-white p-0 border-0" @click="cerrarSesion">
+                Cerrar Sesión
+              </AppButton>
+            </div>
+          </li>
         </div>
       </div>
     </nav>
@@ -112,6 +122,7 @@ export default {
         productCodeSearch: '',
         productNameSearch: '',
         searchResult: '',
+        showMenu: false,
         ventasEnEspera: []
       };
     },
@@ -152,6 +163,9 @@ export default {
             this.searchResult = '<div class="alert alert-danger">Error al buscar el producto.</div>';
           });
       },
+      toggleMenu() {
+        this.showMenu = !this.showMenu;
+      },
       async retomarVenta(ventaId) {
         try {
           const response = await fetch(`${process.env.VUE_APP_PENDING_SALES_URL}/id=${ventaId}`);
@@ -177,6 +191,12 @@ export default {
         } catch (error) {
           console.error("Error al obtener ventas en espera:", error);
         }
+      },
+      cerrarSesion() {
+        // Lógica de cierre de sesión: remover token, rol, etc.
+        localStorage.removeItem("token");
+        localStorage.removeItem("rol_id");
+        this.$router.push("/"); // O la ruta que desees al cerrar sesión
       }
     },
     // Added mounted hook:
