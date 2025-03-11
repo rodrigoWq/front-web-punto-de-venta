@@ -1,9 +1,6 @@
 <template>
   <div class="container mt-5">
       <h1 class="text-center">Formulario de Carga de Factura</h1>
-
-       <!-- Inspección de Datos -->
-      <pre>{{ factura }}</pre> <!-- Aquí puedes inspeccionar los datos -->
       <form @submit.prevent="guardarFactura">
           <!-- Información de factura -->
           <div class="row g-3 mb-3">

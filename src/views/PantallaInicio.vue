@@ -105,7 +105,7 @@ export default {
       rucCliente: '',
       productos: [],
       paginaActual: 1,
-      itemsPorPagina: 6
+      itemsPorPagina: 5
     };
   },
   computed: {
