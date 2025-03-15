@@ -24,9 +24,22 @@ export default class Factura {
   }
 
   calcularTotales() {
-    this.totalFactura = this.productos.reduce((acc, prod) => acc + prod.totalProducto, 0);
-    this.totalIva5 = this.productos.reduce((acc, prod) => acc + (prod.tipoImpuesto === 'iva5' ? prod.totalProducto : 0), 0);
-    this.totalIva10 = this.productos.reduce((acc, prod) => acc + (prod.tipoImpuesto === 'iva10' ? prod.totalProducto : 0), 0);
-    this.totalIvaExenta = this.productos.reduce((acc, prod) => acc + (prod.tipoImpuesto === 'exenta' ? prod.totalProducto : 0), 0);
+    let sumExenta = 0;
+    let sumIva5 = 0;
+    let sumIva10 = 0;
+  
+    this.productos.forEach(prod => {
+      sumExenta += Number(prod.exenta) || 0;
+      sumIva5   += Number(prod.iva5)   || 0;
+      sumIva10  += Number(prod.iva10)  || 0;
+    });
+  
+    this.totalIvaExenta = sumExenta;
+    this.totalIva5      = sumIva5;
+    if (sumIva10 > 0) {
+      sumIva10 = sumIva10 / 11;   // 10% de IVA
+    }
+    this.totalIva10     = sumIva10;
+    this.totalFactura   = sumExenta + sumIva5 + sumIva10;
   }
 }

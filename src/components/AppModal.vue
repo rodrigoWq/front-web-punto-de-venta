@@ -1,5 +1,5 @@
 <template>
-    <div class="modal fade" :id="modalId" tabindex="-1" :aria-labelledby="modalLabelId" aria-hidden="true">
+     <div v-if="showModal" class="modal fade show" style="display: block;" :id="modalId">
       <div class="modal-dialog">
         <div class="modal-content">
           <div class="modal-header">
@@ -25,6 +25,7 @@
         type: String,
         required: true
       },
+      showModal: { type: Boolean, default: false },
       title: {
         type: String,
         required: true

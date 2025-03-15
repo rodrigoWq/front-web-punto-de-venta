@@ -67,71 +67,66 @@
         </div>
       </div>
 
-        <div class="d-grid gap-2 mb-3">
-          <button type="button" class="btn btn-secondary" @click="agregarProducto">
-            Agregar Producto
-          </button>
-        </div>
+      <div class="d-grid gap-2 mb-3">
+        <button type="button" class="btn btn-secondary" @click="agregarProducto">
+          Agregar Producto
+        </button>
+      </div>
 
-         <!-- Fondo Oscurecido -->
-        <div v-if="showRegisterModal" class="modal-backdrop"></div>
-
-        <!-- Después (solo snippet de reemplazo): -->
-        <AppModal modalId="registerProductModal" title="Registrar Nuevo Producto" v-if="showRegisterModal">
-          <template #body>
-            <!-- Contenido del body -->
-            <div class="mb-3">
-              <label class="form-label">Código</label>
-              <input type="text" v-model="nuevoProducto.codigo" class="form-control" placeholder="Código" />
-            </div>
-            <!-- ... resto de campos ... -->
-          </template>
-          <template #footer>
-            <button type="button" class="btn btn-primary" @click="registrarProducto">Registrar</button>
-            <button type="button" class="btn btn-secondary" @click="closeRegisterModal">Cancelar</button>
-          </template>
-        </AppModal>
+      <!-- Modal para registrar un producto -->
+      <RegistrarProductoModal
+        :showModal="showRegisterModal"
+        :initialCode="productoData.codigo"
+        @product-registered="onProductRegistered"
+        @close="closeRegisterModal"
+      />
 
 
-          <!-- Productos Agregados -->
-          <h3>Productos Agregados</h3>
-          <AppTable :headers="['Código', 'Descripción', 'Cantidad', 'Valor Unitario', 'Exenta', '5%', '10%', 'Acciones']">
-            <tr v-for="(producto, index) in factura.productos" :key="index">
-              <td>
-                <input v-if="productoEditandoIndex === index" v-model="productoData.codigo" class="form-control form-control-sm" />
-                <span v-else>{{ producto.codigo }}</span>
-              </td>
-              <td>
-                <input v-if="productoEditandoIndex === index" v-model="productoData.descripcion" class="form-control form-control-sm" />
-                <span v-else>{{ producto.descripcion }}</span>
-              </td>
-              <td>
-                <input v-if="productoEditandoIndex === index" v-model.number="productoData.cantidad" type="number" class="form-control form-control-sm" />
-                <span v-else>{{ producto.cantidad }}</span>
-              </td>
-              <td>
-                <input v-if="productoEditandoIndex === index" v-model.number="productoData.valorUnitario" type="number" class="form-control form-control-sm" />
-                <span v-else>{{ producto.valorUnitario }}</span>
-              </td>
-              <td>
-                <input v-if="productoEditandoIndex === index" v-model.number="productoData.exenta" type="number" class="form-control form-control-sm" />
-                <span v-else>{{ producto.exenta }}</span>
-              </td>
-              <td>
-                <input v-if="productoEditandoIndex === index" v-model.number="productoData.iva5" type="number" class="form-control form-control-sm" />
-                <span v-else>{{ producto.iva5 }}</span>
-              </td>
-              <td>
-                <input v-if="productoEditandoIndex === index" v-model.number="productoData.iva10" type="number" class="form-control form-control-sm" />
-                <span v-else>{{ producto.iva10 }}</span>
-              </td>
-              <td>
-                <button v-if="productoEditandoIndex === index" type="button" class="btn btn-success btn-sm me-1" @click="guardarEdicionProducto">Guardar</button>
-                <button v-else type="button" class="btn btn-primary btn-sm me-1" @click="editarProducto(index)">Editar</button>
-                <button type="button" class="btn btn-danger btn-sm" @click="eliminarProducto(index)">Eliminar</button>
-              </td>
-            </tr>
-          </AppTable>
+      <!-- Productos Agregados -->
+      <h3>Productos Agregados</h3>
+      <AppTable :headers="['Código', 'Descripción', 'Cantidad', 'Valor Unitario', 'Exenta', '5%', '10%', 'Acciones']">
+        <tr v-for="(producto, index) in factura.productos" :key="index">
+          <td>
+            <input v-if="productoEditandoIndex === index" v-model="productoData.codigo" class="form-control form-control-sm" />
+            <span v-else>{{ producto.codigo }}</span>
+          </td>
+          <td>
+            <input v-if="productoEditandoIndex === index" v-model="productoData.descripcion" class="form-control form-control-sm" />
+            <span v-else>{{ producto.descripcion }}</span>
+          </td>
+          <td>
+            <input v-if="productoEditandoIndex === index" v-model.number="productoData.cantidad" type="number" class="form-control form-control-sm" />
+            <span v-else>{{ producto.cantidad }}</span>
+          </td>
+          <td>
+            <input v-if="productoEditandoIndex === index" v-model.number="productoData.valorUnitario" type="number" class="form-control form-control-sm" />
+            <span v-else>{{ producto.valorUnitario }}</span>
+          </td>
+          <td>
+            <input v-if="productoEditandoIndex === index" v-model.number="productoData.exenta" type="number" class="form-control form-control-sm" />
+            <span v-else>{{ producto.exenta }}</span>
+          </td>
+          <td>
+            <input v-if="productoEditandoIndex === index" v-model.number="productoData.iva5" type="number" class="form-control form-control-sm" />
+            <span v-else>{{ producto.iva5 }}</span>
+          </td>
+          <td>
+            <input v-if="productoEditandoIndex === index" v-model.number="productoData.iva10" type="number" class="form-control form-control-sm" />
+            <span v-else>{{ producto.iva10 }}</span>
+          </td>
+          <td>
+            <template v-if="productoEditandoIndex === index">
+              <button v-if="productoEditandoIndex === index" type="button" class="btn btn-success btn-sm me-1" @click="guardarEdicionProducto">Guardar</button>
+              <button type="button" class="btn btn-danger btn-sm" @click="cancelarEdicion">Cancelar</button>
+            </template>
+            <template v-else>
+              <button type="button" class="btn btn-primary btn-sm me-1" @click="editarProducto(index)">Editar</button>
+              <button type="button" class="btn btn-danger btn-sm" @click="eliminarProducto(index)">Eliminar</button>
+            </template>
+          </td>
+
+        </tr>
+      </AppTable>
 
 
           <!-- Totales -->
@@ -168,15 +163,15 @@
 import Factura from '@/models/Factura';
 import Producto from '@/models/Producto';
 import FacturaService from '@/services/FacturaServiceMock';
-import AppModal from '@/components/AppModal.vue';
 import AppTable from '@/components/AppTable.vue';
+import RegistrarProductoModal from '@/components/RegistrarProductoModal.vue';
 
 
 export default {
   name: 'FacturaView',
   components: {
-    AppModal,
     AppTable,
+    RegistrarProductoModal,
   },
   props: {
     datosParaFactura: {
@@ -248,9 +243,30 @@ export default {
               console.error('Error al cargar la factura desde parámetros:', error);
           }
       },
+      onProductRegistered(newProduct) {
+        // Simulamos la "lógica" de guardado en DB o servicio,
+        // pero por ahora solo lo agregamos al array de productos de la factura
+        this.productoData = { ...newProduct };
+      },
       closeRegisterModal() {
         this.showRegisterModal = false;
         this.nuevoProducto = { codigo: '', descripcion: '', valorUnitario: 0, tipoImpuesto: 'exenta' };
+      },
+      calcularImpuestoPorTipo() {
+        const subtotal = Number(this.productoData.cantidad) * Number(this.productoData.valorUnitario);
+        if (this.productoData.tipoImpuesto === 'exenta') {
+          this.productoData.exenta = subtotal;
+          this.productoData.iva5   = 0;
+          this.productoData.iva10  = 0;
+        } else if (this.productoData.tipoImpuesto === 'iva5') {
+          this.productoData.iva5   = subtotal;
+          this.productoData.exenta = 0;
+          this.productoData.iva10  = 0;
+        } else {
+          this.productoData.iva10  = subtotal;
+          this.productoData.exenta = 0;
+          this.productoData.iva5   = 0;
+        }
       },
       registrarProducto() {
         console.log("registrarProducto llamado");
@@ -260,7 +276,7 @@ export default {
         this.closeRegisterModal(); // Cerrar el modal
        },
         agregarProducto() {
-          console.log("agregarProducto llamado");
+          this.calcularImpuestoPorTipo();
           const producto = new Producto(this.productoData);
           if (this.productoEditandoIndex !== null) {
               // Guardar cambios del producto editado
@@ -298,6 +314,11 @@ export default {
       guardarEdicionProducto() {
           // Llama a agregarProducto para guardar los cambios
           this.agregarProducto();
+          //this.factura.calcularTotales(); // Actualizar los totales después de editar
+      },
+      cancelarEdicion() {
+        this.productoEditandoIndex = null;
+        this.limpiarCamposProducto();
       },
       async guardarFactura() {
         try {

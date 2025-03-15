@@ -50,72 +50,73 @@
 
             <!-- Menú personalizado, se muestra solo si showMenu es true -->
             <div v-if="showMenu" class="position-absolute p-2 border border-light rounded" style="right: 0; top: 100%; background-color: black;"> 
-              <AppButton variant="link" customClass="text-white p-0 border-0" @click="cerrarSesion">
-                Cerrar Sesión
-              </AppButton>
+              <button type="button" class="btn btn-link text-white p-0 border-0" @click="cerrarSesion">Cerrar Sesión</button>
             </div>
           </li>
         </div>
       </div>
     </nav>
-    <!-- Buscar Producto Modal -->
-    <AppModal modalId="searchProductModal" title="Buscar Producto">
-      <template #body>
-        <div class="mb-3">
-          <label for="productCodeSearch" class="form-label">Código del producto</label>
-          <input type="text" class="form-control" v-model="productCodeSearch" @keydown.enter.prevent="buscarProducto" placeholder="Ingresa el código">
+    <!-- Modal Buscar Producto -->
+    <div class="modal fade" id="searchProductModal" tabindex="-1" aria-labelledby="searchProductModalLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="searchProductModalLabel">Buscar Producto</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <!-- Contenido que antes estaba en #body -->
+            <div class="mb-3">
+              <label for="productCodeSearch" class="form-label">Código del producto</label>
+              <input type="text" class="form-control" v-model="productCodeSearch" @keydown.enter.prevent="buscarProducto" placeholder="Ingresa el código">
+            </div>
+            <div class="mb-3">
+              <label for="productNameSearch" class="form-label">Nombre del producto</label>
+              <input type="text" class="form-control" v-model="productNameSearch" @keydown.enter.prevent="buscarProducto" placeholder="Ingresa el nombre del producto">
+            </div>
+            <div id="searchResult" class="mt-3" v-html="searchResult"></div>
+          </div>
+          <div class="modal-footer">
+            <!-- Botones que antes estaban en #footer -->
+            <button type="button" class="btn btn-secondary me-2" data-bs-dismiss="modal">Cerrar</button>
+            <button type="button" class="btn btn-primary" @click="buscarProducto">Buscar</button>
+          </div>
         </div>
-        <div class="mb-3">
-          <label for="productNameSearch" class="form-label">Nombre del producto</label>
-          <input type="text" class="form-control" v-model="productNameSearch" @keydown.enter.prevent="buscarProducto" placeholder="Ingresa el nombre del producto">
-        </div>
-        <div id="searchResult" class="mt-3" v-html="searchResult"></div>
-      </template>
-      <template #footer>
-        <AppButton variant="secondary" customClass="me-2" data-bs-dismiss="modal">
-          Cerrar
-        </AppButton>
-        <AppButton variant="primary" @click="buscarProducto">
-          Buscar
-        </AppButton>
-      </template>
-    </AppModal>
+      </div>
+    </div>
 
-    <!-- Ventas en Espera Modal -->
-    <AppModal modalId="onHoldSalesModal" title="Ventas en Espera">
-      <template #body>
-        <ul class="list-group">
-          <li v-for="venta in ventasEnEspera" :key="venta.id" class="list-group-item">
-            {{ venta.descripcion }} - {{ formatCurrency(venta.monto_total) }}
-            <AppButton variant="primary" customClass="btn-sm" @click="retomarVenta(venta.id)">
-              Retomar
-            </AppButton>
-          </li>
-        </ul>
-      </template>
-      <template #footer>
-        <AppButton variant="secondary" data-bs-dismiss="modal">
-          Cerrar
-        </AppButton>
-      </template>
-    </AppModal>
+
+    <!-- Modal Ventas en Espera -->
+    <div class="modal fade" id="onHoldSalesModal" tabindex="-1" aria-labelledby="onHoldSalesModalLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="onHoldSalesModalLabel">Ventas en Espera</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <ul class="list-group">
+              <li v-for="venta in ventasEnEspera" :key="venta.id" class="list-group-item">
+                {{ venta.descripcion }} - {{ formatCurrency(venta.monto_total) }}
+                <!-- Reemplaza AppButton por un botón nativo -->
+                <button type="button" class="btn btn-primary btn-sm" @click="retomarVenta(venta.id)">Retomar</button>
+              </li>
+            </ul>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
 
 
   </template>
   
   <script>
-import AppButton from './AppButton.vue';
-import AppModal from './AppModal.vue';
-
-// Removed unused import:
-// import App from '@/App.vue';
-
 export default {
     name: 'AppNavbar',
-    components: {
-      AppButton,
-      AppModal
-    },
     // Added data properties:
     data() {
       return {
