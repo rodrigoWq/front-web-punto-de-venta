@@ -53,120 +53,46 @@
         </div>
       </div>
       <div class="d-grid gap-2 mb-3">
-        <button type="button" class="btn btn-secondary" @click="agregarProducto">Agregar Producto</button>
+         <AppButton variant="secondary" @click="agregarProducto">
+            Agregar Producto
+         </AppButton>
       </div>
 
-        <!-- Fondo Oscurecido -->
-      <div v-if="showRegisterModal" class="modal-backdrop"></div>
+      <AppModal modalId="registerProductModal" title="Registrar Nuevo Producto" v-if="showRegisterModal">
+        <template #body>
+          <div class="mb-3"><label class="form-label">Código</label><input type="text" v-model="nuevoProducto.codigo" class="form-control" placeholder="Código" /></div>
+          <div class="mb-3"><label class="form-label">Descripción</label><input type="text" v-model="nuevoProducto.descripcion" class="form-control" placeholder="Descripción" /></div>
+          <div class="mb-3"><label class="form-label">Cantidad</label><input type="number" v-model="nuevoProducto.cantidad" class="form-control" placeholder="Cantidad" /></div>
+          <div class="mb-3"><label class="form-label">Unidad de Medida</label><input type="text" v-model="nuevoProducto.unidadMedida" class="form-control" placeholder="Unidad de Medida" /></div>
+          <div class="mb-3"><label class="form-label">Fecha de Vencimiento</label><input type="date" v-model="nuevoProducto.fechaVencimiento" class="form-control" /></div>
+        </template>
+        <template #footer>
+          <AppButton variant="primary" @click="registrarProducto">Registrar</AppButton>
+          <AppButton variant="secondary" @click="closeRegisterModal">Cancelar</AppButton>
+        </template>
+      </AppModal>
 
-      <!-- Modal de Registro de Producto -->
-      <div v-if="showRegisterModal" class="modal d-block" tabindex="-1">
-        <div class="modal-dialog">
-          <div class="modal-content">
-            <div class="modal-header">
-              <h5 class="modal-title">Registrar Nuevo Producto</h5>
-              <button type="button" class="btn-close" @click="closeRegisterModal"></button>
-            </div>
-            <div class="modal-body">
-              <div class="mb-3">
-                <label class="form-label">Código</label>
-                <input type="text" v-model="nuevoProducto.codigo" class="form-control" placeholder="Código" />
-              </div>
-              <div class="mb-3">
-                <label class="form-label">Descripción</label>
-                <input type="text" v-model="nuevoProducto.descripcion" class="form-control" placeholder="Descripción" />
-              </div>
-              <div class="mb-3">
-                <label class="form-label">Cantidad</label>
-                <input type="number" v-model="nuevoProducto.cantidad" class="form-control" placeholder="Cantidad" />
-              </div>
-              <div class="mb-3">
-                <label class="form-label">Unidad de Medida</label>
-                <input type="text" v-model="nuevoProducto.unidadMedida" class="form-control" placeholder="Unidad de Medida" />
-              </div>
-              <div class="mb-3">
-                <label class="form-label">Fecha de Vencimiento</label>
-                <input type="date" v-model="nuevoProducto.fechaVencimiento" class="form-control" />
-              </div>
-            </div>
-            <div class="modal-footer">
-              <button type="button" class="btn btn-primary" @click="registrarProducto">Registrar</button>
-              <button type="button" class="btn btn-secondary" @click="closeRegisterModal">Cancelar</button>
-            </div>
-          </div>
-        </div>
-      </div>
 
       <!-- Tabla de productos agregados -->
       <h3>Productos Agregados</h3>
-      <table class="table table-bordered mt-3">
-        <thead>
-          <tr>
-            <th>Código de Barra</th>
-            <th>Cantidad</th>
-            <th>Unidad de Medida</th>
-            <th>Descripción</th>
-            <th>Acciones</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="(producto, index) in productos" :key="index">
-            <td>
-              <input
-                v-if="productoEditandoIndex === index"
-                v-model="productoData.codigo"
-                class="form-control form-control-sm"
-              />
-              <span v-else>{{ producto.codigo }}</span>
-            </td>
-            <td>
-              <input
-                v-if="productoEditandoIndex === index"
-                v-model.number="productoData.cantidad"
-                type="number"
-                class="form-control form-control-sm"
-              />
-              <span v-else>{{ producto.cantidad }}</span>
-            </td>
-            <td>
-              <input
-                v-if="productoEditandoIndex === index"
-                v-model="productoData.unidadMedida"
-                class="form-control form-control-sm"
-              />
-              <span v-else>{{ producto.unidadMedida }}</span>
-            </td>
-            <td>
-              <input
-                v-if="productoEditandoIndex === index"
-                v-model="productoData.descripcion"
-                class="form-control form-control-sm"
-              />
-              <span v-else>{{ producto.descripcion }}</span>
-            </td>
-            <td>
-              <button
-                v-if="productoEditandoIndex === index"
-                class="btn btn-success btn-sm me-1"
-                @click="guardarEdicionProducto"
-              >
-                Guardar
-              </button>
-              <button
-                v-else
-                class="btn btn-primary btn-sm me-1"
-                @click="editarProducto(index)"
-              >
-                Editar
-              </button>
-              <button class="btn btn-danger btn-sm" @click="eliminarProducto(index)">Eliminar</button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+      <AppTable :headers="['Código de Barra','Cantidad','Unidad de Medida','Descripción','Acciones']">
+        <tr v-for="(producto, index) in productos" :key="index">
+          <td><input v-if="productoEditandoIndex === index" v-model="productoData.codigo" class="form-control form-control-sm" /><span v-else>{{ producto.codigo }}</span></td>
+          <td><input v-if="productoEditandoIndex === index" v-model.number="productoData.cantidad" type="number" class="form-control form-control-sm" /><span v-else>{{ producto.cantidad }}</span></td>
+          <td><input v-if="productoEditandoIndex === index" v-model="productoData.unidadMedida" class="form-control form-control-sm" /><span v-else>{{ producto.unidadMedida }}</span></td>
+          <td><input v-if="productoEditandoIndex === index" v-model="productoData.descripcion" class="form-control form-control-sm" /><span v-else>{{ producto.descripcion }}</span></td>
+          <td>
+            <AppButton v-if="productoEditandoIndex === index" variant="success" customClass="btn-sm me-1" @click="guardarEdicionProducto">Guardar</AppButton>
+            <AppButton v-else variant="primary" customClass="btn-sm me-1" @click="editarProducto(index)">Editar</AppButton>
+            <AppButton variant="danger" customClass="btn-sm" @click="eliminarProducto(index)">Eliminar</AppButton>
+          </td>
+        </tr>
+      </AppTable>
 
       <div class="d-grid gap-2 mt-4">
-        <button type="submit" class="btn btn-success">Guardar Nota de Remisión</button>
+         <AppButton variant="success" type="submit">
+           Guardar Nota de Remisión
+         </AppButton>
       </div>
     </form>
   </div>
@@ -174,9 +100,17 @@
   
 <script>
 import NotaDeRemisionService from '@/services/NotaDeRemisionServiceMock';
+import AppButton from '@/components/AppButton.vue';
+import AppModal from '@/components/AppModal.vue';
+import AppTable from '@/components/AppTable.vue';
 
 export default {
   name: 'NotaDeRemision',
+  components: {
+    AppButton,
+    AppModal,
+    AppTable
+  },
   props: ['id'], // Recibe el id como prop
   data() {
     return {

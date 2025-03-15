@@ -41,157 +41,99 @@
         <!-- Detalles de Productos -->
         <h3>Detalles de Productos</h3>
         <div class="row g-3 mb-3">
-            <div class="col-md-2">
-            <label class="form-label">Código</label>
-            <input
-                type="text"
-                v-model="productoData.codigo"
-                class="form-control"
-                placeholder="Código"
-                @blur="autocompletarProducto"
-            />
-            </div>
-            <div class="col-md-3">
-            <label class="form-label">Descripción</label>
-            <input type="text" v-model="productoData.descripcion" class="form-control" placeholder="Descripción" />
-            </div>
-            <div class="col-md-2">
-            <label class="form-label">Cantidad</label>
-            <input type="number" v-model="productoData.cantidad" class="form-control" placeholder="Cantidad" />
-            </div>
-            <div class="col-md-2">
-            <label class="form-label">Valor Unitario</label>
-            <input type="number" v-model="productoData.valorUnitario" class="form-control" placeholder="Valor Unitario" />
-            </div>
-            <div class="col-md-3">
-            <label class="form-label">Tipo de Impuesto</label>
-            <select v-model="productoData.tipoImpuesto" class="form-control">
-                <option value="exenta">Exenta</option>
-                <option value="iva5">IVA 5%</option>
-                <option value="iva10">IVA 10%</option>
-            </select>
-            </div>
+        <div class="col-md-2">
+          <label class="form-label">Código</label>
+          <input type="text" v-model="productoData.codigo" class="form-control" placeholder="Código" @blur="autocompletarProducto" @keydown.enter.prevent />
         </div>
+        <div class="col-md-3">
+          <label class="form-label">Descripción</label>
+          <input type="text" v-model="productoData.descripcion" class="form-control" placeholder="Descripción" @keydown.enter.prevent />
+        </div>
+        <div class="col-md-2">
+          <label class="form-label">Cantidad</label>
+          <input type="number" v-model="productoData.cantidad" class="form-control" placeholder="Cantidad" @keydown.enter.prevent />
+        </div>
+        <div class="col-md-2">
+          <label class="form-label">Valor Unitario</label>
+          <input type="number" v-model="productoData.valorUnitario" class="form-control" placeholder="Valor Unitario" @keydown.enter.prevent />
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Tipo de Impuesto</label>
+          <select v-model="productoData.tipoImpuesto" class="form-control" @keydown.enter.prevent>
+            <option value="exenta">Exenta</option>
+            <option value="iva5">IVA 5%</option>
+            <option value="iva10">IVA 10%</option>
+          </select>
+        </div>
+      </div>
+
         <div class="d-grid gap-2 mb-3">
-            <button type="button" class="btn btn-secondary" @click="agregarProducto">Agregar Producto</button>
+          <button type="button" class="btn btn-secondary" @click="agregarProducto">
+            Agregar Producto
+          </button>
         </div>
 
          <!-- Fondo Oscurecido -->
         <div v-if="showRegisterModal" class="modal-backdrop"></div>
 
-        <!-- Modal de Registro de Producto -->
-        <div v-if="showRegisterModal" class="modal d-block" tabindex="-1">
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <div class="modal-header">
-                    <h5 class="modal-title">Registrar Nuevo Producto</h5>
-                    <button type="button" class="btn-close" @click="closeRegisterModal"></button>
-                    </div>
-                    <div class="modal-body">
-                    <div class="mb-3">
-                        <label class="form-label">Código</label>
-                        <input type="text" v-model="nuevoProducto.codigo" class="form-control" placeholder="Código" />
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Descripción</label>
-                        <input type="text" v-model="nuevoProducto.descripcion" class="form-control" placeholder="Descripción" />
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Valor Unitario</label>
-                        <input type="number" v-model="nuevoProducto.valorUnitario" class="form-control" placeholder="Valor Unitario" />
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Tipo de Impuesto</label>
-                        <select v-model="nuevoProducto.tipoImpuesto" class="form-control">
-                        <option value="exenta">Exenta</option>
-                        <option value="iva5">IVA 5%</option>
-                        <option value="iva10">IVA 10%</option>
-                        </select>
-                    </div>
-                    </div>
-                    <div class="modal-footer">
-                    <button type="button" class="btn btn-primary" @click="registrarProducto">Registrar</button>
-                    <button type="button" class="btn btn-secondary" @click="closeRegisterModal">Cancelar</button>
-                    </div>
-                </div>
+        <!-- Después (solo snippet de reemplazo): -->
+        <AppModal modalId="registerProductModal" title="Registrar Nuevo Producto" v-if="showRegisterModal">
+          <template #body>
+            <!-- Contenido del body -->
+            <div class="mb-3">
+              <label class="form-label">Código</label>
+              <input type="text" v-model="nuevoProducto.codigo" class="form-control" placeholder="Código" />
             </div>
-        </div>
+            <!-- ... resto de campos ... -->
+          </template>
+          <template #footer>
+            <button type="button" class="btn btn-primary" @click="registrarProducto">Registrar</button>
+            <button type="button" class="btn btn-secondary" @click="closeRegisterModal">Cancelar</button>
+          </template>
+        </AppModal>
+
 
           <!-- Productos Agregados -->
           <h3>Productos Agregados</h3>
-          <table class="table table-bordered mt-3">
-              <thead>
-                  <tr>
-                      <th>Código</th>
-                      <th>Descripción</th>
-                      <th>Cantidad</th>
-                      <th>Valor Unitario</th>
-                      <th>Exenta</th>
-                      <th>5%</th>
-                      <th>10%</th>
-                      <th>Acciones</th>
-                  </tr>
-              </thead>
-              <tbody>
-                    <tr v-for="(producto, index) in factura.productos" :key="index">
-                        <td>
-                        <input 
-                            v-if="productoEditandoIndex === index"
-                            v-model="productoData.codigo"
-                            class="form-control form-control-sm"
-                        />
-                        <span v-else>{{ producto.codigo }}</span>
-                        </td>
-                        <td>
-                        <input 
-                            v-if="productoEditandoIndex === index"
-                            v-model="productoData.descripcion"
-                            class="form-control form-control-sm"
-                        />
-                        <span v-else>{{ producto.descripcion }}</span>
-                        </td>
-                        <td>
-                        <input 
-                            v-if="productoEditandoIndex === index"
-                            v-model.number="productoData.cantidad"
-                            type="number"
-                            class="form-control form-control-sm"
-                        />
-                        <span v-else>{{ producto.cantidad }}</span>
-                        </td>
-                        <td>
-                        <input 
-                            v-if="productoEditandoIndex === index"
-                            v-model.number="productoData.valorUnitario"
-                            type="number"
-                            class="form-control form-control-sm"
-                        />
-                        <span v-else>{{ producto.valorUnitario }}</span>
-                        </td>
-                        <td>{{ producto.tipoImpuesto === 'exenta' ? producto.totalProducto : '' }}</td>
-                        <td>{{ producto.tipoImpuesto === 'iva5' ? producto.totalProducto : '' }}</td>
-                        <td>{{ producto.tipoImpuesto === 'iva10' ? producto.totalProducto : '' }}</td>
-                        <td>
-                        <button
-                            v-if="productoEditandoIndex === index"
-                            class="btn btn-success btn-sm me-1"
-                            @click="guardarEdicionProducto"
-                        >
-                            Guardar
-                        </button>
-                        <button
-                            v-else
-                            class="btn btn-primary btn-sm me-1"
-                            @click="editarProducto(index)"
-                        >
-                            Editar
-                        </button>
-                        <button class="btn btn-danger btn-sm" @click="eliminarProducto(index)">Eliminar</button>
-                        </td>
-                    </tr>
-                </tbody>
+          <AppTable :headers="['Código', 'Descripción', 'Cantidad', 'Valor Unitario', 'Exenta', '5%', '10%', 'Acciones']">
+            <tr v-for="(producto, index) in factura.productos" :key="index">
+              <td>
+                <input v-if="productoEditandoIndex === index" v-model="productoData.codigo" class="form-control form-control-sm" />
+                <span v-else>{{ producto.codigo }}</span>
+              </td>
+              <td>
+                <input v-if="productoEditandoIndex === index" v-model="productoData.descripcion" class="form-control form-control-sm" />
+                <span v-else>{{ producto.descripcion }}</span>
+              </td>
+              <td>
+                <input v-if="productoEditandoIndex === index" v-model.number="productoData.cantidad" type="number" class="form-control form-control-sm" />
+                <span v-else>{{ producto.cantidad }}</span>
+              </td>
+              <td>
+                <input v-if="productoEditandoIndex === index" v-model.number="productoData.valorUnitario" type="number" class="form-control form-control-sm" />
+                <span v-else>{{ producto.valorUnitario }}</span>
+              </td>
+              <td>
+                <input v-if="productoEditandoIndex === index" v-model.number="productoData.exenta" type="number" class="form-control form-control-sm" />
+                <span v-else>{{ producto.exenta }}</span>
+              </td>
+              <td>
+                <input v-if="productoEditandoIndex === index" v-model.number="productoData.iva5" type="number" class="form-control form-control-sm" />
+                <span v-else>{{ producto.iva5 }}</span>
+              </td>
+              <td>
+                <input v-if="productoEditandoIndex === index" v-model.number="productoData.iva10" type="number" class="form-control form-control-sm" />
+                <span v-else>{{ producto.iva10 }}</span>
+              </td>
+              <td>
+                <button v-if="productoEditandoIndex === index" type="button" class="btn btn-success btn-sm me-1" @click="guardarEdicionProducto">Guardar</button>
+                <button v-else type="button" class="btn btn-primary btn-sm me-1" @click="editarProducto(index)">Editar</button>
+                <button type="button" class="btn btn-danger btn-sm" @click="eliminarProducto(index)">Eliminar</button>
+              </td>
+            </tr>
+          </AppTable>
 
-          </table>
+
           <!-- Totales -->
           <h3>Liquidación del IVA</h3>
           <div class="row g-3">
@@ -226,9 +168,16 @@
 import Factura from '@/models/Factura';
 import Producto from '@/models/Producto';
 import FacturaService from '@/services/FacturaServiceMock';
+import AppModal from '@/components/AppModal.vue';
+import AppTable from '@/components/AppTable.vue';
+
 
 export default {
   name: 'FacturaView',
+  components: {
+    AppModal,
+    AppTable,
+  },
   props: {
     datosParaFactura: {
       type: Object,
@@ -243,7 +192,10 @@ export default {
               descripcion: '',
               cantidad: 0,
               valorUnitario: 0,
-              tipoImpuesto: 'exenta',
+              tipoImpuesto: 'iva10',
+              iva10: 0,
+              iva5: 0,
+              exenta: 0,
           },
         showRegisterModal: false,
         nuevoProducto: {
@@ -251,11 +203,6 @@ export default {
             descripcion: '',
             valorUnitario: 0,
             tipoImpuesto: 'exenta',
-        },
-        facturaData: {
-            ruc: '',
-            razonSocial: '',
-            productos: [],
         },
           facturas: [], // Almacenará las facturas cargadas desde el servicio
           productoEditandoIndex: null // Índice para identificar el producto que se está editando
@@ -275,13 +222,6 @@ export default {
 
             }
        },
-      async cargarFacturas() {
-          try {
-              this.facturas = await FacturaService.obtenerFacturas(); // Carga las facturas iniciales
-          } catch (error) {
-              console.error('Error al cargar las facturas:', error);
-          }
-      },
       async cargarFacturaDesdeParams() {
           const id = Number(this.$route.params.id);
           try {
@@ -313,12 +253,14 @@ export default {
         this.nuevoProducto = { codigo: '', descripcion: '', valorUnitario: 0, tipoImpuesto: 'exenta' };
       },
       registrarProducto() {
+        console.log("registrarProducto llamado");
         // Guardar el nuevo producto en el array de productos simulados
         FacturaService.guardarProducto(this.nuevoProducto); // Implementa esta función en el servicio mock
-        this.productoData = { ...this.nuevoProducto, cantidad: 1 }; // Copiar datos del nuevo producto al formulario principal
+        //this.productoData = { ...this.nuevoProducto, cantidad: 1 }; // Copiar datos del nuevo producto al formulario principal
         this.closeRegisterModal(); // Cerrar el modal
        },
         agregarProducto() {
+          console.log("agregarProducto llamado");
           const producto = new Producto(this.productoData);
           if (this.productoEditandoIndex !== null) {
               // Guardar cambios del producto editado
@@ -335,8 +277,17 @@ export default {
         this.factura.eliminarProducto(index); // Eliminar producto de la factura
       },
       limpiarCamposProducto() {
-        this.productoData = { codigo: '', descripcion: '', cantidad: 0, valorUnitario: 0, tipoImpuesto: 'exenta' };
-        this.productoEditandoIndex = null; // Limpiar el modo edición
+        this.productoData = {
+          codigo: '',
+          descripcion: '',
+          cantidad: 0,
+          valorUnitario: 0,
+          tipoImpuesto: 'iva10',
+          exenta: 0,
+          iva5: 0,
+          iva10: 0
+        };
+        this.productoEditandoIndex = null;
       },
       editarProducto(index) {
           // Cargar el producto en el formulario para editar
@@ -368,6 +319,7 @@ export default {
   watch: {
   '$route.query.datosParaFactura': {
     handler(newQuery) {
+      console.log('Datos recibidos en FacturaView:', newQuery);
       try {
         const queryData = newQuery
           ? JSON.parse(decodeURIComponent(newQuery))
@@ -381,7 +333,7 @@ export default {
 
           console.log('Factura después de asignar RUC y Razón Social:', this.factura);
 
-          // Limpia productos existentes y carga los nuevos
+          //Limpia productos existentes y carga los nuevos
           this.factura.productos = [];
           queryData.productos.forEach(producto => {
             this.factura.agregarProducto({
