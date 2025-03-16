@@ -5,16 +5,16 @@
       <!-- Encabezado -->
       <div class="row g-3 mb-3">
         <div class="col-md-4">
-          <label for="timbrado" class="form-label">Timbrado</label>
-          <input type="text" v-model="notaData.timbrado" class="form-control" placeholder="Número de timbrado">
+          <label for="ruc" class="form-label">RUC</label>
+          <input type="text" v-model="notaData.ruc" class="form-control" placeholder="RUC del destinatario" @blur="autocompletarProveedor">
         </div>
         <div class="col-md-4">
           <label for="razon_social" class="form-label">Razón Social</label>
           <input type="text" v-model="notaData.razonSocial" class="form-control" placeholder="Razón Social">
         </div>
         <div class="col-md-4">
-          <label for="ruc" class="form-label">RUC</label>
-          <input type="text" v-model="notaData.ruc" class="form-control" placeholder="RUC del destinatario">
+          <label for="timbrado" class="form-label">Timbrado</label>
+          <input type="text" v-model="notaData.timbrado" class="form-control" placeholder="Número de timbrado">
         </div>
       </div>
       <div class="row g-3 mb-3">
@@ -27,6 +27,22 @@
           <input type="date" v-model="notaData.fechaEmision" class="form-control">
         </div>
       </div>
+
+      <!-- Modal para registrar un producto -->
+      <RegistrarProductoModal
+        :showModal="showRegisterModal"
+        :initialCode="productoData.codigo"
+        @product-registered="onProductRegistered"
+        @close="closeRegisterModal"
+      />
+
+       <!-- Modal para registrar un proveedor -->
+      <RegistrarProveedorModal 
+        :showModal="showProveedorModal"
+        :initialRuc="notaData.ruc"
+        @proveedor-registered="onProveedorRegistered"
+        @close="showProveedorModal = false"
+      />
 
       <!-- Datos de la Mercadería -->
       <h3>Datos de la Mercadería</h3>
@@ -53,24 +69,11 @@
         </div>
       </div>
       <div class="d-grid gap-2 mb-3">
-         <AppButton variant="secondary" @click="agregarProducto">
+         <button type="button" class="btn btn-secondary" @click="agregarProducto">
             Agregar Producto
-         </AppButton>
+          </button>
       </div>
 
-      <AppModal modalId="registerProductModal" title="Registrar Nuevo Producto" v-if="showRegisterModal">
-        <template #body>
-          <div class="mb-3"><label class="form-label">Código</label><input type="text" v-model="nuevoProducto.codigo" class="form-control" placeholder="Código" /></div>
-          <div class="mb-3"><label class="form-label">Descripción</label><input type="text" v-model="nuevoProducto.descripcion" class="form-control" placeholder="Descripción" /></div>
-          <div class="mb-3"><label class="form-label">Cantidad</label><input type="number" v-model="nuevoProducto.cantidad" class="form-control" placeholder="Cantidad" /></div>
-          <div class="mb-3"><label class="form-label">Unidad de Medida</label><input type="text" v-model="nuevoProducto.unidadMedida" class="form-control" placeholder="Unidad de Medida" /></div>
-          <div class="mb-3"><label class="form-label">Fecha de Vencimiento</label><input type="date" v-model="nuevoProducto.fechaVencimiento" class="form-control" /></div>
-        </template>
-        <template #footer>
-          <AppButton variant="primary" @click="registrarProducto">Registrar</AppButton>
-          <AppButton variant="secondary" @click="closeRegisterModal">Cancelar</AppButton>
-        </template>
-      </AppModal>
 
 
       <!-- Tabla de productos agregados -->
@@ -82,17 +85,21 @@
           <td><input v-if="productoEditandoIndex === index" v-model="productoData.unidadMedida" class="form-control form-control-sm" /><span v-else>{{ producto.unidadMedida }}</span></td>
           <td><input v-if="productoEditandoIndex === index" v-model="productoData.descripcion" class="form-control form-control-sm" /><span v-else>{{ producto.descripcion }}</span></td>
           <td>
-            <AppButton v-if="productoEditandoIndex === index" variant="success" customClass="btn-sm me-1" @click="guardarEdicionProducto">Guardar</AppButton>
-            <AppButton v-else variant="primary" customClass="btn-sm me-1" @click="editarProducto(index)">Editar</AppButton>
-            <AppButton variant="danger" customClass="btn-sm" @click="eliminarProducto(index)">Eliminar</AppButton>
+            <template v-if="productoEditandoIndex === index">
+              <button type="button" class="btn btn-success btn-sm me-1" @click="guardarEdicionProducto">Guardar</button>
+              <button type="button" class="btn btn-warning btn-sm me-1" @click="cancelarEdicion">Cancelar</button>
+            </template>
+            <template v-else>
+              <button type="button" class="btn btn-primary btn-sm me-1" @click="editarProducto(index)">Editar</button>
+              <button type="button" class="btn btn-danger btn-sm" @click="eliminarProducto(index)">Eliminar</button>
+            </template>
           </td>
+
         </tr>
       </AppTable>
 
       <div class="d-grid gap-2 mt-4">
-         <AppButton variant="success" type="submit">
-           Guardar Nota de Remisión
-         </AppButton>
+        <button type="submit" class="btn btn-success">Guardar Nota de Remisión </button>
       </div>
     </form>
   </div>
@@ -100,16 +107,16 @@
   
 <script>
 import NotaDeRemisionService from '@/services/NotaDeRemisionServiceMock';
-import AppButton from '@/components/AppButton.vue';
-import AppModal from '@/components/AppModal.vue';
 import AppTable from '@/components/AppTable.vue';
+import RegistrarProveedorModal from '@/components/RegistrarProveedorModal.vue';
+import RegistrarProductoModal from '@/components/RegistrarProductoModal.vue';
 
 export default {
   name: 'NotaDeRemision',
   components: {
-    AppButton,
-    AppModal,
-    AppTable
+    AppTable,
+    RegistrarProveedorModal,
+    RegistrarProductoModal
   },
   props: ['id'], // Recibe el id como prop
   data() {
@@ -129,6 +136,7 @@ export default {
         fechaVencimiento: ''
       },
       showRegisterModal: false,
+      showProveedorModal: false,
       nuevoProducto: {
         codigo: '',
         descripcion: '',
@@ -137,7 +145,9 @@ export default {
         fechaVencimiento: '',
       },
       productos: [],
-      notasDeRemision: [] // Lista de notas cargadas si es necesario
+      notasDeRemision: [],
+      productoEditandoIndex: null,
+      originalProducto: null
     };
   },
   methods: {
@@ -154,6 +164,10 @@ export default {
         this.showRegisterModal = true; // Mostrar modal si no se encuentra el producto
       }
     },
+    onProductRegistered(newProduct) {
+      // Aquí asignas el producto recién creado al 'productoData' actual
+      this.productoData = { ...newProduct };
+    },
     closeRegisterModal() {
       this.showRegisterModal = false;
       this.nuevoProducto = {
@@ -163,6 +177,23 @@ export default {
         unidadMedida: '',
         fechaVencimiento: '',
       };
+    },
+    cancelarEdicion() {
+      // Si quieres revertir el producto en el array:
+      if (this.productoEditandoIndex !== null && this.originalProducto) {
+        this.productos[this.productoEditandoIndex] = { ...this.originalProducto };
+      }
+
+      // Deja de editar y limpia campos
+      this.productoEditandoIndex = null;
+      this.limpiarCamposProducto();
+      this.originalProducto = null;  // ya no se necesita la copia
+    },
+    onProveedorRegistered(nuevoProv) {
+      // Asignas los datos a la nota actual
+      this.notaData.ruc = nuevoProv.ruc;
+      this.notaData.razonSocial = nuevoProv.razonSocial;
+      // Si deseas guardar teléfono en algún lugar, puedes hacerlo también
     },
     registrarProducto() {
       NotaDeRemisionService.guardarProducto(this.nuevoProducto); // Implementa esta función en el servicio mock
@@ -185,6 +216,18 @@ export default {
         }
       } catch (error) {
         console.error('Error al cargar la nota de remisión:', error);
+      }
+    },
+    async autocompletarProveedor() {
+      if (!this.notaData.ruc) return;
+      const proveedor = await NotaDeRemisionService.obtenerProveedorPorRuc(this.notaData.ruc);
+      if (proveedor) {
+        // Asigna datos si existe
+        this.notaData.razonSocial = proveedor.razonSocial;
+        // Podrías guardar el teléfono si deseas en otra propiedad
+      } else {
+        // Si no existe => abrir modal
+        this.showProveedorModal = true;
       }
     },
     async guardarNotaRemision() {
@@ -212,6 +255,10 @@ export default {
       this.limpiarCamposProducto();
     },
     editarProducto(index) {
+       // Guarda la versión original, por si se cancela
+        this.originalProducto = { ...this.productos[index] };
+
+      // Copia al formulario de edición
       this.productoData = { ...this.productos[index] };
       this.productoEditandoIndex = index;
     },

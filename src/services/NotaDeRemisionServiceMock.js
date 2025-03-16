@@ -60,6 +60,18 @@ class NotaDeRemisionServiceMock {
       setTimeout(() => resolve(productoEncontrado || null), 300);
     });
   }
+
+  async obtenerProveedorPorRuc(ruc) {
+    return new Promise((resolve) => {
+      const proveedoresSimulados = [
+        { ruc: '1234-0', razonSocial: 'Distribuidora ABC', telefono: '021 555-123' }
+      ];
+      setTimeout(() => {
+        const encontrado = proveedoresSimulados.find((prov) => prov.ruc === ruc);
+        resolve(encontrado || null);
+      }, 300);
+    });
+  }
   
   guardarProducto(producto) {
     console.log('Producto registrado:', producto);

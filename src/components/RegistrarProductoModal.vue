@@ -12,15 +12,15 @@
             <div class="modal-body">
               <div class="mb-3">
                 <label class="form-label">Código</label>
-                <input type="text" class="form-control" v-model="productData.codigo" placeholder="Código" />
+                <input type="text" class="form-control" v-model="productData.codigo" placeholder="Código" @keydown.enter.prevent />
               </div>
               <div class="mb-3">
                 <label class="form-label">Descripción</label>
-                <input type="text" class="form-control" v-model="productData.descripcion" placeholder="Descripción del Producto" />
+                <input type="text" class="form-control" v-model="productData.descripcion" placeholder="Descripción del Producto" @keydown.enter.prevent />
               </div>
               <div class="mb-3">
                 <label class="form-label">Valor Unitario</label>
-                <input type="number" class="form-control" v-model="productData.valorUnitario" placeholder="Valor Unitario" />
+                <input type="number" class="form-control" v-model="productData.valorUnitario" placeholder="Valor Unitario" @keydown.enter.prevent/>
               </div>
               <div class="mb-3 d-flex align-items-center">
                 <!-- Añadimos algo de margen al label -->
