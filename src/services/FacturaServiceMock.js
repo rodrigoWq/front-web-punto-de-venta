@@ -56,6 +56,22 @@ class FacturaServiceMock {
       }, 300);
     });
   }
+
+  async obtenerProveedorPorRuc(ruc) {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        // Datos de prueba (puedes añadir más si quieres)
+        const proveedoresSimulados = [
+          { ruc: '1234-0', razonSocial: 'Proveedor de Ejemplo S.A.', telefono: '021-444222' }
+        ];
+  
+        // Busca si existe un proveedor con el RUC ingresado
+        const proveedorEncontrado = proveedoresSimulados.find((p) => p.ruc === ruc);
+        resolve(proveedorEncontrado || null);
+      }, 300);
+    });
+  }
+  
   
   
 

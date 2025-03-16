@@ -6,7 +6,7 @@
           <div class="row g-3 mb-3">
               <div class="col-md-6">
                   <label for="ruc" class="form-label">RUC</label>
-                  <input type="text" v-model="factura.ruc" class="form-control" placeholder="RUC del proveedor">
+                  <input type="text" v-model="factura.ruc" class="form-control" placeholder="RUC del proveedor" @blur="autocompletarProveedor"  @keydown.enter.prevent>
               </div>
               <div class="col-md-6">
                   <label for="razon_social" class="form-label">Nombre o Razón Social</label>
@@ -80,11 +80,19 @@
         @product-registered="onProductRegistered"
         @close="closeRegisterModal"
       />
+      <!-- Modal para registrar un proveedor -->
+      <RegistrarProveedorModal
+        :showModal="showProveedorModal"
+        :initialRuc="factura.ruc"
+        @proveedor-registered="onProveedorRegistered"
+        @close="showProveedorModal = false"
+      />
+
 
 
       <!-- Productos Agregados -->
       <h3>Productos Agregados</h3>
-      <AppTable :headers="['Código', 'Descripción', 'Cantidad', 'Valor Unitario', 'Exenta', '5%', '10%', 'Acciones']">
+      <AppTable :headers="['Código', 'Descripción', 'Cantidad', 'Valor Unitario', 'Exenta', 'Iva 5%', 'Iva 10%', 'Acciones']">
         <tr v-for="(producto, index) in factura.productos" :key="index">
           <td>
             <input v-if="productoEditandoIndex === index" v-model="productoData.codigo" class="form-control form-control-sm" />
@@ -103,16 +111,16 @@
             <span v-else>{{ producto.valorUnitario }}</span>
           </td>
           <td>
-            <input v-if="productoEditandoIndex === index" v-model.number="productoData.exenta" type="number" class="form-control form-control-sm" />
-            <span v-else>{{ producto.exenta }}</span>
+            <!--<input v-if="productoEditandoIndex === index" v-model.number="productoData.exenta" type="number" class="form-control form-control-sm" />-->
+            <span>{{ producto.exenta }}</span>
           </td>
           <td>
-            <input v-if="productoEditandoIndex === index" v-model.number="productoData.iva5" type="number" class="form-control form-control-sm" />
-            <span v-else>{{ producto.iva5 }}</span>
+            <!--<input v-if="productoEditandoIndex === index" v-model.number="productoData.iva5" type="number" class="form-control form-control-sm" />-->
+            <span>{{ producto.iva5 }}</span>
           </td>
           <td>
-            <input v-if="productoEditandoIndex === index" v-model.number="productoData.iva10" type="number" class="form-control form-control-sm" />
-            <span v-else>{{ producto.iva10 }}</span>
+            <!--<input v-if="productoEditandoIndex === index" v-model.number="productoData.iva10" type="number" class="form-control form-control-sm" />-->
+            <span>{{ producto.iva10 }}</span>
           </td>
           <td>
             <template v-if="productoEditandoIndex === index">
@@ -153,7 +161,7 @@
           </div>
 
           <div class ="d-grid gap-2 mt-4">
-            <button type="submit" class="btn btn-success mt-4">Guardar Factura</button>
+            <button type="submit" class="btn btn-success mt-4" >Guardar Factura</button>
           </div>
       </form>
   </div>
@@ -165,6 +173,7 @@ import Producto from '@/models/Producto';
 import FacturaService from '@/services/FacturaServiceMock';
 import AppTable from '@/components/AppTable.vue';
 import RegistrarProductoModal from '@/components/RegistrarProductoModal.vue';
+import RegistrarProveedorModal from '@/components/RegistrarProveedorModal.vue';
 
 
 export default {
@@ -172,6 +181,7 @@ export default {
   components: {
     AppTable,
     RegistrarProductoModal,
+    RegistrarProveedorModal
   },
   props: {
     datosParaFactura: {
@@ -193,6 +203,7 @@ export default {
               exenta: 0,
           },
         showRegisterModal: false,
+        showProveedorModal: false,
         nuevoProducto: {
             codigo: '',
             descripcion: '',
@@ -217,6 +228,23 @@ export default {
 
             }
        },
+      async autocompletarProveedor() {
+      if (!this.factura.ruc) return;
+
+      // Supongamos que tienes un método en tu servicio para buscar un proveedor:
+      const proveedor = await FacturaService.obtenerProveedorPorRuc(this.factura.ruc);
+
+      if (proveedor) {
+        // Si lo encontró, asignamos sus datos a la factura
+        this.factura.razonSocial = proveedor.razonSocial;
+        // Ejemplo: si quisieras asignar teléfono u otros campos
+        // this.factura.telefono = proveedor.telefono;
+      } else {
+        // Si no existe, abrimos el modal para registrar un proveedor nuevo
+        this.showProveedorModal = true;
+      }
+    },
+
       async cargarFacturaDesdeParams() {
           const id = Number(this.$route.params.id);
           try {
@@ -248,6 +276,14 @@ export default {
         // pero por ahora solo lo agregamos al array de productos de la factura
         this.productoData = { ...newProduct };
       },
+      onProveedorRegistered(nuevoProveedor) {
+        // Lógica para "guardar" al proveedor en DB (futuro) o en un array local
+        // O para asignar datos en la factura actual
+        this.factura.ruc = nuevoProveedor.ruc;
+        this.factura.razonSocial = nuevoProveedor.razonSocial;
+        // Teléfono u otros campos si necesitas
+      },
+
       closeRegisterModal() {
         this.showRegisterModal = false;
         this.nuevoProducto = { codigo: '', descripcion: '', valorUnitario: 0, tipoImpuesto: 'exenta' };
