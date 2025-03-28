@@ -82,63 +82,43 @@
           // Datos para la solicitud al backend
           
           const loginData = {
-            nombre_usuario: this.username,
+            usuario: this.username,
             password: this.password
           };
   
-          fetch(`${process.env.VUE_APP_LOGIN_URL}${loginData.nombre_usuario}`,
-           {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json"
-              },
-              body: JSON.stringify(loginData)
-            }
-          )
-            .then((response) => response.json())
-            .then((data) => {
+          fetch(`${process.env.VUE_APP_LOGIN_URL}auth/login`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify(loginData)
+            })
+          .then((response) => {
+              // Verificar si el código de respuesta es 200
+              if (response.status === 200) {
+                return response.json();
+              } else {
+                throw new Error("Código de error: " + response.status);
+              }
+            })
+          .then((data) => {
+              // Si existe token, guardamos datos y redirigimos
               if (data.token) {
-                // Guardar token y rol en localStorage
                 localStorage.setItem("token", data.token);
                 localStorage.setItem("rol_id", data.rol_id);
-  
-                // Redirigir según el rol_id
-                if (data.rol_id === 1) {
-                  this.$router.push("/pantalla-inicio");
-                } else {
-                  this.$router.push("/pantalla-inicio");
-                }
+                console.log(data);
+                this.$router.push("/pantalla-inicio");
               } else {
                 this.passwordError = "Usuario o contraseña incorrectos.";
               }
             })
-            .catch((error) => {
+          .catch((error) => {
               console.error("Error:", error);
               this.passwordError = "Ocurrió un error al intentar iniciar sesión.";
-            });
-            
-        }
-        // Simulación de respuesta de la API para seguir con el flujo
-        const simulatedResponse = {
-          token: "simulated-token-12345",
-          rol_id: 1 // Cambia según el rol que necesites simular
-        };
-
-        if (simulatedResponse.token) {
-          // Guardar token y rol en localStorage
-          localStorage.setItem("token", simulatedResponse.token);
-          localStorage.setItem("rol_id", simulatedResponse.rol_id);
-
-          // Redirigir según el rol_id
-          if (simulatedResponse.rol_id === 1) {
-            this.$router.push("/pantalla-inicio");
-          } else {
-            this.$router.push("/pantalla-inicio");
+            });  
           }
-        } else {
-          this.passwordError = "Usuario o contraseña incorrectos.";
+
         }
-      }
     },
     mounted() {
       // Limpiar sesión al cargar la pantalla de login

@@ -73,21 +73,11 @@
         </button>
       </div>
 
-      <!-- Modal para registrar un producto -->
-      <RegistrarProductoModal
+      <SimpleRegisterModal
         :showModal="showRegisterModal"
-        :initialCode="productoData.codigo"
-        @product-registered="onProductRegistered"
-        @close="closeRegisterModal"
-      />
-      <!-- Modal para registrar un proveedor -->
-      <RegistrarProveedorModal
-        :showModal="showProveedorModal"
-        :initialRuc="factura.ruc"
-        @proveedor-registered="onProveedorRegistered"
-        @close="showProveedorModal = false"
-      />
-
+        :title="registerModalTitle"
+        @close="showRegisterModal = false"
+        @register="irARegistro" />
 
 
       <!-- Productos Agregados -->
@@ -172,16 +162,14 @@ import Factura from '@/models/Factura';
 import Producto from '@/models/Producto';
 import FacturaService from '@/services/FacturaServiceMock';
 import AppTable from '@/components/AppTable.vue';
-import RegistrarProductoModal from '@/components/RegistrarProductoModal.vue';
-import RegistrarProveedorModal from '@/components/RegistrarProveedorModal.vue';
+import SimpleRegisterModal from '@/components/SimpleRegisterModal.vue';
 
 
 export default {
   name: 'FacturaView',
   components: {
     AppTable,
-    RegistrarProductoModal,
-    RegistrarProveedorModal
+    SimpleRegisterModal
   },
   props: {
     datosParaFactura: {
@@ -215,33 +203,28 @@ export default {
       };
   },
   methods: {
-      async autocompletarProducto() {
-            if (!this.productoData.codigo) return;
-            const producto = await FacturaService.obtenerProductoPorCodigo(this.productoData.codigo);
-            if (producto) {
-                this.productoData.descripcion = producto.descripcion;
-                this.productoData.valorUnitario = producto.valorUnitario;
-                this.productoData.tipoImpuesto = producto.tipoImpuesto;
-            } else {
-                this.nuevoProducto.codigo = this.productoData.codigo; // Autocompletar el código en el modal
-                this.showRegisterModal = true; // Mostrar modal si no se encuentra el producto
-
-            }
-       },
-      async autocompletarProveedor() {
-      if (!this.factura.ruc) return;
-
-      // Supongamos que tienes un método en tu servicio para buscar un proveedor:
-      const proveedor = await FacturaService.obtenerProveedorPorRuc(this.factura.ruc);
-
-      if (proveedor) {
-        // Si lo encontró, asignamos sus datos a la factura
-        this.factura.razonSocial = proveedor.razonSocial;
-        // Ejemplo: si quisieras asignar teléfono u otros campos
-        // this.factura.telefono = proveedor.telefono;
+    async autocompletarProducto() {
+      if (!this.productoData.codigo) return;
+      const producto = await FacturaService.obtenerProductoPorCodigo(this.productoData.codigo);
+      if (producto) {
+        this.productoData.descripcion = producto.descripcion;
+        this.productoData.valorUnitario = producto.valorUnitario;
+        this.productoData.tipoImpuesto = producto.tipoImpuesto;
       } else {
-        // Si no existe, abrimos el modal para registrar un proveedor nuevo
-        this.showProveedorModal = true;
+        // Mostrar modal indicando que el producto no fue encontrado
+        this.registerModalTitle = "Producto no encontrado";
+        this.showRegisterModal = true;
+      }
+    },
+    async autocompletarProveedor() {
+      if (!this.factura.ruc) return;
+      const proveedor = await FacturaService.obtenerProveedorPorRuc(this.factura.ruc);
+      if (proveedor) {
+        this.factura.razonSocial = proveedor.razonSocial;
+      } else {
+        // Mostrar modal indicando que el proveedor no fue encontrado
+        this.registerModalTitle = "Proveedor no encontrado";
+        this.showRegisterModal = true;
       }
     },
 
@@ -283,7 +266,15 @@ export default {
         this.factura.razonSocial = nuevoProveedor.razonSocial;
         // Teléfono u otros campos si necesitas
       },
-
+      irARegistro() {
+        if (this.registerModalTitle === "Producto no encontrado") {
+          // Navega a la página de registro de producto
+          this.$router.push({ name: 'RegistrarProducto' });
+        } else if (this.registerModalTitle === "Proveedor no encontrado") {
+          // Navega a la página de registro de proveedor
+          this.$router.push({ name: 'RegistrarProveedor' });
+        }
+      },
       closeRegisterModal() {
         this.showRegisterModal = false;
         this.nuevoProducto = { codigo: '', descripcion: '', valorUnitario: 0, tipoImpuesto: 'exenta' };

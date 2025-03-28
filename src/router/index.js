@@ -6,12 +6,25 @@ import FacturaView from '../views/Factura.vue'; // Importa la pantalla de Factur
 import NotaDeRemision from '../views/NotaDeRemision.vue'; // Importa la pantalla de NotaDeRemision
 import ListarComprobantes from '../views/ListarComprobantes.vue'; // Importa la pantalla de ListarComprobantes
 import UserManagement from '../views/UserManagement.vue'; // Importa UserManagement
+import RegistrarProveedor from '@/components/RegistrarProveedorModal.vue';
+import RegistrarProductoModal from '@/components/RegistrarProductoModal.vue';
 
 const routes = [
   {
     path: '/',
     name: 'Login',
     component: LoginView
+  },
+  {
+    path: '/registrar-proveedor',
+    name: 'RegistrarProveedor',
+    component: RegistrarProveedor
+  },
+  {
+    path: '/registrar-producto',
+    name: 'RegistrarProducto',
+    component: RegistrarProductoModal
+
   },
   {
     path: '/pantalla-inicio',
