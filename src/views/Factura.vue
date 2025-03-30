@@ -60,9 +60,9 @@
         <div class="col-md-3">
           <label class="form-label">Tipo de Impuesto</label>
           <select v-model="productoData.tipoImpuesto" class="form-control" @keydown.enter.prevent>
-            <option value="exenta">Exenta</option>
-            <option value="iva5">IVA 5%</option>
-            <option value="iva10">IVA 10%</option>
+            <option :value="3">Exenta</option>
+            <option :value="2">IVA 5%</option>
+            <option :value="1">IVA 10%</option>
           </select>
         </div>
       </div>
@@ -163,6 +163,7 @@ import Producto from '@/models/Producto';
 import FacturaService from '@/services/FacturaServiceMock';
 import AppTable from '@/components/AppTable.vue';
 import SimpleRegisterModal from '@/components/SimpleRegisterModal.vue';
+import apiService from '@/services/apiService.js';
 
 
 export default {
@@ -191,7 +192,6 @@ export default {
               exenta: 0,
           },
         showRegisterModal: false,
-        showProveedorModal: false,
         nuevoProducto: {
             codigo: '',
             descripcion: '',
@@ -205,24 +205,38 @@ export default {
   methods: {
     async autocompletarProducto() {
       if (!this.productoData.codigo) return;
-      const producto = await FacturaService.obtenerProductoPorCodigo(this.productoData.codigo);
-      if (producto) {
-        this.productoData.descripcion = producto.descripcion;
-        this.productoData.valorUnitario = producto.valorUnitario;
-        this.productoData.tipoImpuesto = producto.tipoImpuesto;
-      } else {
-        // Mostrar modal indicando que el producto no fue encontrado
+      try {
+        const url = `${process.env.VUE_APP_API_BASE_URL}/api/products/barcode/${this.productoData.codigo}`;
+        const response = await apiService.get(url);
+        const producto = response.data;
+        if (producto) {
+          this.productoData.descripcion = producto.descripcion;
+          this.productoData.valorUnitario = producto.valorUnitario || 0;
+          this.productoData.tipoImpuesto = producto.tipo_iva;
+        } else {
+          this.registerModalTitle = "Producto no encontrado";
+          this.showRegisterModal = true;
+        }
+      } catch (error) {
+        console.error("Error al obtener el producto:", error);
         this.registerModalTitle = "Producto no encontrado";
         this.showRegisterModal = true;
       }
     },
     async autocompletarProveedor() {
       if (!this.factura.ruc) return;
-      const proveedor = await FacturaService.obtenerProveedorPorRuc(this.factura.ruc);
-      if (proveedor) {
-        this.factura.razonSocial = proveedor.razonSocial;
-      } else {
-        // Mostrar modal indicando que el proveedor no fue encontrado
+      try {
+        const url = `${process.env.VUE_APP_API_BASE_URL}/api/providers/${this.factura.ruc}`;
+        const response = await apiService.get(url);
+        const proveedor = response.data;
+        if (proveedor) {
+          this.factura.razonSocial = proveedor.nombre;
+        } else {
+          this.registerModalTitle = "Proveedor no encontrado";
+          this.showRegisterModal = true;
+        }
+      } catch (error) {
+        console.error("Error al obtener el proveedor:", error);
         this.registerModalTitle = "Proveedor no encontrado";
         this.showRegisterModal = true;
       }
@@ -272,7 +286,7 @@ export default {
           this.$router.push({ name: 'RegistrarProducto' });
         } else if (this.registerModalTitle === "Proveedor no encontrado") {
           // Navega a la página de registro de proveedor
-          this.$router.push({ name: 'RegistrarProveedor' });
+          this.$router.push({ name: 'RegistrarProveedor'});
         }
       },
       closeRegisterModal() {
@@ -362,7 +376,7 @@ export default {
     if (this.$route.params.id) {
       // Cargar la factura existente si hay un id
       await this.cargarFacturaDesdeParams();
-    } 
+    }
   },
   watch: {
   '$route.query.datosParaFactura': {

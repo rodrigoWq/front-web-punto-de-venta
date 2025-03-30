@@ -11,9 +11,9 @@
             <label for="productCode" class="form-label">Código del producto</label>
             <div class="input-group">
               <input type="text" class="form-control" v-model="productCode" placeholder="Ingresa el código" />
-              <AppButton variant="success" @click="agregarProducto">
+              <button type="button" class="btn btn-success" @click="agregarProducto">
                 <i class="bi bi-plus"></i>
-              </AppButton>
+              </button>
             </div>
           </div>
           <div class="col">
@@ -24,9 +24,9 @@
             <label for="rucCliente" class="form-label">RUC / CI</label>
             <div class="input-group">
               <input type="text" class="form-control" v-model="rucCliente" placeholder="Ingresa el RUC/CI del cliente" />
-              <AppButton variant="success" @click="agregarRUC">
+              <button type="button" class="btn btn-success" @click="agregarRUC">
                 <i class="bi bi-plus"></i>
-              </AppButton>
+              </button>
             </div>
           </div>
         </div>
@@ -43,9 +43,9 @@
             <td>{{ producto.unidad_medida }}</td>
             <td>{{ producto.precio }}</td>
             <td>
-              <AppButton variant="danger" customClass="btn-sm" @click="eliminarProducto(index)">
+              <button type="button" class="btn btn-danger btn-sm" @click="eliminarProducto(index)">
                 <i class="bi bi-trash"></i>
-              </AppButton>
+              </button>
             </td>
           </tr>
         </AppTable>
@@ -57,26 +57,24 @@
     <div class="total-footer-section">
       <h4>
         Total: <span>{{ totalAmount }}</span>
-      </h4>
+      </h4> 
+      <!-- Reemplazo en la sección de Total y Acciones -->
       <div class="button-container">
-        <AppButton variant="warning" @click="ponerVentaEnEspera">Poner Venta en Espera</AppButton>
-        <AppButton variant="danger" @click="cancelarVenta">Cancelar Venta</AppButton>
-        <AppButton variant="success" @click="confirmarVenta">Confirmar Venta</AppButton>
+        <button type="button" class="btn btn-warning" @click="ponerVentaEnEspera">Poner Venta en Espera</button>
+        <button type="button" class="btn btn-danger" @click="cancelarVenta">Cancelar Venta</button>
+        <button type="button" class="btn btn-success" @click="confirmarVenta">Confirmar Venta</button>
       </div>
+
     </div>
 
     <!-- Footer Fijo al Final -->
     <div class="footer d-flex w-100 align-items-center">
-
       <div class="flex-grow-1 text-center">
         Cajero en turno: Juan Pérez | Hora: 10:45 AM
       </div>
-
-
-      <AppButton variant="primary" class="ms-auto">
+      <button type="button" class="btn btn-primary ms-auto">
         Reimprimir último ticket
-      </AppButton>
-
+      </button>
     </div>
 
 
@@ -84,16 +82,16 @@
 </template>
 
 <script>
-import AppButton from '../components/AppButton.vue';
+
 import AppTable from '../components/AppTable.vue';
 import AppNavbar from '../components/AppNavbar.vue';
 import AppPagination from '../components/AppPagination.vue';
+import apiService from '../services/apiService.js';
 
 
 export default {
   name: "PantallaInicio",
   components: {
-    AppButton,
     AppTable,
     AppNavbar,
     AppPagination
@@ -124,28 +122,35 @@ export default {
     }
   },
   methods: {
-    agregarProducto() {
+    async agregarProducto() {
       if (!this.productCode) {
         alert("Por favor, ingresa un código de producto");
         return;
       }
-      fetch(`${process.env.VUE_APP_ADD_PRODUCTO_TABLE_SALES}codigo_barras=${this.productCode}`)
-        .then(response => response.json())
-        .then(product => {
-          if (product) {
-            const productoNuevo = {
-              codigo: product.producto_id,
-              nombre: product.nombre,
-              cantidad: this.productQuantity,
-              unidad_medida: product.unidad_medida,
-              precio: product.precio
-            };
-            this.productos.push(productoNuevo);
-          } else {
-            alert("Producto no encontrado");
-          }
-        })
-        .catch(error => console.error("Error al obtener el producto:", error));
+      try {
+        // Se usa el método GET del servicio, pasando el parámetro 'codigo_barras'
+        const url = `${process.env.VUE_APP_API_BASE_URL}/api/products/${this.productCode}`;
+        const response = await apiService.get(url);
+        const product = response.data;
+        if (product) {
+          // Mapeamos solo los campos que usaremos en el front
+          const productoNuevo = {
+            codigo: product.producto_id,
+            nombre: product.nombre,
+            cantidad: this.productQuantity,
+            // Como el backend envía 'unidad_medida_nombre', lo usamos para mostrar la unidad
+            unidad_medida: product.unidad_medida_nombre,
+            // Si el precio no viene en la respuesta, se asigna 0 (o el valor que se considere adecuado)
+            precio: product.precio || 0
+          };
+          this.productos.push(productoNuevo);
+        } else {
+          alert("Producto no encontrado");
+        }
+      } catch (error) {
+        console.error("Error al obtener el producto:", error);
+        alert("Error al obtener el producto");
+      }
     },
     agregarRUC() {
       // Lógica para agregar RUC (se mantiene igual)

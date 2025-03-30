@@ -16,14 +16,14 @@
                 <i class="bi bi-people"></i> Clientes
               </router-link>
             </li>
-            <li class="nav-item">
+            <li class="nav-item" v-if="$route.path === '/pantalla-inicio'">
               <a class="nav-link" href="#" data-bs-toggle="modal" data-bs-target="#onHoldSalesModal">
                 <i class="bi bi-hourglass-split"></i> Ventas en espera
               </a>
             </li>
             <li class="nav-item admin-only">
-              <router-link class="nav-link" to="/inventario">
-                <i class="bi bi-box-seam"></i> Inventario
+              <router-link class="nav-link" to="/Productos">
+                <i class="bi bi-box-seam"></i> Productos
               </router-link>
             </li>
             <li class="nav-item">
@@ -195,7 +195,7 @@ export default {
       },
       cerrarSesion() {
         // Lógica de cierre de sesión: remover token, rol, etc.
-        localStorage.removeItem("token");
+        localStorage.removeItem("authToken");
         localStorage.removeItem("rol_id");
         this.$router.push("/"); // O la ruta que desees al cerrar sesión
       }

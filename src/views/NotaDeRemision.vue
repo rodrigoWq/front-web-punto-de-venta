@@ -6,7 +6,7 @@
       <div class="row g-3 mb-3">
         <div class="col-md-4">
           <label for="ruc" class="form-label">RUC</label>
-          <input type="text" v-model="notaData.ruc" class="form-control" placeholder="RUC del destinatario" @blur="autocompletarProveedor">
+          <input type="text" v-model="notaData.ruc" class="form-control" placeholder="RUC del destinatario" @blur="autocompletarProveedor" @keydown.enter.prevent>
         </div>
         <div class="col-md-4">
           <label for="razon_social" class="form-label">Razón Social</label>
@@ -28,28 +28,13 @@
         </div>
       </div>
 
-      <!-- Modal para registrar un producto -->
-      <RegistrarProductoModal
-        :showModal="showRegisterModal"
-        :initialCode="productoData.codigo"
-        @product-registered="onProductRegistered"
-        @close="closeRegisterModal"
-      />
-
-       <!-- Modal para registrar un proveedor -->
-      <RegistrarProveedorModal 
-        :showModal="showProveedorModal"
-        :initialRuc="notaData.ruc"
-        @proveedor-registered="onProveedorRegistered"
-        @close="showProveedorModal = false"
-      />
 
       <!-- Datos de la Mercadería -->
       <h3>Datos de la Mercadería</h3>
       <div class="row g-3 mb-3">
         <div class="col-md-2">
           <label class="form-label">Código de Barra</label>
-          <input type="text" v-model="productoData.codigo" class="form-control" placeholder="Código de Barra" @blur="autocompletarProducto">
+          <input type="text" v-model="productoData.codigo" class="form-control" placeholder="Código de Barra" @blur="autocompletarProducto" @keydown.enter.prevent>
         </div>
         <div class="col-md-2">
           <label class="form-label">Cantidad</label>
@@ -74,7 +59,11 @@
           </button>
       </div>
 
-
+      <SimpleRegisterModal
+        :showModal="showRegisterModal"
+        :title="registerModalTitle"
+        @close="showRegisterModal = false"
+        @register="irARegistro" />
 
       <!-- Tabla de productos agregados -->
       <h3>Productos Agregados</h3>
@@ -108,15 +97,15 @@
 <script>
 import NotaDeRemisionService from '@/services/NotaDeRemisionServiceMock';
 import AppTable from '@/components/AppTable.vue';
-import RegistrarProveedorModal from '@/components/RegistrarProveedorModal.vue';
-import RegistrarProductoModal from '@/components/RegistrarProductoModal.vue';
+import apiService from '@/services/apiService.js';
+import SimpleRegisterModal from '@/components/SimpleRegisterModal.vue';
 
 export default {
   name: 'NotaDeRemision',
   components: {
     AppTable,
-    RegistrarProveedorModal,
-    RegistrarProductoModal
+    SimpleRegisterModal
+  
   },
   props: ['id'], // Recibe el id como prop
   data() {
@@ -136,7 +125,6 @@ export default {
         fechaVencimiento: ''
       },
       showRegisterModal: false,
-      showProveedorModal: false,
       nuevoProducto: {
         codigo: '',
         descripcion: '',
@@ -153,15 +141,25 @@ export default {
   methods: {
     async autocompletarProducto() {
       if (!this.productoData.codigo) return;
-      const producto = await NotaDeRemisionService.obtenerProductoPorCodigo(this.productoData.codigo);
-      if (producto) {
-        this.productoData.descripcion = producto.descripcion;
-        this.productoData.cantidad = producto.cantidad;
-        this.productoData.unidadMedida = producto.unidadMedida;
-        this.productoData.fechaVencimiento = producto.fechaVencimiento;
-      } else {
-        this.nuevoProducto.codigo = this.productoData.codigo; // Autocompletar el código en el modal
-        this.showRegisterModal = true; // Mostrar modal si no se encuentra el producto
+      try {
+        const url = `${process.env.VUE_APP_API_BASE_URL}/api/products/barcode/${this.productoData.codigo}`;
+        const response = await apiService.get(url);
+        const producto = response.data;
+        if (producto) {
+          this.productoData.descripcion = producto.descripcion;
+          this.productoData.unidadMedida = producto.unidad_medida_id;
+          this.productoData.fechaVencimiento = producto.fechaVencimiento;
+        } else {
+          // Si no se encuentra, precargar el código en el modal de registro
+          this.nuevoProducto.codigo = this.productoData.codigo;
+          this.showRegisterModal = true;
+          this.registerModalTitle = "Producto no encontrado"
+        }
+      } catch (error) {
+        console.error("Error al obtener el producto:", error);
+        this.nuevoProducto.codigo = this.productoData.codigo;
+        this.registerModalTitle = "Producto no encontrado";
+        this.showRegisterModal = true;
       }
     },
     onProductRegistered(newProduct) {
@@ -220,27 +218,31 @@ export default {
     },
     async autocompletarProveedor() {
       if (!this.notaData.ruc) return;
-      const proveedor = await NotaDeRemisionService.obtenerProveedorPorRuc(this.notaData.ruc);
-      if (proveedor) {
-        // Asigna datos si existe
-        this.notaData.razonSocial = proveedor.razonSocial;
-        // Podrías guardar el teléfono si deseas en otra propiedad
-      } else {
-        // Si no existe => abrir modal
-        this.showProveedorModal = true;
+      try {
+        const url = `${process.env.VUE_APP_API_BASE_URL}/api/providers/${this.notaData.ruc}`;
+        const response = await apiService.get(url);
+        const proveedor = response.data;
+        if (proveedor) {
+          this.notaData.razonSocial = proveedor.nombre;
+        } else {
+          // Si no se encuentra el proveedor, asignar título y mostrar el modal
+          this.registerModalTitle = "Proveedor no encontrado";
+          this.showRegisterModal = true;
+        }
+      } catch (error) {
+        console.error("Error al obtener el proveedor:", error);
+        this.showRegisterModal = true;
+        this.registerModalTitle = "Proveedor no encontrado";
       }
     },
     async guardarNotaRemision() {
       try {
-        // Crear una nueva nota de remisión incluyendo los productos
-        const nuevaNota = {
-          ...this.notaData,
-          productos: this.productos // Añade los productos actuales a la nota
-        };
-        const notasActualizadas = await NotaDeRemisionService.guardarNotaRemision(nuevaNota);
-        this.notasDeRemision = notasActualizadas;
+        const nuevaNota = { ...this.notaData, productos: this.productos };
+        const url = `${process.env.VUE_APP_API_BASE_URL}/api/nota-remision`;
+        const response = await apiService.post(url, nuevaNota);
+        this.notasDeRemision = response.data;
         alert('Nota de remisión guardada correctamente');
-        this.resetNota(); // Reinicia los campos después de guardar
+        this.resetNota();
       } catch (error) {
         console.error('Error al guardar la nota de remisión:', error);
       }
@@ -254,11 +256,19 @@ export default {
       }
       this.limpiarCamposProducto();
     },
+    irARegistro() {
+      if (this.registerModalTitle === "Producto no encontrado") {
+        // Navega a la página de registro de producto
+        this.$router.push({ name: 'RegistrarProducto' });
+      } else if (this.registerModalTitle === "Proveedor no encontrado") {
+        // Navega a la página de registro de proveedor
+        this.$router.push({ name: 'RegistrarProveedor' });
+      }
+    },
     editarProducto(index) {
-       // Guarda la versión original, por si se cancela
-        this.originalProducto = { ...this.productos[index] };
 
-      // Copia al formulario de edición
+      this.originalProducto = { ...this.productos[index] };
+
       this.productoData = { ...this.productos[index] };
       this.productoEditandoIndex = index;
     },

@@ -8,6 +8,7 @@ import ListarComprobantes from '../views/ListarComprobantes.vue'; // Importa la 
 import UserManagement from '../views/UserManagement.vue'; // Importa UserManagement
 import RegistrarProveedor from '@/components/RegistrarProveedorModal.vue';
 import RegistrarProductoModal from '@/components/RegistrarProductoModal.vue';
+import ProductosView from '@/views/ProductosView.vue'; // Importa la pantalla de Productos
 
 const routes = [
   {
@@ -18,12 +19,17 @@ const routes = [
   {
     path: '/registrar-proveedor',
     name: 'RegistrarProveedor',
-    component: RegistrarProveedor
+    component: RegistrarProveedor,
+  },
+  {
+    path: '/productos',
+    name: 'Productos',
+    component: ProductosView
   },
   {
     path: '/registrar-producto',
     name: 'RegistrarProducto',
-    component: RegistrarProductoModal
+    component: RegistrarProductoModal,
 
   },
   {

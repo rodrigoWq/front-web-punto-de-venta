@@ -38,6 +38,8 @@
 </template>
   
 <script>
+import apiService from '@/services/apiService';
+
   export default {
     name: "LoginView",
     data() {
@@ -86,25 +88,12 @@
             password: this.password
           };
   
-          fetch(`${process.env.VUE_APP_LOGIN_URL}auth/login`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json"
-            },
-            body: JSON.stringify(loginData)
-            })
-          .then((response) => {
-              // Verificar si el código de respuesta es 200
-              if (response.status === 200) {
-                return response.json();
-              } else {
-                throw new Error("Código de error: " + response.status);
-              }
-            })
-          .then((data) => {
-              // Si existe token, guardamos datos y redirigimos
+          apiService.post(`${process.env.VUE_APP_LOGIN_URL}auth/login`, loginData)
+            .then(response => {
+              const data = response.data;
               if (data.token) {
-                localStorage.setItem("token", data.token);
+                // Guardamos el token con la clave "authToken" para que el interceptor lo reconozca
+                localStorage.setItem("authToken", data.token);
                 localStorage.setItem("rol_id", data.rol_id);
                 console.log(data);
                 this.$router.push("/pantalla-inicio");
@@ -112,11 +101,12 @@
                 this.passwordError = "Usuario o contraseña incorrectos.";
               }
             })
-          .catch((error) => {
+            .catch(error => {
               console.error("Error:", error);
               this.passwordError = "Ocurrió un error al intentar iniciar sesión.";
-            });  
+            });
           }
+            
 
         }
     },
