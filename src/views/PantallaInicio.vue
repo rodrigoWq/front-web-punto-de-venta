@@ -23,10 +23,7 @@
           <div class="col">
             <label for="rucCliente" class="form-label">RUC / CI</label>
             <div class="input-group">
-              <input type="text" class="form-control" v-model="rucCliente" placeholder="Ingresa el RUC/CI del cliente" />
-              <button type="button" class="btn btn-success" @click="agregarRUC">
-                <i class="bi bi-plus"></i>
-              </button>
+              <input type="text" class="form-control" v-model="rucCliente" placeholder="Ingresa el RUC/CI del cliente"  @blur="verificarRUC"  />
             </div>
           </div>
         </div>
@@ -77,6 +74,9 @@
       </button>
     </div>
 
+    <ModalCliente v-if="showClienteModal" @close="showClienteModal = false" />
+
+
 
   </div>
 </template>
@@ -87,6 +87,7 @@ import AppTable from '../components/AppTable.vue';
 import AppNavbar from '../components/AppNavbar.vue';
 import AppPagination from '../components/AppPagination.vue';
 import apiService from '../services/apiService.js';
+import ModalCliente from '../components/ClienteModal.vue';
 
 
 export default {
@@ -94,7 +95,8 @@ export default {
   components: {
     AppTable,
     AppNavbar,
-    AppPagination
+    AppPagination,
+    ModalCliente,
   },
   data() {
     return {
@@ -103,7 +105,8 @@ export default {
       rucCliente: '',
       productos: [],
       paginaActual: 1,
-      itemsPorPagina: 5
+      itemsPorPagina: 5,
+      showClienteModal: false
     };
   },
   computed: {
@@ -152,10 +155,6 @@ export default {
         alert("Error al obtener el producto");
       }
     },
-    agregarRUC() {
-      // Lógica para agregar RUC (se mantiene igual)
-      console.log("Agregar RUC");
-    },
     eliminarProducto(index) {
       if (confirm("¿Estás seguro de que deseas eliminar este producto?")) {
         this.productos.splice(index, 1);
@@ -193,7 +192,26 @@ export default {
         console.error("Error:", error);
         alert("Hubo un error al poner la venta en espera.");
       }
+    },
+    async verificarRUC() {
+      if (!this.rucCliente.trim()) return;
+      try {
+        const url = `${process.env.VUE_APP_API_BASE_URL}/api/clients/${this.rucCliente}`;
+        const response = await apiService.get(url);
+        const cliente = response.data;
+        if (!cliente || Object.keys(cliente).length === 0) {
+          this.showClienteModal = true;
+        }
+      } catch (error) {
+        // Si el error es por cliente no encontrado, se puede mostrar el modal
+        if (error.response && error.response.status === 404) {
+          this.showClienteModal = true;
+        } else {
+          console.error("Error al verificar RUC:", error);
+        }
+      }
     }
+
   },
   mounted() {
     
