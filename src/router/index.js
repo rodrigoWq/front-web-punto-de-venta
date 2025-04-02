@@ -9,6 +9,7 @@ import UserManagement from '../views/UserManagement.vue'; // Importa UserManagem
 import RegistrarProveedor from '@/components/RegistrarProveedorModal.vue';
 import RegistrarProductoModal from '@/components/RegistrarProductoModal.vue';
 import ProductosView from '@/views/ProductosView.vue'; // Importa la pantalla de Productos
+import ProveedoresView from '@/views/ProveedoresView.vue';
 
 const routes = [
   {
@@ -20,6 +21,12 @@ const routes = [
     path: '/registrar-proveedor',
     name: 'RegistrarProveedor',
     component: RegistrarProveedor,
+  },
+  {
+    path: '/proveedores/editar/:id',
+    name: 'EditarProveedor',
+    component: RegistrarProveedor,
+    props: true
   },
   {
     path: '/productos',
@@ -75,6 +82,11 @@ const routes = [
     path: '/user-management',
     name: 'UserManagement',
     component: UserManagement
+  },
+  {
+    path: '/listar-proveedores',
+    name: 'ListarProveedores',
+    component: ProveedoresView
   }
 ];
 

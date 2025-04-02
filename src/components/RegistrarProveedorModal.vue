@@ -5,7 +5,7 @@
       <div class="col-md-10">
         <div class="card">
           <div class="card-header d-flex justify-content-between align-items-center">
-            <h5 class="mb-0">{{ title }}</h5>
+            <h5 class="mb-0">{{ isEditMode ? 'Editar Proveedor' : title }}</h5>
           </div>
           <div class="card-body">
             <!-- Agrupamos los inputs en filas (rows) con dos columnas cada una -->
@@ -71,6 +71,7 @@ export default {
     
     title: { type: String, default: 'Registrar Proveedor' },
     initialRuc: { type: String, default: '' },
+    id: { type: [String, Number], default: null }
 
   },
   data() {
@@ -88,40 +89,80 @@ export default {
     };
   },
   watch: {
-    showModal(newVal) {
-      if (newVal && this.initialRuc) {
-        this.providerData.ruc = this.initialRuc;
-      }
+    id(newVal) {
+    if (newVal) {
+      this.loadProvider();
     }
+  }
   },
   methods: {
     handleSave() {
-      const url = `${process.env.VUE_APP_API_BASE_URL}/api/providers/`;
-      apiService.post(url, this.providerData)
-        .then(() => {
-          // Reiniciar el formulario
-          this.providerData = {
-            nombre: '',
-            contacto: '',
-            identificacion_fiscal: '',
-            direccion: '',
-            telefono_celular: '',
-            email: '',
-            nombre_fantasia: '',
-            condiciones_pago: ''
-          };
-          // Redirigir a la pantalla correspondiente (factura, nota de remisión, etc.)
-          this.$router.back();
-        })
-        .catch(error => {
-          console.error("Error registrando proveedor:", error);
-          // Puedes agregar una notificación de error aquí
-        });
+      if (this.isEditMode) {
+        const url = `${process.env.VUE_APP_API_BASE_URL}/api/providers/${this.id}`;
+        apiService.put(url, this.providerData)
+          .then(() => {
+            this.$router.back();
+          })
+          .catch(error => {
+            console.error("Error actualizando proveedor:", error);
+          });
+      } else {
+        const url = `${process.env.VUE_APP_API_BASE_URL}/api/providers/`;
+        apiService.post(url, this.providerData)
+          .then(() => {
+            // Reiniciar el formulario si es necesario
+            this.providerData = {
+              nombre: '',
+              contacto: '',
+              identificacion_fiscal: '',
+              direccion: '',
+              telefono_celular: '',
+              email: '',
+              nombre_fantasia: '',
+              condiciones_pago: ''
+            };
+            this.$router.back();
+          })
+          .catch(error => {
+            console.error("Error registrando proveedor:", error);
+          });
+      }
     },
     handleVolver() {
       this.$router.back();
+    },
+    loadProvider() {
+      const url = `${process.env.VUE_APP_API_BASE_URL}/api/providers/${this.id}`;
+      apiService.get(url)
+        .then(response => {
+          // Mapear campos de la respuesta a providerData
+          this.providerData = {
+            nombre: response.data.nombre || '',
+            contacto: response.data.contacto || '',
+            identificacion_fiscal: response.data.nro_documento || '',
+            direccion: response.data.direccion || '',
+            telefono_celular: response.data.telefono_celular || '',
+            email: response.data.email || '',
+            nombre_fantasia: response.data.nombre_fantasia || '',
+            condiciones_pago: response.data.condiciones_pago || ''
+          };
+        })
+        .catch(error => {
+          console.error("Error al cargar proveedor:", error);
+        });
     }
   },
+  computed: {
+    isEditMode() {
+      return !!this.id;
+    }
+  },
+  mounted() {
+    if (this.isEditMode) {
+      this.loadProvider();
+    }
+  },
+
   close() {
       this.$router.go(-1);
   }

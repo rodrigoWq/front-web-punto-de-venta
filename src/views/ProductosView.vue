@@ -6,26 +6,22 @@
         <!-- Puedes agregar botones adicionales si lo requieres -->
         </template>
       </AppHeader>
-      <AppFilter 
-        v-model="searchTerm"
-        placeholder="Buscar por nombre de producto"
-        customClasses="mb-3" />
-
-      <!-- Filtro de Precio (se mantiene para elegir entre todos, sin precio y con precio) -->
-      <div class="mb-3">
-        <div class="d-flex justify-content-end" style="margin-right: 30px;">
-          <button type="button" class="btn btn-outline-primary me-2" :class="{ active: priceFilter === 'all' }" @click="priceFilter = 'all'">Todos</button>
-          <button type="button" class="btn btn-outline-primary me-2" :class="{ active: priceFilter === 'zero' }" @click="priceFilter = 'zero'">Sin Precio</button>
-          <button type="button" class="btn btn-outline-primary" :class="{ active: priceFilter === 'nonzero' }" @click="priceFilter = 'nonzero'">Con Precio</button>
+      <AppFilter  v-model="searchTerm" placeholder="Buscar por nombre de producto" customClasses="mb-3">
+        <div class="mb-3">
+          <div class="d-flex justify-content-end" style="margin-right: 30px;">
+            <button type="button" class="btn btn-outline-primary me-2" :class="{ active: priceFilter === 'all' }" @click="priceFilter = 'all'">Todos</button>
+            <button type="button" class="btn btn-outline-primary me-2" :class="{ active: priceFilter === 'zero' }" @click="priceFilter = 'zero'">Sin Precio</button>
+            <button type="button" class="btn btn-outline-primary" :class="{ active: priceFilter === 'nonzero' }" @click="priceFilter = 'nonzero'">Con Precio</button>
+          </div>
         </div>
-      </div>
+      </AppFilter>
 
   
       <!-- Tabla de Productos -->
       <AppTable :headers="['Nombre', 'Precio', 'Categoría', 'Acciones']">
         <tr v-for="product in filteredProducts" :key="product.producto_id">
           <td>{{ product.nombre }}</td>
-          <td>{{ product.precio || 'Sin precio' }}</td>
+          <td>{{ product.precio_venta || 'Sin precio' }}</td>
           <td>{{ product.categoria_nombre }}</td>
           <td>
             <button class="btn btn-primary btn-sm" @click="openModal(product)">
@@ -103,9 +99,9 @@ export default {
       }
 
       if (this.priceFilter === 'zero') {
-        filtered = filtered.filter(p => !p.precio || Number(p.precio) === 0);
+        filtered = filtered.filter(p => !p.precio_venta || Number(p.precio_venta) === 0);
       } else if (this.priceFilter === 'nonzero') {
-        filtered = filtered.filter(p => p.precio && Number(p.precio) > 0);
+        filtered = filtered.filter(p => p.precio_venta && Number(p.precio_venta) > 0);
       }
       return filtered.slice((this.currentPage - 1) * this.itemsPerPage, this.currentPage * this.itemsPerPage);
     },
@@ -128,14 +124,14 @@ export default {
   },
   methods: {
     fetchProducts() {
-      const url = `${process.env.VUE_APP_API_BASE_URL}/api/products`;
+      const url = `${process.env.VUE_APP_API_BASE_URL}/api/sales/price?limit=10&offset=0`;
       apiService.get(url)
         .then(response => { this.products = response.data; })
         .catch(error => { console.error("Error fetching products:", error); });
     },
     openModal(product) {
       this.modalData.productId = product.producto_id;
-      this.modalData.nuevoPrecio = product.precio || 0;
+      this.modalData.nuevoPrecio = product.precio_venta || 0;
       this.modalData.fechaVigencia = this.formatDate(new Date());
       const modalEl = document.getElementById("updatePriceModal");
       const modal = new bootstrap.Modal(modalEl);

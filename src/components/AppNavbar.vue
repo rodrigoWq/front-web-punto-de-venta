@@ -16,6 +16,11 @@
                 <i class="bi bi-people"></i> Clientes
               </router-link>
             </li>
+            <li class="nav-item">
+              <router-link class="nav-link" to="/listar-proveedores">
+                <i class="bi bi-truck"></i> Proveedores
+              </router-link>
+            </li>
             <li class="nav-item" v-if="$route.path === '/pantalla-inicio'">
               <a class="nav-link" href="#" data-bs-toggle="modal" data-bs-target="#onHoldSalesModal">
                 <i class="bi bi-hourglass-split"></i> Ventas en espera
