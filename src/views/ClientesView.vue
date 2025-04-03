@@ -12,33 +12,33 @@
       <!-- Barra de Filtros -->
       <AppFilter v-model="searchInput" placeholder="Buscar por nombre..." customClasses="mt-4 mb-4">
         <AppButton variant="outline-secondary" customClass="me-2" :class="{ active: filtroTipo === 'all' }" @click="setFiltro('all')">Todos los Tipos</AppButton>
-        <AppButton variant="outline-secondary" customClass="me-2" :class="{ active: filtroTipo === 'normal' }" @click="setFiltro('normal')">Normal</AppButton>
+        <AppButton variant="outline-secondary" customClass="me-2" :class="{ active: filtroTipo === 'Contado' }" @click="setFiltro('Contado')">Contado</AppButton>
         <AppButton variant="outline-secondary" customClass="me-2" :class="{ active: filtroTipo === 'credito' }" @click="setFiltro('credito')">Crédito</AppButton>
       </AppFilter>
 
   
       <!-- Tabla de Clientes -->
       <h2>Lista de Clientes</h2>
-      <AppTable :headers="['Nombre y Apellido', 'RUC / CI', 'Teléfono', 'Tipo', 'Saldo', 'Acciones']">
+      <AppTable :headers="['Nombre Completo', 'RUC', 'Teléfono', 'Email', 'Condiciones de Pago', 'Acciones']">
         <tr v-for="cliente in clientesFiltradosPaginados" :key="cliente.id">
-          <td>{{ cliente.nombre }}</td>
+          <td>{{ cliente.nombre_completo }}</td>
           <td>{{ cliente.ruc }}</td>
           <td>{{ cliente.telefono }}</td>
-          <td>{{ cliente.tipo }}</td>
-          <td>{{ cliente.tipo === 'credito' ? cliente.saldo : '-' }}</td>
+          <td>{{ cliente.email }}</td>
+          <td>{{ cliente.condiciones_pago }}</td>
           <td>
             <button class="btn btn-primary btn-sm" @click="editarCliente(cliente)">✏️</button>
-            <button class="btn btn-danger btn-sm" @click="eliminarCliente(cliente.id)">🗑️</button>
-            <button v-if="cliente.tipo === 'credito'" class="btn btn-warning btn-sm" @click="abrirModalCredito(cliente)">Línea de Crédito</button>
+            <button class="btn btn-danger btn-sm" @click="eliminarCliente(cliente.cliente_id)">🗑️</button>
           </td>
         </tr>
       </AppTable>
+
       <AppPagination :currentPage="paginaActual" :totalPages="totalPaginas" @page-changed="cambiarPagina" />
 
 
       <!-- Modal para Registrar / Editar Cliente -->
       <div class="modal fade" id="clienteModal" tabindex="-1">
-        <div class="modal-dialog">
+        <div class="modal-dialog modal-lg">
           <div class="modal-content">
             <div class="modal-header">
               <h5 class="modal-title">{{ modalTitle }}</h5>
@@ -46,31 +46,69 @@
             </div>
             <div class="modal-body">
               <form @submit.prevent="guardarCliente">
-                <div class="mb-3">
-                  <label for="nombreCliente" class="form-label">Nombre y Apellido</label>
-                  <input type="text" v-model="cliente.nombre" class="form-control" required />
+                <div class="container-fluid">
+                  <div class="row mb-3">
+                    <div class="col-md-6">
+                      <label for="nombreCompleto" class="form-label">Nombre Completo</label>
+                      <input type="text" id="nombreCompleto" v-model="cliente.nombre_completo" class="form-control" required />
+                    </div>
+                    <div class="col-md-6">
+                      <label for="cedula" class="form-label">Cédula</label>
+                      <input type="text" id="cedula" v-model="cliente.cedula" class="form-control" required />
+                    </div>
+                  </div>
+                  <div class="row mb-3">
+                    <div class="col-md-6">
+                      <label for="nroDocumento" class="form-label">Nro. Documento</label>
+                      <input type="text" id="nroDocumento" v-model="cliente.nro_documento" class="form-control" required />
+                    </div>
+                    <div class="col-md-6">
+                      <label for="ruc" class="form-label">RUC</label>
+                      <input type="text" id="ruc" v-model="cliente.ruc" class="form-control" required />
+                    </div>
+                  </div>
+                  <div class="row mb-3">
+                    <div class="col-md-6">
+                      <label for="direccion" class="form-label">Dirección</label>
+                      <input type="text" id="direccion" v-model="cliente.direccion" class="form-control" />
+                    </div>
+                    <div class="col-md-6">
+                      <label for="telefono" class="form-label">Teléfono</label>
+                      <input type="tel" id="telefono" v-model="cliente.telefono" class="form-control" />
+                    </div>
+                  </div>
+                  <div class="row mb-3">
+                    <div class="col-md-6">
+                      <label for="email" class="form-label">Email</label>
+                      <input type="email" id="email" v-model="cliente.email" class="form-control" />
+                    </div>
+                    <div class="col-md-6">
+                      <label for="nombreFantasia" class="form-label">Nombre Fantasía</label>
+                      <input type="text" id="nombreFantasia" v-model="cliente.nombre_fantasia" class="form-control" />
+                    </div>
+                  </div>
+                  <div class="row mb-3">
+                    <div class="col-md-6">
+                      <label for="condicionesPago" class="form-label">Condiciones de Pago</label>
+                      <select id="condicionesPago" v-model="cliente.condiciones_pago" class="form-select">
+                        <option value="Contado">Contado</option>
+                        <option value="Crédito">Crédito</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div class="row">
+                    <div class="col text-end">
+                      <button type="submit" class="btn btn-primary">Guardar Cliente</button>
+                    </div>
+                  </div>
                 </div>
-                <div class="mb-3">
-                  <label for="rucCliente" class="form-label">RUC / CI</label>
-                  <input type="text" v-model="cliente.ruc" class="form-control" required />
-                </div>
-                <div class="mb-3">
-                  <label for="telefonoCliente" class="form-label">Teléfono</label>
-                  <input type="tel" v-model="cliente.telefono" class="form-control" />
-                </div>
-                <div class="mb-3">
-                  <label for="tipoCliente" class="form-label">Tipo de Cliente</label>
-                  <select v-model="cliente.tipo" class="form-select">
-                    <option value="normal">Normal</option>
-                    <option value="credito">Crédito</option>
-                  </select>
-                </div>
-                <button type="submit" class="btn btn-primary">Guardar Cliente</button>
               </form>
             </div>
           </div>
         </div>
       </div>
+
+
       <!-- Modal para Línea de Crédito -->
       <div class="modal fade" id="creditoModal" tabindex="-1">
         <div class="modal-dialog">
@@ -97,14 +135,13 @@
   
 <script>
 import { Modal } from 'bootstrap';
-import Cliente from '@/models/Cliente'; // Importa la clase Cliente
-import ClienteService from '@/services/ClienteServiceMock'; // Importa el servicio ClienteService
 import AppNavbar from '../components/AppNavbar.vue';
 import AppHeader from '../components/AppHeader.vue';
 import AppTable from '../components/AppTable.vue';
 import AppFilter from '../components/AppFilter.vue';
 import AppButton from '../components//AppButton.vue';
 import AppPagination from '../components/AppPagination.vue';
+import apiService from '../services/apiService.js'; 
 export default {
   name: 'ClientesView',
   components: {
@@ -118,7 +155,17 @@ export default {
   data() {
     return {
       clientes: [], // Lista de clientes
-      cliente: new Cliente('', '', '', 'normal'), // Cliente actual
+      cliente: {
+        nombre_completo: '',
+        cedula: '',
+        nro_documento: '',
+        ruc: '',
+        direccion: '',
+        telefono: '',
+        email: '',
+        nombre_fantasia: '',
+        condiciones_pago: 'Contado'
+      },
       clienteActual: null,
       modalTitle: 'Registrar Cliente',
       searchInput: '',
@@ -130,12 +177,13 @@ export default {
   },
   computed: {
     clientesFiltrados() {
-      return [...this.clientes].filter(cliente => {
+      return this.clientes.filter(cliente => {
         const search = this.searchInput.toLowerCase();
-        const nombreCoincide = cliente.nombre.toLowerCase().includes(search);
-        const rucCoincide = cliente.ruc.toLowerCase().includes(search);
-        const tipoCoincide = this.filtroTipo === 'all' || cliente.tipo === this.filtroTipo;
-        return tipoCoincide && (nombreCoincide || rucCoincide);
+        const nombre = (cliente.nombre_completo || '').toLowerCase();
+        const ruc = (cliente.ruc || '').toLowerCase();
+        // Si quieres seguir filtrando por un campo de tipo, asegúrate de usar la propiedad actual, por ejemplo, "condiciones_pago"
+        const filtroCoincide = this.filtroTipo === 'all' || (cliente.condiciones_pago || '').toLowerCase() === this.filtroTipo.toLowerCase();
+        return filtroCoincide && (nombre.includes(search) || ruc.includes(search));
       });
     },
     totalPaginas() {
@@ -150,14 +198,25 @@ export default {
   methods: {
     async cargarClientes() {
       try {
-        this.clientes = await ClienteService.obtenerClientes();
+        const response = await apiService.get(`${process.env.VUE_APP_API_BASE_URL}/api/clients`);
+        this.clientes = response.data;
       } catch (error) {
         console.error('Error al cargar los clientes:', error);
       }
     },
     abrirModal() {
       this.modalTitle = this.clienteActual ? 'Editar Cliente' : 'Registrar Cliente';
-      this.cliente = this.clienteActual ? Object.assign({}, this.clienteActual) : new Cliente('', '', '', 'normal');
+      this.cliente = this.clienteActual ? Object.assign({}, this.clienteActual) : {
+        nombre_completo: '',
+        cedula: '',
+        nro_documento: '',
+        ruc: '',
+        direccion: '',
+        telefono: '',
+        email: '',
+        nombre_fantasia: '',
+        condiciones_pago: 'Contado'
+      };
       const modalInstance = new Modal(document.getElementById('clienteModal'));
       modalInstance.show();
     },
@@ -175,7 +234,17 @@ export default {
       if (modalInstance) {
         modalInstance.hide();
       }
-      this.cliente = new Cliente('', '', '', 'normal'); // Limpiar el formulario al cerrar
+      this.cliente = {
+        nombre_completo: '',
+        cedula: '',
+        nro_documento: '',
+        ruc: '',
+        direccion: '',
+        telefono: '',
+        email: '',
+        nombre_fantasia: '',
+        condiciones_pago: 'Contado'
+      };
       this.clienteActual = null; // Reiniciar clienteActual al cerrar
     },
     setFiltro(tipo) {
@@ -184,15 +253,16 @@ export default {
     async guardarCliente() {
       try {
         if (this.clienteActual && this.clienteActual.id) {
-          // Actualiza el cliente existente en la lista
-          Object.assign(this.clienteActual, this.cliente); // Actualiza los datos en la referencia del cliente actual
-          await ClienteService.actualizarCliente(this.clienteActual); // Llama al servicio para guardar cambios
+          // Actualizar cliente existente
+          Object.assign(this.clienteActual, this.cliente);
+          await apiService.put(`${process.env.VUE_APP_API_BASE_URL}/api/clients`, this.clienteActual);
+          console.log('Cliente actualizado:', this.clienteActual);
         } else {
-          // Crea un nuevo cliente si no existe clienteActual
-          const listaActualizada = await ClienteService.crearCliente(this.cliente);
-          this.clientes = [...listaActualizada]; // Actualiza la lista completa
+          // Crear un nuevo cliente
+          console.log('Cliente a registrar:', this.cliente);
+          const response = await apiService.post(`${process.env.VUE_APP_API_BASE_URL}/api/clients`, this.cliente);
+          this.clientes.push(response.data);
         }
-        console.log('Cliente actualizado o agregado:', this.clienteActual || this.cliente);
         this.cerrarModal();
       } catch (error) {
         console.error('Error al guardar el cliente:', error);
@@ -201,9 +271,9 @@ export default {
     async eliminarCliente(clienteId) {
       if (confirm('¿Estás seguro de que deseas eliminar este cliente?')) {
         try {
-          const listaActualizada = await ClienteService.eliminarCliente(clienteId);
-          this.clientes = [...listaActualizada]; // Actualiza la lista con la versión más reciente
-          console.log('Lista de clientes después de eliminar:', this.clientes);
+          await apiService.delete(`${process.env.VUE_APP_API_BASE_URL}/api/clients/${clienteId}`);
+          // Actualiza la lista local eliminando el cliente borrado
+          this.clientes = this.clientes.filter(cliente => cliente.id !== clienteId);
         } catch (error) {
           console.error('Error al eliminar el cliente:', error);
         }

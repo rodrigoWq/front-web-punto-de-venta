@@ -1,6 +1,6 @@
 // src/models/Cliente.js
 export default class Cliente {
-    constructor(nombre, ruc, telefono, tipo = 'normal', saldo = null, id = null) {
+    constructor(nombre, ruc, telefono, tipo = 'Contado', saldo = null, id = null) {
       this.id = id || Date.now(); // Genera un ID único si no se proporciona
       this.nombre = nombre;
       this.ruc = ruc;

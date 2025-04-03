@@ -226,7 +226,7 @@ export default {
     async autocompletarProveedor() {
       if (!this.factura.ruc) return;
       try {
-        const url = `${process.env.VUE_APP_API_BASE_URL}/api/providers/${this.factura.ruc}`;
+        const url = `${process.env.VUE_APP_API_BASE_URL}/api/providers/document/${this.factura.ruc}`;
         const response = await apiService.get(url);
         const proveedor = response.data;
         if (proveedor) {

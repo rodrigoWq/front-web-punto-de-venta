@@ -132,7 +132,7 @@ export default {
       }
       try {
         // Se usa el método GET del servicio, pasando el parámetro 'codigo_barras'
-        const url = `${process.env.VUE_APP_API_BASE_URL}/api/sales/price/${this.productCode}`;
+        const url = `${process.env.VUE_APP_API_BASE_URL}/api/products/barcode/${this.productCode}`;
         const response = await apiService.get(url);
         const product = response.data;
         if (product) {
@@ -144,7 +144,7 @@ export default {
             // Como el backend envía 'unidad_medida_nombre', lo usamos para mostrar la unidad
             unidad_medida: product.unidad_medida_nombre,
             // Si el precio no viene en la respuesta, se asigna 0 (o el valor que se considere adecuado)
-            precio: product.precio_venta || 0
+            precio: product.precio_venta_actual || 0
           };
           this.productos.push(productoNuevo);
         } else {

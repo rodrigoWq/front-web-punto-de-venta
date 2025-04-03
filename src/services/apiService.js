@@ -30,7 +30,7 @@ apiService.interceptors.response.use(
         // Por ejemplo, redirigir a login o notificar al usuario que no tiene permisos
         // Aquí podrías limpiar el token y redirigir:
         localStorage.removeItem('authToken');
-        window.location.href = '/';
+        //window.location.href = '/';
       }
     return Promise.reject(error);
   }

@@ -219,7 +219,7 @@ export default {
     async autocompletarProveedor() {
       if (!this.notaData.ruc) return;
       try {
-        const url = `${process.env.VUE_APP_API_BASE_URL}/api/providers/${this.notaData.ruc}`;
+        const url = `${process.env.VUE_APP_API_BASE_URL}/api/providers/document/${this.notaData.ruc}`;
         const response = await apiService.get(url);
         const proveedor = response.data;
         if (proveedor) {
