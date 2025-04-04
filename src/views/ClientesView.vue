@@ -263,6 +263,7 @@ export default {
           const response = await apiService.post(`${process.env.VUE_APP_API_BASE_URL}/api/clients`, this.cliente);
           this.clientes.push(response.data);
         }
+        this.cargarClientes();
         this.cerrarModal();
       } catch (error) {
         console.error('Error al guardar el cliente:', error);
@@ -277,6 +278,7 @@ export default {
         } catch (error) {
           console.error('Error al eliminar el cliente:', error);
         }
+        this.cargarClientes();
       }
     },
     aplicarFiltros() {
