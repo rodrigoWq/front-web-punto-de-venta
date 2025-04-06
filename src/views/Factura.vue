@@ -160,7 +160,6 @@
 <script>
 import Factura from '@/models/Factura';
 import Producto from '@/models/Producto';
-import FacturaService from '@/services/FacturaServiceMock';
 import AppTable from '@/components/AppTable.vue';
 import SimpleRegisterModal from '@/components/SimpleRegisterModal.vue';
 import apiService from '@/services/apiService.js';
@@ -186,7 +185,7 @@ export default {
               descripcion: '',
               cantidad: 0,
               valorUnitario: 0,
-              tipoImpuesto: 'iva10',
+              tipoImpuesto: 1,
               iva10: 0,
               iva5: 0,
               exenta: 0,
@@ -241,33 +240,33 @@ export default {
         this.showRegisterModal = true;
       }
     },
-
-      async cargarFacturaDesdeParams() {
-          const id = Number(this.$route.params.id);
-          try {
-              // Cargar todas las facturas si no están cargadas
-              if (this.facturas.length === 0) {
-                  this.facturas = await FacturaService.obtenerFacturas();
-              }
-              // Buscar la factura con el id proporcionado
-              const facturaData = this.facturas.find(factura => factura.id === id);
-              if (facturaData) {
-                  // Asignar los datos de la factura al modelo `factura`
-                  this.factura = new Factura(
-                      facturaData.ruc,
-                      facturaData.razonSocial,
-                      facturaData.fechaEmision,
-                      facturaData.timbrado,
-                      facturaData.nroFactura,
-                      facturaData.condicionVenta
-                  );
-                  this.factura.productos = facturaData.productos || [];
-                  this.factura.calcularTotales();
-              }
-          } catch (error) {
-              console.error('Error al cargar la factura desde parámetros:', error);
-          }
-      },
+    async cargarFacturaDesdeParams() {
+      const nroDocumento = this.$route.params.id; // Usar el número de documento de la factura
+      try {
+        const { data: facturaData } = await apiService.get(`${process.env.VUE_APP_API_BASE_URL}/api/purchases/invoices/${nroDocumento}`);
+        if (facturaData) {
+          // Asignar los datos de la factura utilizando la estructura del endpoint
+          this.factura = new Factura(
+            facturaData.cabecera.nro_documento,
+            facturaData.cabecera.nombre_razon_social,
+            facturaData.cabecera.fecha_emision.split('T')[0],
+            facturaData.cabecera.timbrado,
+            facturaData.cabecera.nro_comprobante,
+            facturaData.cabecera.credito_contado.toLowerCase() === 'contado' ? 'contado' : 'credito'
+          );
+          // Mapear los detalles de la factura a los productos
+          this.factura.productos = facturaData.detalles.map(detalle => ({
+            id: detalle.producto_id,
+            cantidad: detalle.cantidad,
+            valorUnitario: detalle.precio_unitario_bruto,
+            tipoImpuesto: detalle.tipo_iva === 10.00 ? 'iva10' : (detalle.tipo_iva === 5.00 ? 'iva5' : 'exenta')
+          }));
+          this.factura.calcularTotales();
+        }
+      } catch (error) {
+        console.error('Error al cargar la factura desde parámetros:', error);
+      }
+    },
       onProductRegistered(newProduct) {
         // Simulamos la "lógica" de guardado en DB o servicio,
         // pero por ahora solo lo agregamos al array de productos de la factura
@@ -312,7 +311,7 @@ export default {
       registrarProducto() {
         console.log("registrarProducto llamado");
         // Guardar el nuevo producto en el array de productos simulados
-        FacturaService.guardarProducto(this.nuevoProducto); // Implementa esta función en el servicio mock
+        //FacturaService.guardarProducto(this.nuevoProducto); // Implementa esta función en el servicio mock
         //this.productoData = { ...this.nuevoProducto, cantidad: 1 }; // Copiar datos del nuevo producto al formulario principal
         this.closeRegisterModal(); // Cerrar el modal
        },
@@ -363,14 +362,45 @@ export default {
       },
       async guardarFactura() {
         try {
-          // Guardar la factura utilizando el servicio
-          this.facturas = await FacturaService.guardarFactura(this.factura);
+          // Construir el cuerpo de la petición según el formato requerido
+          const requestBody = {
+            cabecera: {
+              nro_comprobante: this.factura.nroFactura.toString(),
+              timbrado: this.factura.timbrado.toString(),
+              fecha_emision: this.factura.fechaEmision ? new Date(this.factura.fechaEmision).toISOString() : null,
+              tipo_moneda: this.factura.tipo_moneda || 'USD',
+              credito_contado: this.factura.condicionVenta === 'contado' ? 'Contado' : 'Crédito',
+              tipo_documento: 'RUC',
+              nro_documento: this.factura.ruc.toString(),
+              nombre_razon_social: this.factura.razonSocial,
+              direccion: this.factura.direccion || '',
+              pendiente: false,
+              total_iva: Number(this.factura.totalIva) || 0,
+              total_iva_incluido: Number(this.factura.totalFactura) || 0,
+              total_sin_iva: Number(this.factura.totalSinIva) || 0
+            },
+            detalles: this.factura.productos.map(producto => ({
+              producto_id: Number(producto.id || producto.codigo),
+              cantidad: Number(producto.cantidad),
+              precio_unitario_bruto: Number(producto.valorUnitario),
+              descuento: 0.00,
+              tipo_iva: Number(producto.tipoImpuesto),
+              fecha_vencimiento: producto.fechaVencimiento ? new Date(producto.fechaVencimiento).toISOString() : null
+            }))
+          };
+
+          // Imprime en consola el objeto que se enviará
+          console.log("Request Body:", requestBody);
+          // Enviar la petición POST utilizando apiService
+          await apiService.post(`${process.env.VUE_APP_API_BASE_URL}/api/purchases/invoices`, requestBody);
           alert('Factura guardada correctamente');
           this.factura = new Factura(); // Reiniciar la factura después de guardarla
+          this.$router.back();
         } catch (error) {
           console.error('Error al guardar la factura:', error);
         }
       }
+
   },
   async mounted() {
     if (this.$route.params.id) {

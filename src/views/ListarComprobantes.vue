@@ -25,22 +25,23 @@
           <th>RUC</th>
           <th>Fecha</th>
           <th>Monto Total</th>
-          <th>Estado</th>
+          <th>Pendiente</th>
           <th>Tipo de Comprobante</th>
           <th>Acciones</th>
         </tr>
       </thead>
       <tbody>
         <tr v-for="(comprobante, index) in comprobantesFiltradosPaginados" :key="index">
-          <td>{{ comprobante.nroNotaRemision || comprobante.nroFactura || 'N/A' }}</td>
-          <td>{{ comprobante.rucCliente || comprobante.ruc || 'N/A' }}</td>
-          <td>{{ comprobante.fecha || comprobante.fechaEmision || 'N/A' }}</td>
-          <td>{{ comprobante.montoTotal || comprobante.totalFactura || '0,00' }}</td>
-          <td>{{ comprobante.estado || 'activo' }}</td>
+          <td>{{ comprobante.nro_comprobante || comprobante.nro_nota_remision || 'N/A' }}</td>
+          <td>{{ comprobante.nro_documento || 'N/A' }}</td>
+          <td>{{ comprobante.fecha_emision || 'N/A' }}</td>
+          <td>{{ comprobante.total_iva_incluido || comprobante.total_sin_iva || 'N/A' }}</td>
+          <td>{{ comprobante.pendiente }}</td>
+
           <td>{{ comprobante.tipo === 'nota_remision' ? 'Nota de Remisión' : 'Factura' }}</td>
           <td>
             <button class="btn btn-primary btn-sm me-1" @click="verDetalleComprobante(comprobante)">Ver</button>
-            <button class="btn btn-danger btn-sm me-1" :disabled="comprobante.estado === 'anulado'" @click="anularComprobante(index)">Anular</button>
+            <button class="btn btn-danger btn-sm me-1" :disabled="comprobante.estado === 'anulado'">Anular</button>
             <button v-if="comprobante.tipo === 'nota_remision'" class="btn btn-info btn-sm" @click="generarFacturaDesdeNotaRemision(comprobante)">Generar Factura</button>
           </td>
         </tr>
@@ -54,8 +55,7 @@
 </template>
 
 <script>
-import FacturaService from '@/services/FacturaServiceMock';
-import NotaDeRemisionService from '@/services/NotaDeRemisionServiceMock';
+import ApiServices from '../services/apiService.js';
 import AppNavbar from '../components/AppNavbar.vue';
 import AppHeader from '../components/AppHeader.vue';
 import AppFilter from '../components/AppFilter.vue';
@@ -83,8 +83,8 @@ export default {
   computed: {
     comprobantesFiltrados() {
       return this.comprobantes.filter(comprobante => {
-        const numero = (comprobante.numeroComprobante || comprobante.nroFactura || '').toLowerCase();
-        const ruc = (comprobante.rucCliente || comprobante.ruc || '').toLowerCase();
+        const numero = (comprobante.nro_comprobante || comprobante.nro_nota_remision || '').toLowerCase();
+        const ruc = (comprobante.nro_documento || '').toLowerCase();
         const tipo = comprobante.tipo || '';
 
         const matchesSearch = numero.includes(this.searchInput.toLowerCase()) || ruc.includes(this.searchInput.toLowerCase());
@@ -105,35 +105,33 @@ export default {
   methods: {
     async cargarComprobantes() {
       try {
-        const facturas = await FacturaService.obtenerFacturas();
-        const notas = await NotaDeRemisionService.obtenerNotas();
+        const { data: facturas } = await ApiServices.get(`${process.env.VUE_APP_API_BASE_URL}/api/purchases/invoices`);
+        const { data: notas } = await ApiServices.get(`${process.env.VUE_APP_API_BASE_URL}/api/purchases/delivery-notes`);
         
-        // Añadir tipo a cada comprobante para distinguirlos
-        facturas.forEach(factura => factura.tipo = 'factura');
+        facturas.forEach(factura => {
+          factura.tipo = 'factura';
+        });
         notas.forEach(nota => {
           nota.tipo = 'nota_remision';
-          nota.productos = nota.productos || []; // Asegúrate de que tiene productos
-          nota.ruc = nota.ruc || 'N/A'; // Valor por defecto si no tiene RUC
-          nota.razonSocial = nota.razonSocial || 'N/A'; // Valor por defecto si no tiene razón social
         });
         
-        // Combinar facturas y notas de remisión
         this.comprobantes = [...facturas, ...notas];
       } catch (error) {
         console.error('Error al cargar comprobantes:', error);
       }
     },
+
     generarFacturaDesdeNotaRemision(comprobante) {
-      if (!comprobante || !comprobante.productos || !comprobante.ruc || !comprobante.razonSocial) {
+      if (!comprobante || !comprobante.nro_documento || !comprobante.nombre_razon_social) {
         console.error('Faltan datos en el comprobante:', comprobante);
         alert('Este comprobante no tiene todos los datos necesarios para generar una factura.');
         return;
       }
 
       const datosParaFactura = {
-        productos: comprobante.productos, // Productos de la nota de remisión
-        ruc: comprobante.ruc,            // RUC asociado
-        razonSocial: comprobante.razonSocial, // Razón social asociada
+        productos: comprobante.productos || [],
+        ruc: comprobante.nro_documento,
+        razonSocial: comprobante.nombre_razon_social
       };
       this.$router.push({
         name: 'RegistrarFactura',
@@ -168,10 +166,10 @@ export default {
     verDetalleComprobante(comprobante) {
       if (comprobante.tipo === 'nota_remision') {
         console.log("tipo: nota_remision")
-        this.$router.push({ name: 'NotaDeRemision', params: { id: comprobante.id } });
+        this.$router.push({ name: 'NotaDeRemision', params: { id: comprobante.nro_nota_remision } });
       } else {
         console.log("tipo: factura")
-        this.$router.push({ name: 'Factura', params: { id: comprobante.id } });
+        this.$router.push({ name: 'Factura', params: { id: comprobante.nro_comprobante } });
       }
     },
   },

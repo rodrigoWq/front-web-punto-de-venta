@@ -5,12 +5,12 @@
       <!-- Encabezado -->
       <div class="row g-3 mb-3">
         <div class="col-md-4">
-          <label for="ruc" class="form-label">RUC</label>
-          <input type="text" v-model="notaData.ruc" class="form-control" placeholder="RUC del destinatario" @blur="autocompletarProveedor" @keydown.enter.prevent>
+          <label for="nro_documento" class="form-label">RUC</label>
+          <input type="text" v-model="notaData.nro_documento" class="form-control" placeholder="RUC del destinatario" @blur="autocompletarProveedor" @keydown.enter.prevent>
         </div>
         <div class="col-md-4">
-          <label for="razon_social" class="form-label">Razón Social</label>
-          <input type="text" v-model="notaData.razonSocial" class="form-control" placeholder="Razón Social">
+          <label for="nombre_razon_social" class="form-label">Razón Social</label>
+          <input type="text" v-model="notaData.nombre_razon_social" class="form-control" placeholder="Razón Social">
         </div>
         <div class="col-md-4">
           <label for="timbrado" class="form-label">Timbrado</label>
@@ -20,11 +20,11 @@
       <div class="row g-3 mb-3">
         <div class="col-md-6">
           <label for="nro_nota_remision" class="form-label">N° de Nota de Remisión</label>
-          <input type="text" v-model="notaData.nroNotaRemision" class="form-control" placeholder="Número de Nota de Remisión">
+          <input type="text" v-model="notaData.nro_nota_remision" class="form-control" placeholder="Número de Nota de Remisión">
         </div>
         <div class="col-md-6">
           <label for="fecha_emision" class="form-label">Fecha de Emisión</label>
-          <input type="date" v-model="notaData.fechaEmision" class="form-control">
+          <input type="date" v-model="notaData.fecha_emision" class="form-control">
         </div>
       </div>
 
@@ -34,7 +34,7 @@
       <div class="row g-3 mb-3">
         <div class="col-md-2">
           <label class="form-label">Código de Barra</label>
-          <input type="text" v-model="productoData.codigo" class="form-control" placeholder="Código de Barra" @blur="autocompletarProducto" @keydown.enter.prevent>
+          <input type="text" v-model="productoData.codigo_barras" class="form-control" placeholder="Código de Barra" @blur="autocompletarProducto" @keydown.enter.prevent>
         </div>
         <div class="col-md-2">
           <label class="form-label">Cantidad</label>
@@ -42,7 +42,7 @@
         </div>
         <div class="col-md-2">
           <label class="form-label">Unidad de Medida</label>
-          <input type="text" v-model="productoData.unidadMedida" class="form-control" placeholder="Unidad de medida">
+          <input type="text" v-model="productoData.unidad_medida" class="form-control" placeholder="Unidad de medida">
         </div>
         <div class="col-md-4">
           <label class="form-label">Descripción</label>
@@ -53,6 +53,7 @@
           <input type="date" v-model="productoData.fechaVencimiento" class="form-control">
         </div>
       </div>
+
       <div class="d-grid gap-2 mb-3">
          <button type="button" class="btn btn-secondary" @click="agregarProducto">
             Agregar Producto
@@ -69,9 +70,9 @@
       <h3>Productos Agregados</h3>
       <AppTable :headers="['Código de Barra','Cantidad','Unidad de Medida','Descripción','Acciones']">
         <tr v-for="(producto, index) in productos" :key="index">
-          <td><input v-if="productoEditandoIndex === index" v-model="productoData.codigo" class="form-control form-control-sm" /><span v-else>{{ producto.codigo }}</span></td>
+          <td><input v-if="productoEditandoIndex === index" v-model="productoData.codigo_barras" class="form-control form-control-sm" /><span v-else>{{ producto.codigo_barras }}</span></td>
           <td><input v-if="productoEditandoIndex === index" v-model.number="productoData.cantidad" type="number" class="form-control form-control-sm" /><span v-else>{{ producto.cantidad }}</span></td>
-          <td><input v-if="productoEditandoIndex === index" v-model="productoData.unidadMedida" class="form-control form-control-sm" /><span v-else>{{ producto.unidadMedida }}</span></td>
+          <td><input v-if="productoEditandoIndex === index" v-model="productoData.unidad_medida" class="form-control form-control-sm" /><span v-else>{{ producto.unidad_medida }}</span></td>
           <td><input v-if="productoEditandoIndex === index" v-model="productoData.descripcion" class="form-control form-control-sm" /><span v-else>{{ producto.descripcion }}</span></td>
           <td>
             <template v-if="productoEditandoIndex === index">
@@ -95,7 +96,7 @@
 </template>
   
 <script>
-import NotaDeRemisionService from '@/services/NotaDeRemisionServiceMock';
+
 import AppTable from '@/components/AppTable.vue';
 import apiService from '@/services/apiService.js';
 import SimpleRegisterModal from '@/components/SimpleRegisterModal.vue';
@@ -111,20 +112,28 @@ export default {
   data() {
     return {
       notaData: {
+        nro_nota_remision: '',
         timbrado: '',
-        razonSocial: '',
+        fecha_emision: '',
+        tipo_moneda: 'PYG',
+        condicionVenta: 'Contado', // se usará en "credito_contado"
         ruc: '',
-        nroNotaRemision: '',
-        fechaEmision: ''
+        nombre_razon_social: '',
+        direccion: '',
+        pendiente: false
       },
       productoData: {
-        codigo: '',
+        codigo: '',          // Se puede usar para buscar el producto
+        codigo_producto: '', // Código interno del producto
+        codigo_barras: '',   // Código de barras
         descripcion: '',
         cantidad: 0,
-        unidadMedida: '',
+        unidad_medida: '',
+        iva: 10.00,          // Valor numérico del IVA
         fechaVencimiento: ''
       },
       showRegisterModal: false,
+      registerModalTitle: '',
       nuevoProducto: {
         codigo: '',
         descripcion: '',
@@ -140,14 +149,14 @@ export default {
   },
   methods: {
     async autocompletarProducto() {
-      if (!this.productoData.codigo) return;
+      if (!this.productoData.codigo_barras) return;
       try {
-        const url = `${process.env.VUE_APP_API_BASE_URL}/api/products/barcode/${this.productoData.codigo}`;
+        const url = `${process.env.VUE_APP_API_BASE_URL}/api/products/barcode/${this.productoData.codigo_barras}`;
         const response = await apiService.get(url);
         const producto = response.data;
         if (producto) {
           this.productoData.descripcion = producto.descripcion;
-          this.productoData.unidadMedida = producto.unidad_medida_id;
+          this.productoData.unidad_medida = producto.unidad_medida_nombre;
           this.productoData.fechaVencimiento = producto.fechaVencimiento;
         } else {
           // Si no se encuentra, precargar el código en el modal de registro
@@ -194,36 +203,49 @@ export default {
       // Si deseas guardar teléfono en algún lugar, puedes hacerlo también
     },
     registrarProducto() {
-      NotaDeRemisionService.guardarProducto(this.nuevoProducto); // Implementa esta función en el servicio mock
-      this.productoData = { ...this.nuevoProducto }; // Copiar datos del nuevo producto al formulario principal
+      //NotaDeRemisionService.guardarProducto(this.nuevoProducto); // Implementa esta función en el servicio mock
+      //this.productoData = { ...this.nuevoProducto }; // Copiar datos del nuevo producto al formulario principal
       this.closeRegisterModal(); // Cerrar el modal
     },
     async cargarNotaDeRemision(id) {
       try {
-        const nota = await NotaDeRemisionService.obtenerNotaPorId(id);
+        const { data: nota } = await apiService.get(`${process.env.VUE_APP_API_BASE_URL}/api/purchases/delivery-notes/${id}`);
         if (nota) {
-          // Cargar los datos de la nota en notaData y productos
+          const cabecera = nota.cabecera;
           this.notaData = {
-            timbrado: nota.timbrado,
-            razonSocial: nota.razonSocial,
-            ruc: nota.ruc,
-            nroNotaRemision: nota.nroNotaRemision,
-            fechaEmision: nota.fechaEmision
+            nro_nota_remision: cabecera.nro_nota_remision,
+            timbrado: cabecera.timbrado,
+            fecha_emision: cabecera.fecha_emision ? cabecera.fecha_emision.split('T')[0] : '',
+            tipo_moneda: cabecera.tipo_moneda,
+            condicionVenta: cabecera.credito_contado,
+            nro_documento: cabecera.nro_documento,
+            nombre_razon_social: cabecera.nombre_razon_social,
+            direccion: cabecera.direccion,
+            pendiente: cabecera.pendiente
           };
-          this.productos = nota.productos || []; // Cargar productos si existen
+          this.productos = nota.detalles.map(detalle => ({
+            producto_id: detalle.producto_id,
+            cantidad: detalle.cantidad,
+            unidad_medida: detalle.unidad_medida,
+            codigo_producto: detalle.codigo_producto,
+            codigo_barras: detalle.codigo_barras,
+            descripcion: detalle.descripcion,
+            iva: detalle.iva,
+            fechaVencimiento: detalle.fecha_vencimiento
+          }));
         }
       } catch (error) {
         console.error('Error al cargar la nota de remisión:', error);
       }
     },
     async autocompletarProveedor() {
-      if (!this.notaData.ruc) return;
+      if (!this.notaData.nro_documento) return;
       try {
-        const url = `${process.env.VUE_APP_API_BASE_URL}/api/providers/document/${this.notaData.ruc}`;
+        const url = `${process.env.VUE_APP_API_BASE_URL}/api/providers/document/${this.notaData.nro_documento}`;
         const response = await apiService.get(url);
         const proveedor = response.data;
         if (proveedor) {
-          this.notaData.razonSocial = proveedor.nombre;
+          this.notaData.nombre_razon_social = proveedor.nombre;
         } else {
           // Si no se encuentra el proveedor, asignar título y mostrar el modal
           this.registerModalTitle = "Proveedor no encontrado";
@@ -237,12 +259,38 @@ export default {
     },
     async guardarNotaRemision() {
       try {
-        const nuevaNota = { ...this.notaData, productos: this.productos };
-        const url = `${process.env.VUE_APP_API_BASE_URL}/api/nota-remision`;
-        const response = await apiService.post(url, nuevaNota);
+        const requestBody = {
+          cabecera: {
+            nro_nota_remision: this.notaData.nro_nota_remision,
+            timbrado: this.notaData.timbrado,
+            fecha_emision: this.notaData.fecha_emision ? new Date(this.notaData.fecha_emision).toISOString() : null,
+            tipo_moneda: this.notaData.tipo_moneda || 'PYG',
+            credito_contado: this.notaData.condicionVenta,
+            tipo_documento: 'RUC',
+            nro_documento: this.notaData.nro_documento,
+            nombre_razon_social: this.notaData.nombre_rason_social || this.notaData.nombre_rason_social,  // O ajustar según convenga
+            direccion: this.notaData.direccion,
+            pendiente: this.notaData.pendiente
+          },
+          detalles: this.productos.map(producto => ({
+            producto_id: producto.producto_id || producto.codigo_barras,
+            cantidad: Number(producto.cantidad),
+            unidad_medida: producto.unidad_medida,
+            codigo_producto: producto.codigo_producto || producto.codigo || '',
+            codigo_barras: producto.codigo_barras || producto.codigo || '',
+            descripcion: producto.descripcion,
+            iva: Number(producto.iva),
+            fecha_vencimiento: producto.fechaVencimiento ? new Date(producto.fechaVencimiento).toISOString().split('T')[0] : null
+          }))
+        };
+        console.log("Request Body:", requestBody);
+        // Como apiService ya tiene configurada la URL base, usamos el endpoint relativo
+        const url = `${process.env.VUE_APP_API_BASE_URL}/api/purchases/delivery-notes`;
+        const response = await apiService.post(url, requestBody);
         this.notasDeRemision = response.data;
         alert('Nota de remisión guardada correctamente');
         this.resetNota();
+        this.$router.back();
       } catch (error) {
         console.error('Error al guardar la nota de remisión:', error);
       }
@@ -284,13 +332,17 @@ export default {
     },
     resetNota() {
       this.notaData = {
-        timbrado: '',
-        razonSocial: '',
-        ruc: '',
-        nroNotaRemision: '',
-        fechaEmision: ''
-      };
-      this.productos = [];
+      nro_nota_remision: '',
+      timbrado: '',
+      fecha_emision: '',
+      tipo_moneda: 'PYG',
+      condicionVenta: 'Contado',
+      nro_documento: '',
+      nombre_razon_social: '',
+      direccion: '',
+      pendiente: false
+    };
+    this.productos = [];
     }
   },
   async mounted() {
