@@ -1,6 +1,7 @@
 // src/models/Producto.js
 export default class Producto {
-    constructor({ codigo, descripcion, cantidad, valorUnitario, tipoImpuesto, exenta, iva5, iva10 }) {
+    constructor({ id = null, codigo, descripcion, cantidad, valorUnitario, tipoImpuesto, exenta, iva5, iva10 }) {
+      this.id = id;
       this.codigo = codigo;
       this.descripcion = descripcion;
       this.cantidad = cantidad;

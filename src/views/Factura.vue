@@ -182,6 +182,7 @@ export default {
           factura: new Factura(), // Instancia de Factura
           productoData: { // Datos temporales del producto
               codigo: '',
+              id: null,
               descripcion: '',
               cantidad: 0,
               valorUnitario: 0,
@@ -212,6 +213,7 @@ export default {
           this.productoData.descripcion = producto.descripcion;
           this.productoData.valorUnitario = producto.valorUnitario || 0;
           this.productoData.tipoImpuesto = producto.tipo_iva;
+          this.productoData.id = producto.producto_id || null; 
         } else {
           this.registerModalTitle = "Producto no encontrado";
           this.showRegisterModal = true;
@@ -267,18 +269,7 @@ export default {
         console.error('Error al cargar la factura desde parámetros:', error);
       }
     },
-      onProductRegistered(newProduct) {
-        // Simulamos la "lógica" de guardado en DB o servicio,
-        // pero por ahora solo lo agregamos al array de productos de la factura
-        this.productoData = { ...newProduct };
-      },
-      onProveedorRegistered(nuevoProveedor) {
-        // Lógica para "guardar" al proveedor en DB (futuro) o en un array local
-        // O para asignar datos en la factura actual
-        this.factura.ruc = nuevoProveedor.ruc;
-        this.factura.razonSocial = nuevoProveedor.razonSocial;
-        // Teléfono u otros campos si necesitas
-      },
+
       irARegistro() {
         if (this.registerModalTitle === "Producto no encontrado") {
           // Navega a la página de registro de producto
@@ -318,6 +309,7 @@ export default {
         agregarProducto() {
           this.calcularImpuestoPorTipo();
           const producto = new Producto(this.productoData);
+          console.log("Producto a agregar:", producto);
           if (this.productoEditandoIndex !== null) {
               // Guardar cambios del producto editado
               this.factura.productos.splice(this.productoEditandoIndex, 1, producto);
@@ -380,7 +372,7 @@ export default {
               total_sin_iva: Number(this.factura.totalSinIva) || 0
             },
             detalles: this.factura.productos.map(producto => ({
-              producto_id: Number(producto.id || producto.codigo),
+              producto_id: Number(producto.id),
               cantidad: Number(producto.cantidad),
               precio_unitario_bruto: Number(producto.valorUnitario),
               descuento: 0.00,
