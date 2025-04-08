@@ -68,7 +68,7 @@
       </div>
 
       <div class="d-grid gap-2 mb-3">
-        <button type="button" class="btn btn-secondary" @click="agregarProducto">
+        <button type="button" class="btn btn-secondary" :disabled="fromDeliveryNote" @click="agregarProducto">
           Agregar Producto
         </button>
       </div>
@@ -192,6 +192,7 @@ export default {
               exenta: 0,
           },
         showRegisterModal: false,
+        fromDeliveryNote: false,
         nuevoProducto: {
             codigo: '',
             descripcion: '',
@@ -412,6 +413,7 @@ export default {
         console.log('Datos recibidos en FacturaView desde ListarComprobantes.vue:', queryData);
 
         if (queryData) {
+          this.fromDeliveryNote = true;  // Se marca que viene de nota de remisión
           this.factura.ruc = queryData.ruc || this.factura.ruc;
           this.factura.razonSocial = queryData.razonSocial || this.factura.razonSocial;
 
@@ -423,7 +425,8 @@ export default {
             this.factura.agregarProducto({
               ...producto,
               valorUnitario: producto.valorUnitario || 0,
-              tipoImpuesto: producto.tipoImpuesto || 'exenta',
+              tipoImpuesto: producto.iva || 'exenta',
+              id: producto.producto_id,
             });
           });
 

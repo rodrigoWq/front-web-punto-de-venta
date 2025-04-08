@@ -120,9 +120,11 @@ export default {
         ruc: '',
         nombre_razon_social: '',
         direccion: '',
-        pendiente: false
+        pendiente: false,
+        
       },
       productoData: {
+        id: null,            // ID del producto (si existe)
         codigo: '',          // Se puede usar para buscar el producto
         codigo_producto: '', // Código interno del producto
         codigo_barras: '',   // Código de barras
@@ -157,7 +159,8 @@ export default {
         if (producto) {
           this.productoData.descripcion = producto.descripcion;
           this.productoData.unidad_medida = producto.unidad_medida_nombre;
-          this.productoData.fechaVencimiento = producto.fechaVencimiento;
+          this.productoData.fechaVencimiento = producto.fecha_vencimiento;
+          this.productoData.id = producto.producto_id || null; 
         } else {
           // Si no se encuentra, precargar el código en el modal de registro
           this.nuevoProducto.codigo = this.productoData.codigo;
@@ -273,7 +276,7 @@ export default {
             pendiente: this.notaData.pendiente
           },
           detalles: this.productos.map(producto => ({
-            producto_id: producto.producto_id || producto.codigo_barras,
+            producto_id: producto.id || producto.codigo_barras,
             cantidad: Number(producto.cantidad),
             unidad_medida: producto.unidad_medida,
             codigo_producto: producto.codigo_producto || producto.codigo || '',

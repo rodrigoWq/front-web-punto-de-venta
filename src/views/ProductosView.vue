@@ -1,7 +1,7 @@
 <template>
     <AppNavbar />
     <div id="productos-view">
-      <AppHeader title="Listado de Productos" style="margin-top: 10px;">
+      <AppHeader title="Precios de Productos" style="margin-top: 10px;">
         <template #buttons>
         <!-- Puedes agregar botones adicionales si lo requieres -->
         </template>

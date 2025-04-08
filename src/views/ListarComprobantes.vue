@@ -121,10 +121,25 @@ export default {
       }
     },
 
-    generarFacturaDesdeNotaRemision(comprobante) {
+    async generarFacturaDesdeNotaRemision(comprobante) {
       if (!comprobante || !comprobante.nro_documento || !comprobante.nombre_razon_social) {
         console.error('Faltan datos en el comprobante:', comprobante);
         alert('Este comprobante no tiene todos los datos necesarios para generar una factura.');
+        return;
+      }
+
+      try {
+        // Si comprobante.productos no existe o está vacío, hacemos una consulta al API para obtener los detalles
+        if (!comprobante.productos || comprobante.productos.length === 0) {
+          // Realizamos el GET usando el servicio definido, utilizando el identificador (nro_nota_remision)
+          const { data } = await ApiServices.get(`${process.env.VUE_APP_API_BASE_URL}/api/purchases/delivery-notes/${comprobante.nro_nota_remision}`);
+          // La respuesta debe tener la estructura: { cabecera: { ... }, detalles: [ ... ] }
+          // Asignamos el arreglo de detalles a la propiedad productos del comprobante
+          comprobante.productos = data.detalles;
+        }
+      } catch (error) {
+        console.error('Error al obtener el detalle de productos:', error);
+        alert('No se pudieron cargar los productos del comprobante.');
         return;
       }
 
@@ -133,6 +148,7 @@ export default {
         ruc: comprobante.nro_documento,
         razonSocial: comprobante.nombre_razon_social
       };
+      console.log("datosParaFactura", comprobante);
       this.$router.push({
         name: 'RegistrarFactura',
         query: { datosParaFactura: encodeURIComponent(JSON.stringify(datosParaFactura)) },

@@ -54,7 +54,7 @@
       </div>
     </main>
     <div class="card-footer text-end">
-      <button type="button" class="btn btn-primary me-2" @click="handleSave">Guardar Proveedor</button>
+      <button type="button" class="btn btn-primary me-2" @click="handleSave">Guardar Producto</button>
       <button type="button" class="btn btn-secondary" @click="handleVolver">Volver</button>
     </div>
   </div>
