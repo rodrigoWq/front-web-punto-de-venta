@@ -247,6 +247,7 @@ export default {
       const nroDocumento = this.$route.params.id; // Usar el número de documento de la factura
       try {
         const { data: facturaData } = await apiService.get(`${process.env.VUE_APP_API_BASE_URL}/api/purchases/invoices/${nroDocumento}`);
+        console.log(facturaData);
         if (facturaData) {
           // Asignar los datos de la factura utilizando la estructura del endpoint
           this.factura = new Factura(
@@ -262,7 +263,7 @@ export default {
             id: detalle.producto_id,
             cantidad: detalle.cantidad,
             valorUnitario: detalle.precio_unitario_bruto,
-            tipoImpuesto: detalle.tipo_iva === 10.00 ? 'iva10' : (detalle.tipo_iva === 5.00 ? 'iva5' : 'exenta')
+            tipoImpuesto: detalle.tipo_iva === "10.00" ? 'iva_10' : (detalle.tipo_iva === "5.0" ? 'iva_5' : 'iva_exenta')
           }));
           this.factura.calcularTotales();
         }

@@ -34,7 +34,7 @@
         <tr v-for="(comprobante, index) in comprobantesFiltradosPaginados" :key="index">
           <td>{{ comprobante.nro_comprobante || comprobante.nro_nota_remision || 'N/A' }}</td>
           <td>{{ comprobante.nro_documento || 'N/A' }}</td>
-          <td>{{ comprobante.fecha_emision || 'N/A' }}</td>
+          <td>{{ comprobante.fecha_emision.split('T')[0] || 'N/A' }}</td>
           <td>{{ comprobante.total_iva_incluido || comprobante.total_sin_iva || 'N/A' }}</td>
           <td>{{ comprobante.pendiente }}</td>
 
