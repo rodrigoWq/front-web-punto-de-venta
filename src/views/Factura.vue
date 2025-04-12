@@ -6,32 +6,32 @@
           <div class="row g-3 mb-3">
               <div class="col-md-6">
                   <label for="ruc" class="form-label">RUC</label>
-                  <input type="text" v-model="factura.ruc" class="form-control" placeholder="RUC del proveedor" @blur="autocompletarProveedor"  @keydown.enter.prevent>
+                  <input type="text" v-model="factura.ruc" class="form-control" placeholder="RUC del proveedor" @blur="autocompletarProveedor"  @keydown.enter.prevent :readonly="readOnly">
               </div>
               <div class="col-md-6">
                   <label for="razon_social" class="form-label">Nombre o Razón Social</label>
-                  <input type="text" v-model="factura.razonSocial" class="form-control" placeholder="Nombre o razón social">
+                  <input type="text" v-model="factura.razonSocial" class="form-control" placeholder="Nombre o razón social" :readonly="readOnly">
               </div>
           </div>
           <!-- Información adicional -->
           <div class="row g-3 mb-3">
               <div class="col-md-6">
                   <label for="fecha_emision" class="form-label">Fecha de Emisión</label>
-                  <input type="date" v-model="factura.fechaEmision" class="form-control">
+                  <input type="date" v-model="factura.fechaEmision" class="form-control" :readonly="readOnly">
               </div>
               <div class="col-md-6">
                   <label for="timbrado" class="form-label">Timbrado</label>
-                  <input type="text" v-model="factura.timbrado" class="form-control" placeholder="Número de timbrado">
+                  <input type="text" v-model="factura.timbrado" class="form-control" placeholder="Número de timbrado" :readonly="readOnly">
               </div>
           </div>
           <div class="row g-3 mb-3">
               <div class="col-md-6">
                   <label for="nro_factura" class="form-label">N° de Factura</label>
-                  <input type="text" v-model="factura.nroFactura" class="form-control" placeholder="Número de factura">
+                  <input type="text" v-model="factura.nroFactura" class="form-control" placeholder="Número de factura" :readonly="readOnly">
               </div>
               <div class="col-md-6">
                   <label for="condicion_venta" class="form-label">Condición de Venta</label>
-                  <select v-model="factura.condicionVenta" class="form-control">
+                  <select v-model="factura.condicionVenta" class="form-control" :readonly="readOnly">
                       <option value="contado">Contado</option>
                       <option value="credito">Crédito</option>
                   </select>
@@ -43,23 +43,23 @@
         <div class="row g-3 mb-3">
         <div class="col-md-2">
           <label class="form-label">Código</label>
-          <input type="text" v-model="productoData.codigo" class="form-control" placeholder="Código" @blur="autocompletarProducto" @keydown.enter.prevent />
+          <input type="text" v-model="productoData.codigo" class="form-control" placeholder="Código" @blur="autocompletarProducto" @keydown.enter.prevent :readonly="readOnly"/>
         </div>
         <div class="col-md-3">
           <label class="form-label">Descripción</label>
-          <input type="text" v-model="productoData.descripcion" class="form-control" placeholder="Descripción" @keydown.enter.prevent />
+          <input type="text" v-model="productoData.descripcion" class="form-control" placeholder="Descripción" @keydown.enter.prevent :readonly="readOnly" />
         </div>
         <div class="col-md-2">
           <label class="form-label">Cantidad</label>
-          <input type="number" v-model="productoData.cantidad" class="form-control" placeholder="Cantidad" @keydown.enter.prevent />
+          <input type="number" v-model.number="productoData.cantidad" class="form-control" placeholder="Cantidad" @keydown.enter.prevent :readonly="readOnly"/>
         </div>
         <div class="col-md-2">
           <label class="form-label">Valor Unitario</label>
-          <input type="number" v-model="productoData.valorUnitario" class="form-control" placeholder="Valor Unitario" @keydown.enter.prevent />
+          <input type="number" v-model.number="productoData.valorUnitario" class="form-control" placeholder="Valor Unitario" @keydown.enter.prevent :readonly="readOnly"/>
         </div>
         <div class="col-md-3">
           <label class="form-label">Tipo de Impuesto</label>
-          <select v-model="productoData.tipoImpuesto" class="form-control" @keydown.enter.prevent>
+          <select v-model="productoData.tipoImpuesto" class="form-control" @keydown.enter.prevent :readonly="readOnly">
             <option :value="3">Exenta</option>
             <option :value="2">IVA 5%</option>
             <option :value="1">IVA 10%</option>
@@ -68,7 +68,7 @@
       </div>
 
       <div class="d-grid gap-2 mb-3">
-        <button type="button" class="btn btn-secondary" :disabled="fromDeliveryNote" @click="agregarProducto">
+        <button v-if="!readOnly" type="button" class="btn btn-secondary" :disabled="fromDeliveryNote" @click="agregarProducto">
           Agregar Producto
         </button>
       </div>
@@ -86,7 +86,7 @@
         <tr v-for="(producto, index) in factura.productos" :key="index">
           <td>
             <input v-if="productoEditandoIndex === index" v-model="productoData.codigo" class="form-control form-control-sm" />
-            <span v-else>{{ producto.codigo }}</span>
+            <span v-else>{{ producto.codigo_producto}}</span>
           </td>
           <td>
             <input v-if="productoEditandoIndex === index" v-model="productoData.descripcion" class="form-control form-control-sm" />
@@ -97,29 +97,36 @@
             <span v-else>{{ producto.cantidad }}</span>
           </td>
           <td>
-            <input v-if="productoEditandoIndex === index" v-model.number="productoData.valorUnitario" type="number" class="form-control form-control-sm" />
-            <span v-else>{{ producto.valorUnitario }}</span>
+            <input v-if="productoEditandoIndex === index" v-model.number="productoData.precioUnitarioNeto" type="number" class="form-control form-control-sm" />
+            <span v-else>{{ producto.precio_unitario_bruto }}</span>
           </td>
           <td>
-            <!--<input v-if="productoEditandoIndex === index" v-model.number="productoData.exenta" type="number" class="form-control form-control-sm" />-->
-            <span>{{ producto.exenta }}</span>
+            <span v-if="producto.tipo_iva_id === 3">
+              {{ producto.cantidad * producto.precio_unitario_bruto }}
+            </span>
+            <span v-else></span>
           </td>
           <td>
-            <!--<input v-if="productoEditandoIndex === index" v-model.number="productoData.iva5" type="number" class="form-control form-control-sm" />-->
-            <span>{{ producto.iva5 }}</span>
+            <span v-if="producto.tipo_iva_id === 2">
+              {{ producto.cantidad * producto.precio_unitario_bruto }}
+            </span>
+            <span v-else></span>
           </td>
           <td>
-            <!--<input v-if="productoEditandoIndex === index" v-model.number="productoData.iva10" type="number" class="form-control form-control-sm" />-->
-            <span>{{ producto.iva10 }}</span>
+            <span v-if="producto.tipo_iva_id === 1">
+              {{ producto.cantidad * producto.precio_unitario_bruto }}
+            </span>
+            <span v-else></span>
           </td>
+
           <td>
             <template v-if="productoEditandoIndex === index">
-              <button v-if="productoEditandoIndex === index" type="button" class="btn btn-success btn-sm me-1" @click="guardarEdicionProducto">Guardar</button>
-              <button type="button" class="btn btn-danger btn-sm" @click="cancelarEdicion">Cancelar</button>
+              <button type="button" class="btn btn-success btn-sm me-1" @click="guardarEdicionProducto" :disabled="readOnly">Guardar</button>
+              <button type="button" class="btn btn-danger btn-sm" @click="cancelarEdicion" :disabled="readOnly">Cancelar</button>
             </template>
             <template v-else>
-              <button type="button" class="btn btn-primary btn-sm me-1" @click="editarProducto(index)">Editar</button>
-              <button type="button" class="btn btn-danger btn-sm" @click="eliminarProducto(index)">Eliminar</button>
+              <button type="button" class="btn btn-primary btn-sm me-1" @click="editarProducto(index)" :disabled="readOnly">Editar</button>
+              <button type="button" class="btn btn-danger btn-sm" @click="eliminarProducto(index)" :disabled="readOnly">Eliminar</button>
             </template>
           </td>
 
@@ -132,26 +139,23 @@
           <div class="row g-3">
             <div class="col-md-6">
               <label for="iva_5" class="form-label">Liquidación del IVA 5%</label>
-              <input type="number" class="form-control" id="iva_5" :value="factura.totalIva5" placeholder="IVA 5%" readonly />
+              <input type="number" class="form-control" id="iva_5" :value="factura.totalIva5" placeholder="IVA 5%"  />
             </div>
             <div class="col-md-6">
               <label for="iva_10" class="form-label">Liquidación del IVA 10%</label>
-              <input type="number" class="form-control" id="iva_10" :value="factura.totalIva10" placeholder="IVA 10%" readonly />
+              <input type="number" class="form-control" id="iva_10" :value="factura.totalIva10" placeholder="IVA 10%"  />
             </div>
           </div>
           <div class="row g-3 mt-3">
-            <div class="col-md-6">
-              <label for="iva_exenta" class="form-label">Liquidación del IVA Exenta</label>
-              <input type="number" class="form-control" id="iva_exenta" :value="factura.totalIvaExenta" placeholder="IVA Exenta" readonly />
-            </div>
+ 
             <div class="col-md-6">
               <label for="total_factura" class="form-label">Total Factura</label>
-              <input type="number" class="form-control" id="total_factura" :value="factura.totalFactura" placeholder="Total Factura" readonly />
+              <input type="number" class="form-control" id="total_factura" :value="factura.totalFactura" placeholder="Total Factura"  />
             </div>
           </div>
 
           <div class ="d-grid gap-2 mt-4">
-            <button type="submit" class="btn btn-success mt-4" >Guardar Factura</button>
+            <button v-if="!readOnly" type="submit" class="btn btn-success mt-4" >Guardar Factura</button>
           </div>
       </form>
   </div>
@@ -191,14 +195,16 @@ export default {
               iva5: 0,
               exenta: 0,
           },
-        showRegisterModal: false,
-        fromDeliveryNote: false,
-        nuevoProducto: {
+          showRegisterModal: false,
+          fromDeliveryNote: false,
+          readOnly: false,
+          registerModalTitle: '',
+          nuevoProducto: {
             codigo: '',
             descripcion: '',
             valorUnitario: 0,
             tipoImpuesto: 'exenta',
-        },
+          },
           facturas: [], // Almacenará las facturas cargadas desde el servicio
           productoEditandoIndex: null // Índice para identificar el producto que se está editando
       };
@@ -247,29 +253,54 @@ export default {
       const nroDocumento = this.$route.params.id; // Usar el número de documento de la factura
       try {
         const { data: facturaData } = await apiService.get(`${process.env.VUE_APP_API_BASE_URL}/api/purchases/invoices/${nroDocumento}`);
-        console.log(facturaData);
-        if (facturaData) {
-          // Asignar los datos de la factura utilizando la estructura del endpoint
-          this.factura = new Factura(
-            facturaData.cabecera.nro_documento,
-            facturaData.cabecera.nombre_razon_social,
-            facturaData.cabecera.fecha_emision.split('T')[0],
-            facturaData.cabecera.timbrado,
-            facturaData.cabecera.nro_comprobante,
-            facturaData.cabecera.credito_contado.toLowerCase() === 'contado' ? 'contado' : 'credito'
-          );
-          // Mapear los detalles de la factura a los productos
-          this.factura.productos = facturaData.detalles.map(detalle => ({
-            id: detalle.producto_id,
-            cantidad: detalle.cantidad,
-            valorUnitario: detalle.precio_unitario_bruto,
-            tipoImpuesto: detalle.tipo_iva === "10.00" ? 'iva_10' : (detalle.tipo_iva === "5.0" ? 'iva_5' : 'iva_exenta')
+        console.log('Factura recibida:', facturaData);
+        if (facturaData && facturaData.cabecera) {
+          const cabecera = facturaData.cabecera;
+          // Asignar datos de la cabecera a la factura
+          this.factura.ruc = cabecera.nro_documento.toString();
+          this.factura.razonSocial = cabecera.nombre_razon_social;
+          this.factura.fechaEmision = cabecera.fecha_emision ? cabecera.fecha_emision.split('T')[0] : '';
+          this.factura.timbrado = cabecera.timbrado.toString();
+          this.factura.nroFactura = cabecera.nro_comprobante.toString();
+          this.factura.condicionVenta = cabecera.credito_contado.toLowerCase() === 'contado' ? 'contado' : 'credito';
+          this.factura.direccion = cabecera.direccion || '';
+          this.factura.tipo_moneda = cabecera.tipo_moneda || 'USD';
+          
+          // Asignar totales (si tu modelo Factura los utiliza)
+          this.factura.totalIva10 = cabecera.iva_detalle && cabecera.iva_detalle['iva_10.00'] ? cabecera.iva_detalle['iva_10.00'] : 0;
+          this.factura.totalIva5 = cabecera.iva_detalle && cabecera.iva_detalle['iva_5.00'] ? cabecera.iva_detalle['iva_5.00'] : 0;
+          this.factura.totalFactura = cabecera.total_iva_incluido || 0;
+          this.factura.totalSinIva = cabecera.total_sin_iva || 0;
+          console.log('Factura CABECERA :', this.factura);
+          // Mapear los detalles a productos
+          // Se asume que tienes un modelo Producto que acepta un objeto con estas propiedades
+          // ‑‑‑ dentro de cargarFacturaDesdeParams() justo después de obtener facturaData ‑‑‑
+          this.factura.productos = facturaData.detalles.map(det => ({
+            id_detalle: det.id_detalle,                 // lo espera el modelo
+            producto_id: det.producto_id,              // idem
+            codigo_producto: det.codigo_barras || det.codigo_producto || '',
+            descripcion:    det.descripcion || '',
+            cantidad:       Number(det.cantidad),
+            precio_unitario_bruto: Number(det.precio_unitario_bruto),
+            precio_unitario_neto:  Number(det.precio_unitario_neto),
+            descuento:      Number(det.descuento),
+            iva:            Number(det.iva),
+            tipo_iva_id:    det.tipo_iva_id            
           }));
-          this.factura.calcularTotales();
+
         }
       } catch (error) {
         console.error('Error al cargar la factura desde parámetros:', error);
       }
+    },
+
+      async cargarFacturas() {
+        try {
+          const response = await apiService.get(`${process.env.VUE_APP_API_BASE_URL}/api/purchases/invoices`);
+          this.facturas = response.data.data || []; // Asignar las facturas a la propiedad local
+        } catch (error) {
+          console.error('Error al cargar las facturas:', error);
+        }
     },
 
       irARegistro() {
@@ -399,6 +430,7 @@ export default {
   async mounted() {
     if (this.$route.params.id) {
       // Cargar la factura existente si hay un id
+      this.readOnly = true;
       await this.cargarFacturaDesdeParams();
     }
   },

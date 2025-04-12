@@ -1,7 +1,7 @@
 <template>
   <AppNavbar />
   <div class="container mt-5">
-    <AppHeader title="Gestión de Documentos">
+    <AppHeader title="Gestión de Facturas">
       <template #buttons>
         <router-link class="btn btn-success me-2" :to="{ name: 'RegistrarFactura' }">Registrar Factura</router-link>
       </template>
@@ -13,7 +13,7 @@
 
 
     <!-- Tabla de Comprobantes -->
-    <h2>Lista de Comprobantes</h2>
+    <h2>Lista de Facturas</h2>
     <table class="table table-striped">
       <thead>
         <tr>
@@ -21,7 +21,7 @@
           <th>RUC</th>
           <th>Fecha</th>
           <th>Monto Total</th>
-          <th>Pendiente</th>
+          <th>Estado</th>
           <th>Tipo de Comprobante</th>
           <th>Acciones</th>
         </tr>
@@ -30,9 +30,9 @@
         <tr v-for="(comprobante, index) in comprobantesFiltradosPaginados" :key="index">
           <td>{{ comprobante.nro_comprobante || 'N/A' }}</td>
           <td>{{ comprobante.nro_documento || 'N/A' }}</td>
-          <td>{{ comprobante.fecha_emision.split('T')[0] || 'N/A' }}</td>
+          <td>{{ comprobante.fecha_emision ? comprobante.fecha_emision.split('T')[0] : 'N/A' }}</td>
           <td>{{ comprobante.total_iva_incluido || comprobante.total_sin_iva || 'N/A' }}</td>
-          <td>{{ comprobante.pendiente }}</td>
+          <td>{{ comprobante.estado }}</td>
 
           <td>Factura</td>
           <td>
@@ -68,7 +68,6 @@ export default {
     return {
       comprobantes: [],
       searchInput: '',
-      filtroTipo: 'all',
       paginaActual: 1,
       itemsPorPagina: 5
     };
@@ -78,9 +77,7 @@ export default {
       return this.comprobantes.filter(comprobante => {
         const numero = (comprobante.nro_comprobante || '').toLowerCase();
         const ruc = (comprobante.nro_documento || '').toLowerCase();
-        const matchesSearch = numero.includes(this.searchInput.toLowerCase()) || ruc.includes(this.searchInput.toLowerCase());
-        // Forzar que solo se muestren facturas.
-        return matchesSearch && comprobante.tipo === 'factura';
+        return numero.includes(this.searchInput.toLowerCase()) || ruc.includes(this.searchInput.toLowerCase());
       });
       
     },
@@ -94,15 +91,25 @@ export default {
     }
   },
   methods: {
-    async cargarComprobantes() {
+    async cargarComprobantes(page = 1) {
       try {
-        const { data: facturas } = await ApiServices.get(`${process.env.VUE_APP_API_BASE_URL}/api/purchases/invoices`);
+        const response = await ApiServices.get(`${process.env.VUE_APP_API_BASE_URL}/api/purchases/invoices`, {
+          params: { page }
+        });
         
+        // Extraemos las facturas y asignamos el tipo
+        const facturas = response.data.data || [];
         facturas.forEach(factura => {
           factura.tipo = 'factura';
         });
-        
         this.comprobantes = facturas;
+        
+        // Extraemos la metadata de paginación
+        const pagination = response.data.pagination || {};
+        this.totalItems = pagination.total || 0;
+        this.paginaActual = pagination.page || 1;
+        this.itemsPorPagina = pagination.limit || 10;
+        this.totalPaginas = pagination.totalPages || 1;
       } catch (error) {
         console.error('Error al cargar facturas:', error);
       }

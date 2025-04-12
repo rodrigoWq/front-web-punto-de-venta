@@ -33,12 +33,12 @@
             </li>
             <li class="nav-item">
               <router-link class="nav-link" to="/listar-comprobantes">
-                <i class="bi bi-receipt"></i> Comprobantes
+                <i class="bi bi-receipt"></i> Facturas
               </router-link>
             </li>
             <li class="nav-item">
-              <router-link class="nav-link" to="/caja">
-                <i class="bi bi-cash-stack"></i> Caja
+              <router-link class="nav-link" to="/listar-notas-remision">
+                <i class="bi bi-file-text"></i> Notas de Remisión
               </router-link>
             </li>
             <li class="nav-item admin-only">
@@ -190,13 +190,13 @@ export default {
         }).format(value);
       },
       async obtenerVentasEnEspera() {
-        try {
-          const response = await fetch(`${process.env.VUE_APP_PENDING_SALES_LIST_URL}`);
-          const data = await response.json();
-          this.ventasEnEspera = data.ventas;
-        } catch (error) {
-          console.error("Error al obtener ventas en espera:", error);
-        }
+        // try {
+        //   const response = await fetch(`${process.env.VUE_APP_PENDING_SALES_LIST_URL}`);
+        //   const data = await response.json();
+        //   this.ventasEnEspera = data.ventas;
+        // } catch (error) {
+        //   console.error("Error al obtener ventas en espera:", error);
+        // }
       },
       cerrarSesion() {
         // Lógica de cierre de sesión: remover token, rol, etc.
