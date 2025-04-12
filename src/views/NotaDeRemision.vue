@@ -6,25 +6,25 @@
       <div class="row g-3 mb-3">
         <div class="col-md-4">
           <label for="nro_documento" class="form-label">RUC</label>
-          <input type="text" v-model="notaData.nro_documento" class="form-control" placeholder="RUC del destinatario" @blur="autocompletarProveedor" @keydown.enter.prevent>
+          <input type="text" v-model="notaData.nro_documento" class="form-control" placeholder="RUC del destinatario" @blur="autocompletarProveedor" @keydown.enter.prevent :readonly="readOnly">
         </div>
         <div class="col-md-4">
           <label for="nombre_razon_social" class="form-label">Razón Social</label>
-          <input type="text" v-model="notaData.nombre_razon_social" class="form-control" placeholder="Razón Social">
+          <input type="text" v-model="notaData.nombre_razon_social" class="form-control" placeholder="Razón Social" :readonly="readOnly">
         </div>
         <div class="col-md-4">
           <label for="timbrado" class="form-label">Timbrado</label>
-          <input type="text" v-model="notaData.timbrado" class="form-control" placeholder="Número de timbrado">
+          <input type="text" v-model="notaData.timbrado" class="form-control" placeholder="Número de timbrado" :readonly="readOnly">
         </div>
       </div>
       <div class="row g-3 mb-3">
         <div class="col-md-6">
           <label for="nro_nota_remision" class="form-label">N° de Nota de Remisión</label>
-          <input type="text" v-model="notaData.nro_nota_remision" class="form-control" placeholder="Número de Nota de Remisión">
+          <input type="text" v-model="notaData.nro_nota_remision" class="form-control" placeholder="Número de Nota de Remisión" :readonly="readOnly">
         </div>
         <div class="col-md-6">
           <label for="fecha_emision" class="form-label">Fecha de Emisión</label>
-          <input type="date" v-model="notaData.fecha_emision" class="form-control">
+          <input type="date" v-model="notaData.fecha_emision" class="form-control" :readonly="readOnly">
         </div>
       </div>
 
@@ -34,28 +34,28 @@
       <div class="row g-3 mb-3">
         <div class="col-md-2">
           <label class="form-label">Código de Barra</label>
-          <input type="text" v-model="productoData.codigo_barras" class="form-control" placeholder="Código de Barra" @blur="autocompletarProducto" @keydown.enter.prevent>
+          <input type="text" v-model="productoData.codigo_barras" class="form-control" placeholder="Código de Barra" @blur="autocompletarProducto" @keydown.enter.prevent :readonly="readOnly">
         </div>
         <div class="col-md-2">
           <label class="form-label">Cantidad</label>
-          <input type="number" v-model="productoData.cantidad" class="form-control" placeholder="Cantidad">
+          <input type="number" v-model="productoData.cantidad" class="form-control" placeholder="Cantidad" :readonly="readOnly">
         </div>
         <div class="col-md-2">
           <label class="form-label">Unidad de Medida</label>
-          <input type="text" v-model="productoData.unidad_medida" class="form-control" placeholder="Unidad de medida">
+          <input type="text" v-model="productoData.unidad_medida" class="form-control" placeholder="Unidad de medida" :readonly="readOnly">
         </div>
         <div class="col-md-4">
           <label class="form-label">Descripción</label>
-          <input type="text" v-model="productoData.descripcion" class="form-control" placeholder="Descripción de la mercadería">
+          <input type="text" v-model="productoData.descripcion" class="form-control" placeholder="Descripción de la mercadería" :readonly="readOnly">
         </div>
         <div class="col-md-2">
           <label class="form-label">Fecha de Vencimiento</label>
-          <input type="date" v-model="productoData.fechaVencimiento" class="form-control">
+          <input type="date" v-model="productoData.fechaVencimiento" class="form-control" :readonly="readOnly">
         </div>
       </div>
 
       <div class="d-grid gap-2 mb-3">
-         <button type="button" class="btn btn-secondary" @click="agregarProducto">
+         <button type="button" class="btn btn-secondary" @click="agregarProducto" :disabled="readOnly">
             Agregar Producto
           </button>
       </div>
@@ -76,12 +76,12 @@
           <td><input v-if="productoEditandoIndex === index" v-model="productoData.descripcion" class="form-control form-control-sm" /><span v-else>{{ producto.descripcion }}</span></td>
           <td>
             <template v-if="productoEditandoIndex === index">
-              <button type="button" class="btn btn-success btn-sm me-1" @click="guardarEdicionProducto">Guardar</button>
-              <button type="button" class="btn btn-warning btn-sm me-1" @click="cancelarEdicion">Cancelar</button>
+              <button type="button" class="btn btn-success btn-sm me-1" @click="guardarEdicionProducto" :disabled="readOnly">Guardar</button>
+              <button type="button" class="btn btn-warning btn-sm me-1" @click="cancelarEdicion" :disabled="readOnly">Cancelar</button>
             </template>
             <template v-else>
-              <button type="button" class="btn btn-primary btn-sm me-1" @click="editarProducto(index)">Editar</button>
-              <button type="button" class="btn btn-danger btn-sm" @click="eliminarProducto(index)">Eliminar</button>
+              <button type="button" class="btn btn-primary btn-sm me-1" @click="editarProducto(index)" :disabled="readOnly">Editar</button>
+              <button type="button" class="btn btn-danger btn-sm" @click="eliminarProducto(index)" :disabled="readOnly">Eliminar</button>
             </template>
           </td>
 
@@ -89,7 +89,7 @@
       </AppTable>
 
       <div class="d-grid gap-2 mt-4">
-        <button type="submit" class="btn btn-success">Guardar Nota de Remisión </button>
+        <button type="submit" class="btn btn-success" :disabled="readOnly" >Guardar Nota de Remisión </button>
       </div>
     </form>
   </div>
@@ -143,6 +143,7 @@ export default {
         unidadMedida: '',
         fechaVencimiento: '',
       },
+      readOnly: false,
       productos: [],
       notasDeRemision: [],
       productoEditandoIndex: null,
@@ -351,6 +352,7 @@ export default {
   async mounted() {
     // Si hay un id, carga los datos de la nota de remisión específica
     if (this.id) {
+      this.readOnly = true;
       await this.cargarNotaDeRemision(this.id);
     }
   }
