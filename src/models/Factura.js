@@ -33,13 +33,13 @@ export default class Factura {
       sumIva5   += Number(prod.iva5)   || 0;
       sumIva10  += Number(prod.iva10)  || 0;
     });
+
+    const r = n => Number(n.toFixed(2))
   
-    this.totalIvaExenta = sumExenta;
-    this.totalIva5      = sumIva5;
-    if (sumIva10 > 0) {
-      sumIva10 = sumIva10 / 11;   // 10% de IVA
-    }
-    this.totalIva10     = sumIva10;
-    this.totalFactura   = sumExenta + sumIva5 + sumIva10;
+    this.totalIvaExenta = r(sumExenta);
+    this.totalIva5      = r(sumIva5);
+    this.totalIva10     = r(sumIva10);
+    this.totalFactura   = r(sumIva5 + sumIva10);
+    
   }
 }

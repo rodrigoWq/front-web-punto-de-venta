@@ -47,7 +47,7 @@
         </div>
         <div class="col-md-3">
           <label class="form-label">Descripción</label>
-          <input type="text" v-model="productoData.descripcion" class="form-control" placeholder="Descripción" @keydown.enter.prevent :readonly="readOnly" />
+          <input type="text" v-model="productoData.descripcion" class="form-control" placeholder="Descripción" @keydown.enter.prevent readOnly />
         </div>
         <div class="col-md-2">
           <label class="form-label">Cantidad</label>
@@ -55,11 +55,11 @@
         </div>
         <div class="col-md-2">
           <label class="form-label">Valor Unitario</label>
-          <input type="number" v-model.number="productoData.valorUnitario" class="form-control" placeholder="Valor Unitario" @keydown.enter.prevent :readonly="readOnly"/>
+          <input type="number" v-model.number="productoData.precio_unitario_neto" class="form-control" placeholder="Valor Unitario" @keydown.enter.prevent :readonly="readOnly"/>
         </div>
         <div class="col-md-3">
           <label class="form-label">Tipo de Impuesto</label>
-          <select v-model="productoData.tipoImpuesto" class="form-control" @keydown.enter.prevent :readonly="readOnly">
+          <select v-model="productoData.tipo_iva_id" class="form-control" @keydown.enter.prevent readOnly>
             <option :value="3">Exenta</option>
             <option :value="2">IVA 5%</option>
             <option :value="1">IVA 10%</option>
@@ -85,36 +85,34 @@
       <AppTable :headers="['Código', 'Descripción', 'Cantidad', 'Valor Unitario', 'Exenta', 'Iva 5%', 'Iva 10%', 'Acciones']">
         <tr v-for="(producto, index) in factura.productos" :key="index">
           <td>
-            <input v-if="productoEditandoIndex === index" v-model="productoData.codigo" class="form-control form-control-sm" />
-            <span v-else>{{ producto.codigo_producto}}</span>
+            <span>{{ producto.codigo_producto}}</span>
           </td>
-          <td>
-            <input v-if="productoEditandoIndex === index" v-model="productoData.descripcion" class="form-control form-control-sm" />
-            <span v-else>{{ producto.descripcion }}</span>
+          <td>          
+            <span>{{ producto.descripcion }}</span>
           </td>
           <td>
             <input v-if="productoEditandoIndex === index" v-model.number="productoData.cantidad" type="number" class="form-control form-control-sm" />
             <span v-else>{{ producto.cantidad }}</span>
           </td>
           <td>
-            <input v-if="productoEditandoIndex === index" v-model.number="productoData.precioUnitarioNeto" type="number" class="form-control form-control-sm" />
-            <span v-else>{{ producto.precio_unitario_bruto }}</span>
+            <input v-if="productoEditandoIndex === index" v-model.number="productoData.precio_unitario_neto" type="number" class="form-control form-control-sm" />
+            <span v-else>{{ producto.precio_unitario_neto  }}</span>
           </td>
           <td>
             <span v-if="producto.tipo_iva_id === 3">
-              {{ producto.cantidad * producto.precio_unitario_bruto }}
+              {{ producto.cantidad * producto.precio_unitario_neto }}
             </span>
             <span v-else></span>
           </td>
           <td>
             <span v-if="producto.tipo_iva_id === 2">
-              {{ producto.cantidad * producto.precio_unitario_bruto }}
+              {{ producto.cantidad * producto.precio_unitario_neto }}
             </span>
             <span v-else></span>
           </td>
           <td>
-            <span v-if="producto.tipo_iva_id === 1">
-              {{ producto.cantidad * producto.precio_unitario_bruto }}
+            <span v-if="producto.tipo_iva_id === 1 || producto.tipo_iva_id === 10">
+              {{ producto.cantidad * producto.precio_unitario_neto }}
             </span>
             <span v-else></span>
           </td>
@@ -139,20 +137,25 @@
           <div class="row g-3">
             <div class="col-md-6">
               <label for="iva_5" class="form-label">Liquidación del IVA 5%</label>
-              <input type="number" class="form-control" id="iva_5" :value="factura.totalIva5" placeholder="IVA 5%"  />
+              <input type="number" class="form-control" id="iva_5" :value="factura.totalIva5" placeholder="IVA 5%" readonly  />
             </div>
             <div class="col-md-6">
               <label for="iva_10" class="form-label">Liquidación del IVA 10%</label>
-              <input type="number" class="form-control" id="iva_10" :value="factura.totalIva10" placeholder="IVA 10%"  />
+              <input type="number" class="form-control" id="iva_10" :value="factura.totalIva10" placeholder="IVA 10%" readonly  />
             </div>
           </div>
-          <div class="row g-3 mt-3">
- 
+          <h3>Totales</h3>
+          <div class="row g-3">
             <div class="col-md-6">
-              <label for="total_factura" class="form-label">Total Factura</label>
-              <input type="number" class="form-control" id="total_factura" :value="factura.totalFactura" placeholder="Total Factura"  />
+              <label for="total_factura" class="form-label">Total IVA</label>
+              <input type="number" id="total_factura" class="form-control" :value="factura.totalFactura" placeholder="Total Factura IVA" readonly />
+            </div>
+            <div class="col-md-6">
+              <label for="monto_total" class="form-label">Monto Total</label>
+              <input type="number" id="monto_total" class="form-control" :value="montoTotal" placeholder="Monto Total" readonly />
             </div>
           </div>
+
 
           <div class ="d-grid gap-2 mt-4">
             <button v-if="!readOnly" type="submit" class="btn btn-success mt-4" >Guardar Factura</button>
@@ -189,8 +192,8 @@ export default {
               id: null,
               descripcion: '',
               cantidad: 0,
-              valorUnitario: 0,
-              tipoImpuesto: 1,
+              precio_unitario_neto: 0,
+              tipo_iva_id: 1,
               iva10: 0,
               iva5: 0,
               exenta: 0,
@@ -202,8 +205,8 @@ export default {
           nuevoProducto: {
             codigo: '',
             descripcion: '',
-            valorUnitario: 0,
-            tipoImpuesto: 'exenta',
+            precio_unitario_neto: 0,
+            tipo_iva_id: 'exenta',
           },
           facturas: [], // Almacenará las facturas cargadas desde el servicio
           productoEditandoIndex: null // Índice para identificar el producto que se está editando
@@ -218,8 +221,8 @@ export default {
         const producto = response.data;
         if (producto) {
           this.productoData.descripcion = producto.descripcion;
-          this.productoData.valorUnitario = producto.valorUnitario || 0;
-          this.productoData.tipoImpuesto = producto.tipo_iva;
+          this.productoData.precio_unitario_neto = producto.valorUnitario || 0;
+          this.productoData.tipo_iva_id = producto.tipo_iva;
           this.productoData.id = producto.producto_id || null; 
         } else {
           this.registerModalTitle = "Producto no encontrado";
@@ -317,12 +320,12 @@ export default {
         this.nuevoProducto = { codigo: '', descripcion: '', valorUnitario: 0, tipoImpuesto: 'exenta' };
       },
       calcularImpuestoPorTipo() {
-        const subtotal = Number(this.productoData.cantidad) * Number(this.productoData.valorUnitario);
-        if (this.productoData.tipoImpuesto === 'exenta') {
+        const subtotal = Number(this.productoData.cantidad) * Number(this.productoData.precio_unitario_neto);
+        if (this.productoData.tipo_iva_id === 'exenta') {
           this.productoData.exenta = subtotal;
           this.productoData.iva5   = 0;
           this.productoData.iva10  = 0;
-        } else if (this.productoData.tipoImpuesto === 'iva5') {
+        } else if (this.productoData.tipo_iva_id === 'iva5') {
           this.productoData.iva5   = subtotal;
           this.productoData.exenta = 0;
           this.productoData.iva10  = 0;
@@ -339,7 +342,7 @@ export default {
         //this.productoData = { ...this.nuevoProducto, cantidad: 1 }; // Copiar datos del nuevo producto al formulario principal
         this.closeRegisterModal(); // Cerrar el modal
        },
-        agregarProducto() {
+      agregarProducto() {
           this.calcularImpuestoPorTipo();
           const producto = new Producto(this.productoData);
           console.log("Producto a agregar:", producto);
@@ -362,8 +365,8 @@ export default {
           codigo: '',
           descripcion: '',
           cantidad: 0,
-          valorUnitario: 0,
-          tipoImpuesto: 'iva10',
+          precio_unitario_neto: 0,
+          tipo_iva_id: 'iva10',
           exenta: 0,
           iva5: 0,
           iva10: 0
@@ -374,7 +377,8 @@ export default {
           // Cargar el producto en el formulario para editar
           const producto = this.factura.productos[index];
           this.productoData = { ...producto };
-          this.productoEditandoIndex = index; // Indicar que estamos en modo edición
+          this.productoEditandoIndex = index;
+          console.log(this.productoData) // Indicar que estamos en modo edición
       },
       guardarEdicionProducto() {
           // Llama a agregarProducto para guardar los cambios
@@ -409,7 +413,7 @@ export default {
               cantidad: Number(producto.cantidad),
               precio_unitario_bruto: Number(producto.valorUnitario),
               descuento: 0.00,
-              tipo_iva: Number(producto.tipoImpuesto),
+              tipo_iva: Number(producto.tipo_iva_id),
               fecha_vencimiento: producto.fechaVencimiento ? new Date(producto.fechaVencimiento).toISOString() : null
             }))
           };
@@ -425,6 +429,7 @@ export default {
           console.error('Error al guardar la factura:', error);
         }
       }
+  
 
   },
   async mounted() {
@@ -432,6 +437,21 @@ export default {
       // Cargar la factura existente si hay un id
       this.readOnly = true;
       await this.cargarFacturaDesdeParams();
+    }
+  },
+  computed: {
+    montoTotal () {
+
+      return this.factura.productos.reduce((suma, p) => {
+        const base = p.cantidad * p.precio_unitario_neto;
+
+        if (p.tipo_iva_id === 1) {          
+          return suma + base;
+        } else if (p.tipo_iva_id === 2) {   
+          return suma + base;
+        }                                   
+        return suma + base;
+      }, 0).toFixed(2);   
     }
   },
   watch: {
@@ -457,8 +477,8 @@ export default {
           queryData.productos.forEach(producto => {
             this.factura.agregarProducto({
               ...producto,
-              valorUnitario: producto.valorUnitario || 0,
-              tipoImpuesto: producto.iva || 'exenta',
+              precio_unitario_neto: producto.valorUnitario || 0,
+              tipo_iva_id: producto.iva || 'exenta',
               id: producto.producto_id,
             });
           });
