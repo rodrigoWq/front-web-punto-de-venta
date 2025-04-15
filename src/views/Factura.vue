@@ -99,7 +99,7 @@
             <span v-else>{{ producto.precio_unitario_neto  }}</span>
           </td>
           <td>
-            <span v-if="producto.tipo_iva_id === 3">
+            <span v-if="producto.tipo_iva_id === 3 || producto.tipoImpuesto === 'exenta'">
               {{ producto.cantidad * producto.precio_unitario_neto }}
             </span>
             <span v-else></span>
@@ -200,6 +200,7 @@ export default {
           },
           showRegisterModal: false,
           fromDeliveryNote: false,
+          fromDeliveryNoteID:'',
           readOnly: false,
           registerModalTitle: '',
           nuevoProducto: {
@@ -409,9 +410,9 @@ export default {
               total_sin_iva: Number(this.factura.totalSinIva) || 0
             },
             detalles: this.factura.productos.map(producto => ({
-              producto_id: Number(producto.id),
+              producto_id: Number(producto.producto_id),
               cantidad: Number(producto.cantidad),
-              precio_unitario_bruto: Number(producto.valorUnitario),
+              precio_unitario_bruto: Number(producto.precio_unitario_neto),
               descuento: 0.00,
               tipo_iva: Number(producto.tipo_iva_id),
               fecha_vencimiento: producto.fechaVencimiento ? new Date(producto.fechaVencimiento).toISOString() : null
@@ -423,6 +424,16 @@ export default {
           // Enviar la petición POST utilizando apiService
           await apiService.post(`${process.env.VUE_APP_API_BASE_URL}/api/purchases/invoices`, requestBody);
           alert('Factura guardada correctamente');
+
+
+          // Si la factura se generó desde una nota de remisión, eliminar la nota
+          if (this.fromDeliveryNote && this.fromDeliveryNoteID) {
+            await apiService.delete(`${process.env.VUE_APP_API_BASE_URL}/api/purchases/delivery-notes/${this.fromDeliveryNoteID}`);
+            console.log("Nota de remisión eliminada exitosamente.");
+          }
+
+
+
           this.factura = new Factura(); // Reiniciar la factura después de guardarla
           this.$router.back();
         } catch (error) {
@@ -467,6 +478,7 @@ export default {
 
         if (queryData) {
           this.fromDeliveryNote = true;  // Se marca que viene de nota de remisión
+          this.fromDeliveryNoteID = queryData.nro_documento; // Guardar el ID de la nota de remisión
           this.factura.ruc = queryData.ruc || this.factura.ruc;
           this.factura.razonSocial = queryData.razonSocial || this.factura.razonSocial;
 
@@ -478,7 +490,7 @@ export default {
             this.factura.agregarProducto({
               ...producto,
               precio_unitario_neto: producto.valorUnitario || 0,
-              tipo_iva_id: producto.iva || 'exenta',
+              tipo_iva_id: producto.iva || producto.tipo_iva_id,
               id: producto.producto_id,
             });
           });

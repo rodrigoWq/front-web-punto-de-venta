@@ -41,7 +41,6 @@
             </button>
             <!-- Se muestra el botón solo si la nota no tiene factura -->
             <button 
-              v-if="comprobante.tiene_factura === 0" 
               class="btn btn-info btn-sm" 
               @click="generarFacturaDesdeNotaRemision(comprobante)">
               Generar Factura
@@ -176,7 +175,8 @@
           const datosParaFactura = {
             productos: comprobante.productos || [],
             ruc: comprobante.nro_documento,
-            razonSocial: comprobante.nombre_razon_social
+            razonSocial: comprobante.nombre_razon_social,
+            nro_documento: comprobante.nro_nota_remision,
           };
           console.log("datosParaFactura", comprobante);
           this.$router.push({
