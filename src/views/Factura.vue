@@ -59,12 +59,12 @@
         </div>
         <div class="col-md-3">
           <label class="form-label">Tipo de Impuesto</label>
-          <select v-model="productoData.tipo_iva_id" class="form-control" @keydown.enter.prevent readOnly>
-            <option :value="3">Exenta</option>
-            <option :value="2">IVA 5%</option>
-            <option :value="1">IVA 10%</option>
-          </select>
+          <input type="text" 
+                class="form-control" 
+                :value="productoData.tipo_iva_id === 1 ? 'IVA 10%' : (productoData.tipo_iva_id === 2 ? 'IVA 5%' : 'Exenta')" 
+                readonly />
         </div>
+
       </div>
 
       <div class="d-grid gap-2 mb-3">
@@ -189,7 +189,7 @@ export default {
           factura: new Factura(), // Instancia de Factura
           productoData: { // Datos temporales del producto
               codigo: '',
-              id: null,
+              producto_id: null,
               descripcion: '',
               cantidad: 0,
               precio_unitario_neto: 0,
@@ -224,7 +224,7 @@ export default {
           this.productoData.descripcion = producto.descripcion;
           this.productoData.precio_unitario_neto = producto.valorUnitario || 0;
           this.productoData.tipo_iva_id = producto.tipo_iva;
-          this.productoData.id = producto.producto_id || null; 
+          this.productoData.producto_id = producto.producto_id || null; 
         } else {
           this.registerModalTitle = "Producto no encontrado";
           this.showRegisterModal = true;
