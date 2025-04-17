@@ -205,16 +205,12 @@ export default {
           fromDeliveryNote: false,
           fromDeliveryNoteID:'',
           readOnly: false,
-          providers: [],
-          selectedProviderInput: '',
-          registerModalTitle: '',
           nuevoProducto: {
             codigo: '',
             descripcion: '',
             precio_unitario_neto: 0,
             tipo_iva_id: 'exenta',
           },
-          facturas: [], // Almacenará las facturas cargadas desde el servicio
           productoEditandoIndex: null // Índice para identificar el producto que se está editando
       };
   },
@@ -240,24 +236,6 @@ export default {
         this.showRegisterModal = true;
       }
     },
-    // async autocompletarProveedor() {
-    //   if (!this.factura.ruc) return;
-    //   try {
-    //     const url = `${process.env.VUE_APP_API_BASE_URL}/api/providers/document/${this.factura.ruc}`;
-    //     const response = await apiService.get(url);
-    //     const proveedor = response.data;
-    //     if (proveedor) {
-    //       this.factura.razonSocial = proveedor.nombre;
-    //     } else {
-    //       this.registerModalTitle = "Proveedor no encontrado";
-    //       this.showRegisterModal = true;
-    //     }
-    //   } catch (error) {
-    //     console.error("Error al obtener el proveedor:", error);
-    //     this.registerModalTitle = "Proveedor no encontrado";
-    //     this.showRegisterModal = true;
-    //   }
-    // },
     async cargarFacturaDesdeParams() {
       const nroDocumento = this.$route.params.id; // Usar el número de documento de la factura
       try {
@@ -302,32 +280,13 @@ export default {
         console.error('Error al cargar la factura desde parámetros:', error);
       }
     },
-    async loadProviders() {
-      try {
-        const { data } = await apiService.get(
-          `${process.env.VUE_APP_API_BASE_URL}/api/providers/`
-        );
-        this.providers = Array.isArray(data) ? data : [];
-      } catch (err) {
-        console.error('Error al cargar proveedores:', err);
-      }
-    },
-    registerProvider() {
-      this.$router.push({ name: 'RegistrarProveedor' });
-    },
+
+
     onProviderSelected(prov) {
       this.factura.ruc = prov.nro_documento;
       this.factura.razonSocial = prov.nombre;
     },
 
-    async cargarFacturas() {
-        try {
-          const response = await apiService.get(`${process.env.VUE_APP_API_BASE_URL}/api/purchases/invoices`);
-          this.facturas = response.data.data || []; // Asignar las facturas a la propiedad local
-        } catch (error) {
-          console.error('Error al cargar las facturas:', error);
-        }
-    },
 
       irARegistro() {
         if (this.registerModalTitle === "Producto no encontrado") {
@@ -467,7 +426,6 @@ export default {
 
   },
   async mounted() {
-    await this.loadProviders();
     if (this.$route.params.id) {
       // Cargar la factura existente si hay un id
       this.readOnly = true;
@@ -488,20 +446,6 @@ export default {
         return suma + base;
       }, 0).toFixed(2);   
     },
-    filteredProviders() {
-      const query = this.selectedProviderInput.trim().toLowerCase();
-      return query
-        ? this.providers.filter(p =>
-            p.nro_documento.toLowerCase().includes(query) ||
-            p.nombre.toLowerCase().includes(query)
-          )
-        : this.providers;
-    },
-    isProviderMatched() {
-      return this.providers.some(
-        p => p.nro_documento === this.selectedProviderInput || `${p.nro_documento} – ${p.nombre}` === this.selectedProviderInput
-      );
-    }
   },
   watch: {
   '$route.query.datosParaFactura': {
@@ -541,19 +485,6 @@ export default {
     },
     immediate: true,
   },
-  selectedProviderInput(val) {
-      if (val === 'Registrar proveedor…') {
-        this.$router.push({ name: 'RegistrarProveedor' });
-      } else {
-        const [ruc] = val.split(' – ');
-        const prov = this.providers.find(p => p.nro_documento === ruc);
-        if (prov) {
-          this.factura.ruc = prov.nro_documento;
-          this.factura.razonSocial = prov.nombre;
-          this.selectedProviderInput = prov.nro_documento;
-        }
-      }
-  }
 },
 };
 </script>
