@@ -4,14 +4,15 @@
       <form @submit.prevent="guardarFactura">
           <!-- Información de factura -->
           <div class="row g-3 mb-3">
-              <div class="col-md-6">
-                  <label for="ruc" class="form-label">RUC</label>
-                  <input type="text" v-model="factura.ruc" class="form-control" placeholder="RUC del proveedor" @blur="autocompletarProveedor"  @keydown.enter.prevent :readonly="readOnly">
-              </div>
-              <div class="col-md-6">
-                  <label for="razon_social" class="form-label">Nombre o Razón Social</label>
-                  <input type="text" v-model="factura.razonSocial" class="form-control" placeholder="Nombre o razón social" :readonly="readOnly">
-              </div>
+            <ProviderSelect
+              :disabled="readOnly"
+              @select="onProviderSelected"
+              @register="() => $router.push({ name: 'RegistrarProveedor' })"
+            />
+            <div class="col-md-6">
+                <label for="razon_social" class="form-label">Nombre o Razón Social</label>
+                <input type="text" v-model="factura.razonSocial" class="form-control" placeholder="Nombre o razón social" :readonly="readOnly">
+            </div>
           </div>
           <!-- Información adicional -->
           <div class="row g-3 mb-3">
@@ -170,13 +171,15 @@ import Producto from '@/models/Producto';
 import AppTable from '@/components/AppTable.vue';
 import SimpleRegisterModal from '@/components/SimpleRegisterModal.vue';
 import apiService from '@/services/apiService.js';
+import ProviderSelect from '@/components/ProviderSelect.vue';
 
 
 export default {
   name: 'FacturaView',
   components: {
     AppTable,
-    SimpleRegisterModal
+    SimpleRegisterModal,
+    ProviderSelect
   },
   props: {
     datosParaFactura: {
@@ -202,6 +205,8 @@ export default {
           fromDeliveryNote: false,
           fromDeliveryNoteID:'',
           readOnly: false,
+          providers: [],
+          selectedProviderInput: '',
           registerModalTitle: '',
           nuevoProducto: {
             codigo: '',
@@ -235,24 +240,24 @@ export default {
         this.showRegisterModal = true;
       }
     },
-    async autocompletarProveedor() {
-      if (!this.factura.ruc) return;
-      try {
-        const url = `${process.env.VUE_APP_API_BASE_URL}/api/providers/document/${this.factura.ruc}`;
-        const response = await apiService.get(url);
-        const proveedor = response.data;
-        if (proveedor) {
-          this.factura.razonSocial = proveedor.nombre;
-        } else {
-          this.registerModalTitle = "Proveedor no encontrado";
-          this.showRegisterModal = true;
-        }
-      } catch (error) {
-        console.error("Error al obtener el proveedor:", error);
-        this.registerModalTitle = "Proveedor no encontrado";
-        this.showRegisterModal = true;
-      }
-    },
+    // async autocompletarProveedor() {
+    //   if (!this.factura.ruc) return;
+    //   try {
+    //     const url = `${process.env.VUE_APP_API_BASE_URL}/api/providers/document/${this.factura.ruc}`;
+    //     const response = await apiService.get(url);
+    //     const proveedor = response.data;
+    //     if (proveedor) {
+    //       this.factura.razonSocial = proveedor.nombre;
+    //     } else {
+    //       this.registerModalTitle = "Proveedor no encontrado";
+    //       this.showRegisterModal = true;
+    //     }
+    //   } catch (error) {
+    //     console.error("Error al obtener el proveedor:", error);
+    //     this.registerModalTitle = "Proveedor no encontrado";
+    //     this.showRegisterModal = true;
+    //   }
+    // },
     async cargarFacturaDesdeParams() {
       const nroDocumento = this.$route.params.id; // Usar el número de documento de la factura
       try {
@@ -297,8 +302,25 @@ export default {
         console.error('Error al cargar la factura desde parámetros:', error);
       }
     },
+    async loadProviders() {
+      try {
+        const { data } = await apiService.get(
+          `${process.env.VUE_APP_API_BASE_URL}/api/providers/`
+        );
+        this.providers = Array.isArray(data) ? data : [];
+      } catch (err) {
+        console.error('Error al cargar proveedores:', err);
+      }
+    },
+    registerProvider() {
+      this.$router.push({ name: 'RegistrarProveedor' });
+    },
+    onProviderSelected(prov) {
+      this.factura.ruc = prov.nro_documento;
+      this.factura.razonSocial = prov.nombre;
+    },
 
-      async cargarFacturas() {
+    async cargarFacturas() {
         try {
           const response = await apiService.get(`${process.env.VUE_APP_API_BASE_URL}/api/purchases/invoices`);
           this.facturas = response.data.data || []; // Asignar las facturas a la propiedad local
@@ -316,6 +338,7 @@ export default {
           this.$router.push({ name: 'RegistrarProveedor'});
         }
       },
+
       closeRegisterModal() {
         this.showRegisterModal = false;
         this.nuevoProducto = { codigo: '', descripcion: '', valorUnitario: 0, tipoImpuesto: 'exenta' };
@@ -444,6 +467,7 @@ export default {
 
   },
   async mounted() {
+    await this.loadProviders();
     if (this.$route.params.id) {
       // Cargar la factura existente si hay un id
       this.readOnly = true;
@@ -463,6 +487,20 @@ export default {
         }                                   
         return suma + base;
       }, 0).toFixed(2);   
+    },
+    filteredProviders() {
+      const query = this.selectedProviderInput.trim().toLowerCase();
+      return query
+        ? this.providers.filter(p =>
+            p.nro_documento.toLowerCase().includes(query) ||
+            p.nombre.toLowerCase().includes(query)
+          )
+        : this.providers;
+    },
+    isProviderMatched() {
+      return this.providers.some(
+        p => p.nro_documento === this.selectedProviderInput || `${p.nro_documento} – ${p.nombre}` === this.selectedProviderInput
+      );
     }
   },
   watch: {
@@ -503,6 +541,19 @@ export default {
     },
     immediate: true,
   },
+  selectedProviderInput(val) {
+      if (val === 'Registrar proveedor…') {
+        this.$router.push({ name: 'RegistrarProveedor' });
+      } else {
+        const [ruc] = val.split(' – ');
+        const prov = this.providers.find(p => p.nro_documento === ruc);
+        if (prov) {
+          this.factura.ruc = prov.nro_documento;
+          this.factura.razonSocial = prov.nombre;
+          this.selectedProviderInput = prov.nro_documento;
+        }
+      }
+  }
 },
 };
 </script>
