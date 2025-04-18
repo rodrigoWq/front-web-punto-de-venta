@@ -462,7 +462,6 @@ export default {
   '$route.query.datosParaFactura': {
     handler(newQuery) {
       console.log('Datos recibidos en FacturaView:', newQuery);
-      this.readOnly = true;
       try {
         const queryData = newQuery
           ? JSON.parse(decodeURIComponent(newQuery))
@@ -471,7 +470,7 @@ export default {
         console.log('Datos recibidos en FacturaView desde ListarComprobantes.vue:', queryData);
 
         if (queryData) {
-
+          this.readOnly = true;
           this.selectedProviderInput = queryData.ruc;
           this.onProviderSelected({
             nro_documento: queryData.ruc,
@@ -496,6 +495,8 @@ export default {
           });
 
           this.factura.calcularTotales();
+        } else {
+          this.readOnly = false;
         }
       } catch (error) {
         console.error('Error al procesar los datos de la factura:', error);
