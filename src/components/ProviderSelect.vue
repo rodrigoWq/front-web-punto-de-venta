@@ -5,7 +5,7 @@
         list="providers-list"
         v-model="inputValue"
         @input="onInput"
-        :disabled="disabled"
+        :readonly="disabled"
         class="form-control"
         placeholder="Buscar o crear proveedor..."
       />
@@ -34,13 +34,16 @@
   
   export default {
     name: 'ProviderSelect',
+    emits: ['provider-selected', 'register', 'update:modelValue'],
+    model: { prop: 'modelValue', event: 'update:modelValue' },
     props: {
+      modelValue: { type: String, default: '' },
       disabled: { type: Boolean, default: false }
     },
     data() {
       return {
         providers: [],
-        inputValue: ''
+        //inputValue: ''
       };
     },
     computed: {
@@ -52,6 +55,10 @@
               p.nombre.toLowerCase().includes(q)
             )
           : this.providers;
+      },
+      inputValue: {
+        get() { return this.modelValue; },
+        set(val) { this.$emit('update:modelValue', val); }
       },
       isMatched() {
         return this.providers.some(
@@ -72,6 +79,7 @@
         }
       },
       onInput() {
+        console.log('onInput Call', this.inputValue);
         if (this.inputValue === 'Registrar proveedor…') {
             this.onRegister();
             return;
@@ -81,7 +89,7 @@
                `${p.nro_documento} – ${p.nombre}` === this.inputValue
         );
         if (prov) {
-          this.$emit('select', prov);
+          this.$emit('provider-selected', prov);
           // normalize input to RUC only
           this.inputValue = prov.nro_documento;
         }

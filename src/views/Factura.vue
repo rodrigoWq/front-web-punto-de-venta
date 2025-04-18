@@ -5,8 +5,9 @@
           <!-- Información de factura -->
           <div class="row g-3 mb-3">
             <ProviderSelect
+              v-model="selectedProviderInput"
               :disabled="readOnly"
-              @select="onProviderSelected"
+              @provider-selected="onProviderSelected"
               @register="() => $router.push({ name: 'RegistrarProveedor' })"
             />
             <div class="col-md-6">
@@ -211,6 +212,7 @@ export default {
             precio_unitario_neto: 0,
             tipo_iva_id: 'exenta',
           },
+          selectedProviderInput: '',
           productoEditandoIndex: null // Índice para identificar el producto que se está editando
       };
   },
@@ -243,6 +245,13 @@ export default {
         console.log('Factura recibida:', facturaData);
         if (facturaData && facturaData.cabecera) {
           const cabecera = facturaData.cabecera;
+
+          // <— SYNC the ProviderSelect v‑model too
+          this.selectedProviderInput = cabecera.nro_documento.toString();
+          this.onProviderSelected({
+            nro_documento: cabecera.nro_documento.toString(),
+            nombre: cabecera.nombre_razon_social
+          });
           // Asignar datos de la cabecera a la factura
           this.factura.ruc = cabecera.nro_documento.toString();
           this.factura.razonSocial = cabecera.nombre_razon_social;
@@ -283,8 +292,10 @@ export default {
 
 
     onProviderSelected(prov) {
+      console.log('onInput Call');
       this.factura.ruc = prov.nro_documento;
       this.factura.razonSocial = prov.nombre;
+      this.selectedProviderInput = prov.nro_documento;
     },
 
 
@@ -451,6 +462,7 @@ export default {
   '$route.query.datosParaFactura': {
     handler(newQuery) {
       console.log('Datos recibidos en FacturaView:', newQuery);
+      this.readOnly = true;
       try {
         const queryData = newQuery
           ? JSON.parse(decodeURIComponent(newQuery))
@@ -459,6 +471,12 @@ export default {
         console.log('Datos recibidos en FacturaView desde ListarComprobantes.vue:', queryData);
 
         if (queryData) {
+
+          this.selectedProviderInput = queryData.ruc;
+          this.onProviderSelected({
+            nro_documento: queryData.ruc,
+            nombre:        queryData.razonSocial
+          });
           this.fromDeliveryNote = true;  // Se marca que viene de nota de remisión
           this.fromDeliveryNoteID = queryData.nro_documento; // Guardar el ID de la nota de remisión
           this.factura.ruc = queryData.ruc || this.factura.ruc;

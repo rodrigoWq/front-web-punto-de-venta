@@ -4,27 +4,29 @@
     <form @submit.prevent="guardarNotaRemision">
       <!-- Encabezado -->
       <div class="row g-3 mb-3">
-        <div class="col-md-4">
-          <label for="nro_documento" class="form-label">RUC</label>
-          <input type="text" v-model="notaData.nro_documento" class="form-control" placeholder="RUC del destinatario" @blur="autocompletarProveedor" @keydown.enter.prevent :readonly="readOnly">
-        </div>
-        <div class="col-md-4">
+        <ProviderSelect
+          v-model="selectedProviderInput"
+          :disabled="readOnly"
+          @provider-selected="onProviderSelected"
+          @register="() => $router.push({ name: 'RegistrarProveedor' })"
+        />
+        <div class="col-md-6">
           <label for="nombre_razon_social" class="form-label">Razón Social</label>
           <input type="text" v-model="notaData.nombre_razon_social" class="form-control" placeholder="Razón Social" :readonly="readOnly">
         </div>
-        <div class="col-md-4">
+        <div class="col-md-6">
           <label for="timbrado" class="form-label">Timbrado</label>
           <input type="text" v-model="notaData.timbrado" class="form-control" placeholder="Número de timbrado" :readonly="readOnly">
+        </div>
+        <div class="col-md-6">
+          <label for="fecha_emision" class="form-label">Fecha de Emisión</label>
+          <input type="date" v-model="notaData.fecha_emision" class="form-control" :readonly="readOnly">
         </div>
       </div>
       <div class="row g-3 mb-3">
         <div class="col-md-6">
           <label for="nro_nota_remision" class="form-label">N° de Nota de Remisión</label>
           <input type="text" v-model="notaData.nro_nota_remision" class="form-control" placeholder="Número de Nota de Remisión" :readonly="readOnly">
-        </div>
-        <div class="col-md-6">
-          <label for="fecha_emision" class="form-label">Fecha de Emisión</label>
-          <input type="date" v-model="notaData.fecha_emision" class="form-control" :readonly="readOnly">
         </div>
       </div>
 
@@ -100,12 +102,14 @@
 import AppTable from '@/components/AppTable.vue';
 import apiService from '@/services/apiService.js';
 import SimpleRegisterModal from '@/components/SimpleRegisterModal.vue';
+import ProviderSelect from '@/components/ProviderSelect.vue';
 
 export default {
   name: 'NotaDeRemision',
   components: {
     AppTable,
-    SimpleRegisterModal
+    SimpleRegisterModal,
+    ProviderSelect
   
   },
   props: ['id'], // Recibe el id como prop
@@ -123,6 +127,7 @@ export default {
         pendiente: false,
         
       },
+      selectedProviderInput: '',
       productoData: {
         id: null,            // ID del producto (si existe)
         codigo: '',          // Se puede usar para buscar el producto
@@ -216,6 +221,13 @@ export default {
         const { data: nota } = await apiService.get(`${process.env.VUE_APP_API_BASE_URL}/api/purchases/delivery-notes/${id}`);
         if (nota) {
           const cabecera = nota.cabecera;
+
+          this.selectedProviderInput = cabecera.nro_documento.toString();
+          this.onProviderSelected({
+            nro_documento: cabecera.nro_documento.toString(),
+            nombre: cabecera.nombre_razon_social
+          });
+
           this.notaData = {
             nro_nota_remision: cabecera.nro_nota_remision,
             timbrado: cabecera.timbrado,
@@ -240,25 +252,6 @@ export default {
         }
       } catch (error) {
         console.error('Error al cargar la nota de remisión:', error);
-      }
-    },
-    async autocompletarProveedor() {
-      if (!this.notaData.nro_documento) return;
-      try {
-        const url = `${process.env.VUE_APP_API_BASE_URL}/api/providers/document/${this.notaData.nro_documento}`;
-        const response = await apiService.get(url);
-        const proveedor = response.data;
-        if (proveedor) {
-          this.notaData.nombre_razon_social = proveedor.nombre;
-        } else {
-          // Si no se encuentra el proveedor, asignar título y mostrar el modal
-          this.registerModalTitle = "Proveedor no encontrado";
-          this.showRegisterModal = true;
-        }
-      } catch (error) {
-        console.error("Error al obtener el proveedor:", error);
-        this.showRegisterModal = true;
-        this.registerModalTitle = "Proveedor no encontrado";
       }
     },
     async guardarNotaRemision() {
@@ -316,6 +309,11 @@ export default {
         // Navega a la página de registro de proveedor
         this.$router.push({ name: 'RegistrarProveedor' });
       }
+    },
+    onProviderSelected(prov) {
+      this.notaData.nro_documento        = prov.nro_documento;
+      this.notaData.nombre_razon_social  = prov.nombre;
+      this.selectedProviderInput = prov.nro_documento;
     },
     editarProducto(index) {
 
