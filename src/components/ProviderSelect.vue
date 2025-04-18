@@ -96,6 +96,7 @@
       },
       onRegister() {
         this.$emit('register');
+        this.inputValue = '' 
       }
     },
     async mounted() {

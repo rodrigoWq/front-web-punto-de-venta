@@ -8,7 +8,7 @@
           v-model="selectedProviderInput"
           :disabled="readOnly"
           @provider-selected="onProviderSelected"
-          @register="() => $router.push({ name: 'RegistrarProveedor' })"
+          @register="() => showProviderModal = true" 
         />
         <div class="col-md-6">
           <label for="nombre_razon_social" class="form-label">Razón Social</label>
@@ -94,6 +94,11 @@
         <button type="submit" class="btn btn-success" :disabled="readOnly" >Guardar Nota de Remisión </button>
       </div>
     </form>
+
+    <RegistrarProveedorModal
+      v-model:showModal="showProviderModal"
+      @provider-registered="onProviderRegistered" />
+
   </div>
 </template>
   
@@ -103,13 +108,15 @@ import AppTable from '@/components/AppTable.vue';
 import apiService from '@/services/apiService.js';
 import SimpleRegisterModal from '@/components/SimpleRegisterModal.vue';
 import ProviderSelect from '@/components/ProviderSelect.vue';
+import RegistrarProveedorModal from '@/components/RegistrarProveedorModal.vue'
 
 export default {
   name: 'NotaDeRemision',
   components: {
     AppTable,
     SimpleRegisterModal,
-    ProviderSelect
+    ProviderSelect,
+    RegistrarProveedorModal
   
   },
   props: ['id'], // Recibe el id como prop
@@ -140,6 +147,7 @@ export default {
         fechaVencimiento: ''
       },
       showRegisterModal: false,
+      showProviderModal: false,
       registerModalTitle: '',
       nuevoProducto: {
         codigo: '',
@@ -306,8 +314,7 @@ export default {
         // Navega a la página de registro de producto
         this.$router.push({ name: 'RegistrarProducto' });
       } else if (this.registerModalTitle === "Proveedor no encontrado") {
-        // Navega a la página de registro de proveedor
-        this.$router.push({ name: 'RegistrarProveedor' });
+        this.showProviderModal = true  
       }
     },
     onProviderSelected(prov) {
@@ -331,6 +338,11 @@ export default {
     limpiarCamposProducto() {
       this.productoData = { codigo: '', descripcion: '', cantidad: 0, unidadMedida: '', fechaVencimiento: '' };
       this.productoEditandoIndex = null;
+    },
+    onProviderRegistered(nuevoProv) {
+      this.notaData.nro_documento       = nuevoProv.identificacion_fiscal || ''
+      this.notaData.nombre_razon_social = nuevoProv.nombre || ''
+      this.selectedProviderInput        = this.notaData.nro_documento
     },
     resetNota() {
       this.notaData = {

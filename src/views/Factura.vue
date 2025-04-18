@@ -8,7 +8,7 @@
               v-model="selectedProviderInput"
               :disabled="readOnly"
               @provider-selected="onProviderSelected"
-              @register="() => $router.push({ name: 'RegistrarProveedor' })"
+              @register="openProviderModal"
             />
             <div class="col-md-6">
                 <label for="razon_social" class="form-label">Nombre o Razón Social</label>
@@ -163,6 +163,10 @@
             <button v-if="!readOnly" type="submit" class="btn btn-success mt-4" >Guardar Factura</button>
           </div>
       </form>
+      <RegistrarProveedorModal
+        v-model:showModal="showProviderModal"
+        @provider-registered="onProviderRegistered"
+      />
   </div>
 </template>
 
@@ -173,6 +177,7 @@ import AppTable from '@/components/AppTable.vue';
 import SimpleRegisterModal from '@/components/SimpleRegisterModal.vue';
 import apiService from '@/services/apiService.js';
 import ProviderSelect from '@/components/ProviderSelect.vue';
+import RegistrarProveedorModal    from '@/components/RegistrarProveedorModal.vue'
 
 
 export default {
@@ -180,7 +185,8 @@ export default {
   components: {
     AppTable,
     SimpleRegisterModal,
-    ProviderSelect
+    ProviderSelect,
+    RegistrarProveedorModal
   },
   props: {
     datosParaFactura: {
@@ -205,6 +211,7 @@ export default {
           showRegisterModal: false,
           fromDeliveryNote: false,
           fromDeliveryNoteID:'',
+          showProviderModal: false,
           readOnly: false,
           nuevoProducto: {
             codigo: '',
@@ -336,6 +343,18 @@ export default {
         //this.productoData = { ...this.nuevoProducto, cantidad: 1 }; // Copiar datos del nuevo producto al formulario principal
         this.closeRegisterModal(); // Cerrar el modal
        },
+      openProviderModal(){
+        this.selectedProviderInput='';     // oculta la “píldora”
+        this.showProviderModal   =true;    // abre el modal
+      },
+      onProviderRegistered(newProv){
+        /*  newProv llega desde el modal con los datos recién creados  */
+        this.onProviderSelected({
+            nro_documento:newProv.nro_documento,
+            nombre       :newProv.nombre
+        })
+        this.showProviderModal=false;      // cierra el modal
+      },
       agregarProducto() {
           this.calcularImpuestoPorTipo();
           const producto = new Producto(this.productoData);
