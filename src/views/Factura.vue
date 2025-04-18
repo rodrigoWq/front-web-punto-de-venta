@@ -167,6 +167,12 @@
         v-model:showModal="showProviderModal"
         @provider-registered="onProviderRegistered"
       />
+      <RegisterProductModal
+        v-model:showModal="showProductModal"
+        :initial-code="initialProductCode"
+        @product-registered="onProductRegistered"
+        @close-all-register-modals="showRegisterModal = false"
+      />
   </div>
 </template>
 
@@ -178,7 +184,7 @@ import SimpleRegisterModal from '@/components/SimpleRegisterModal.vue';
 import apiService from '@/services/apiService.js';
 import ProviderSelect from '@/components/ProviderSelect.vue';
 import RegistrarProveedorModal    from '@/components/RegistrarProveedorModal.vue'
-
+import RegisterProductModal from '@/components/RegistrarProductoModal.vue';
 
 export default {
   name: 'FacturaView',
@@ -186,7 +192,8 @@ export default {
     AppTable,
     SimpleRegisterModal,
     ProviderSelect,
-    RegistrarProveedorModal
+    RegistrarProveedorModal,
+    RegisterProductModal
   },
   props: {
     datosParaFactura: {
@@ -211,6 +218,9 @@ export default {
           showRegisterModal: false,
           fromDeliveryNote: false,
           fromDeliveryNoteID:'',
+          showProductModal: false,
+          registerModalTitle: '',
+          initialProductCode: '',
           showProviderModal: false,
           readOnly: false,
           nuevoProducto: {
@@ -236,13 +246,15 @@ export default {
           this.productoData.tipo_iva_id = producto.tipo_iva;
           this.productoData.producto_id = producto.producto_id || null; 
         } else {
-          this.registerModalTitle = "Producto no encontrado";
-          this.showRegisterModal = true;
+          this.initialProductCode = this.productoData.codigo;
+          this.registerModalTitle  = 'Producto no encontrado';
+          this.showRegisterModal   = true;
         }
       } catch (error) {
         console.error("Error al obtener el producto:", error);
-        this.registerModalTitle = "Producto no encontrado";
-        this.showRegisterModal = true;
+        this.initialProductCode = this.productoData.codigo;
+        this.registerModalTitle  = 'Producto no encontrado';
+        this.showRegisterModal   = true;
       }
     },
     async cargarFacturaDesdeParams() {
@@ -309,10 +321,10 @@ export default {
       irARegistro() {
         if (this.registerModalTitle === "Producto no encontrado") {
           // Navega a la página de registro de producto
-          this.$router.push({ name: 'RegistrarProducto' });
+          this.showProductModal   = true;
         } else if (this.registerModalTitle === "Proveedor no encontrado") {
           // Navega a la página de registro de proveedor
-          this.$router.push({ name: 'RegistrarProveedor'});
+          this.showProviderModal = true  
         }
       },
 
@@ -392,6 +404,16 @@ export default {
           this.productoData = { ...producto };
           this.productoEditandoIndex = index;
           console.log(this.productoData) // Indicar que estamos en modo edición
+      },
+      onProductRegistered(newProd) {
+        // cuando termine de registrar → lo asignamos al form y cerramos
+        this.productoData      = { ...newProd };
+        this.showProductModal  = false;
+      },
+    
+      closeAllRegisterModals() {
+        this.showProductModal = false;
+        this.showRegisterModal = false;
       },
       guardarEdicionProducto() {
           // Llama a agregarProducto para guardar los cambios

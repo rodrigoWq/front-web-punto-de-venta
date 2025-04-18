@@ -63,7 +63,7 @@
       </div>
 
       <SimpleRegisterModal
-        :showModal="showRegisterModal"
+        v-model:showModal="showRegisterModal"
         :title="registerModalTitle"
         @close="showRegisterModal = false"
         @register="irARegistro" />
@@ -95,9 +95,17 @@
       </div>
     </form>
 
+    <RegisterProductModal
+      v-model:showModal="showProductModal"
+      :initial-code="productoData.codigo_barras"
+      @product-registered="onProductRegistered"
+      @close-all-register-modals="showRegisterModal = false"
+    />
+
     <RegistrarProveedorModal
       v-model:showModal="showProviderModal"
-      @provider-registered="onProviderRegistered" />
+      @provider-registered="onProviderRegistered" 
+    />
 
   </div>
 </template>
@@ -108,7 +116,8 @@ import AppTable from '@/components/AppTable.vue';
 import apiService from '@/services/apiService.js';
 import SimpleRegisterModal from '@/components/SimpleRegisterModal.vue';
 import ProviderSelect from '@/components/ProviderSelect.vue';
-import RegistrarProveedorModal from '@/components/RegistrarProveedorModal.vue'
+import RegistrarProveedorModal from '@/components/RegistrarProveedorModal.vue';
+import RegisterProductModal from '@/components/RegistrarProductoModal.vue';
 
 export default {
   name: 'NotaDeRemision',
@@ -116,7 +125,8 @@ export default {
     AppTable,
     SimpleRegisterModal,
     ProviderSelect,
-    RegistrarProveedorModal
+    RegistrarProveedorModal,
+    RegisterProductModal
   
   },
   props: ['id'], // Recibe el id como prop
@@ -135,6 +145,8 @@ export default {
         
       },
       selectedProviderInput: '',
+      showProductModal:false,
+      initialProductCode: '',
       productoData: {
         id: null,            // ID del producto (si existe)
         codigo: '',          // Se puede usar para buscar el producto
@@ -178,13 +190,13 @@ export default {
         } else {
           // Si no se encuentra, precargar el código en el modal de registro
           this.nuevoProducto.codigo = this.productoData.codigo;
-          this.showRegisterModal = true;
-          this.registerModalTitle = "Producto no encontrado"
+          this.initialProductCode = this.productoData.codigo;
         }
       } catch (error) {
         console.error("Error al obtener el producto:", error);
         this.nuevoProducto.codigo = this.productoData.codigo;
         this.registerModalTitle = "Producto no encontrado";
+        this.initialProductCode = this.productoData.codigo_barras;
         this.showRegisterModal = true;
       }
     },
@@ -223,6 +235,9 @@ export default {
       //NotaDeRemisionService.guardarProducto(this.nuevoProducto); // Implementa esta función en el servicio mock
       //this.productoData = { ...this.nuevoProducto }; // Copiar datos del nuevo producto al formulario principal
       this.closeRegisterModal(); // Cerrar el modal
+    },
+    openProductModal(){
+      this.showProductModal = true;
     },
     async cargarNotaDeRemision(id) {
       try {
@@ -312,7 +327,7 @@ export default {
     irARegistro() {
       if (this.registerModalTitle === "Producto no encontrado") {
         // Navega a la página de registro de producto
-        this.$router.push({ name: 'RegistrarProducto' });
+        this.showProductModal   = true;
       } else if (this.registerModalTitle === "Proveedor no encontrado") {
         this.showProviderModal = true  
       }

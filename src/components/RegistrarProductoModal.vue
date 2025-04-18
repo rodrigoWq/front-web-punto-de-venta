@@ -1,71 +1,80 @@
 <template>
-  <div class="register-product-container">
-    <header class="header d-flex justify-content-between align-items-center">
-      <h1 class="title">{{ title }}</h1>
-      <button type="button" class="btn-close" @click="$emit('close')">×</button>
-    </header>
-    <main class="content">
-      <div class="row g-3">
-        <div class="col-md-6">
-          <label class="form-label">Código de Barras</label>
-          <input type="text" class="form-control" v-model="productData.codigo_barras" placeholder="Código de Barras" @keydown.enter.prevent />
-        </div>
-        <div class="col-md-6">
-          <label class="form-label">Nombre</label>
-          <input type="text" class="form-control" v-model="productData.nombre" placeholder="Nombre del Producto" @keydown.enter.prevent />
-        </div>
-      </div>
-      <div class="row g-3 mt-3">
-        <div class="col-md-6">
-          <label class="form-label">Descripción</label>
-          <input type="text" class="form-control" v-model="productData.descripcion" placeholder="Descripción del Producto" @keydown.enter.prevent />
-        </div>
-        <div class="col-md-6">
-          <label class="form-label">URL de Imagen</label>
-          <input type="text" class="form-control" v-model="productData.url_imagen" placeholder="imagen.jpg" @keydown.enter.prevent />
-        </div>
-      </div>
-      <div class="row g-3 mt-3">
-        <div class="col-md-6">
-          <label class="form-label">Categoría ID</label>
-          <input type="number" class="form-control" v-model.number="productData.categoria_id" placeholder="ID de categoría" />
-        </div>
-        <div class="col-md-6">
-          <label class="form-label">Unidad Medida ID</label>
-          <input type="number" class="form-control" v-model.number="productData.unidad_medida_id" placeholder="ID de unidad de medida" />
-        </div>
-      </div>
-      <div class="row g-3 mt-3 align-items-center">
-        <div class="col-md-6">
-          <label class="form-label">Tipo de IVA</label>
-          <select class="form-select" v-model.number="productData.tipo_iva">
-            <option :value="1">IVA 10%</option>
-            <option :value="2">IVA 5%</option>
-            <option :value="3">Exenta</option>
-          </select>
+  <div class="modal fade" :class="{ show: showModal }"
+       :style="{ display: showModal ? 'block' : 'none' }" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg" role="document">
+      <div class="modal-content">
+
+        <!-- header -->
+        <div class="modal-header">
+          <h5 class="modal-title">{{ title }}</h5>
+          <button type="button" class="btn-close" @click="closeModal"></button>
         </div>
 
-        <div class="col-md-6">
-          <div class="form-check mt-4">
-            <input class="form-check-input" type="checkbox" id="activo" v-model="productData.activo" />
-            <label class="form-check-label" for="activo">Activo</label>
+        <!-- body -->
+        <div class="modal-body">
+
+          <div class="row g-3">
+            <div class="col-md-6"><label class="form-label">Código de Barras</label>
+              <input type="text" class="form-control" v-model="productData.codigo_barras" placeholder="Código de Barras">
+            </div>
+            <div class="col-md-6"><label class="form-label">Nombre</label>
+              <input type="text" class="form-control" v-model="productData.nombre" placeholder="Nombre del Producto">
+            </div>
           </div>
+
+          <div class="row g-3 mt-3">
+            <div class="col-md-6"><label class="form-label">Descripción</label>
+              <input type="text" class="form-control" v-model="productData.descripcion" placeholder="Descripción">
+            </div>
+            <div class="col-md-6"><label class="form-label">URL de Imagen</label>
+              <input type="text" class="form-control" v-model="productData.url_imagen" placeholder="imagen.jpg">
+            </div>
+          </div>
+
+          <div class="row g-3 mt-3">
+            <div class="col-md-6"><label class="form-label">Categoría</label>
+              <input type="number" class="form-control" v-model.number="productData.categoria_id" placeholder="ID categoría">
+            </div>
+            <div class="col-md-6"><label class="form-label">Unidad Medida</label>
+              <input type="number" class="form-control" v-model.number="productData.unidad_medida_id" placeholder="ID unidad">
+            </div>
+          </div>
+
+          <div class="row g-3 mt-3">
+            <div class="col-md-6"><label class="form-label">Tipo IVA</label>
+              <select class="form-select" v-model.number="productData.tipo_iva">
+                <option :value="1">IVA 10%</option>
+                <option :value="2">IVA 5%</option>
+                <option :value="3">Exenta</option>
+              </select>
+            </div>
+            <div class="col-md-6 d-flex align-items-center mt-4">
+              <input class="form-check-input me-2" type="checkbox" id="activo" v-model="productData.activo">
+              <label class="form-check-label" for="activo">Activo</label>
+            </div>
+          </div>
+
         </div>
+
+        <!-- footer -->
+        <div class="modal-footer">
+          <button type="button" class="btn btn-primary" @click="handleSave">Guardar Producto</button>
+          <button type="button" class="btn btn-secondary" @click="closeModal">Cancelar</button>
+        </div>
+
       </div>
-    </main>
-    <div class="card-footer text-end">
-      <button type="button" class="btn btn-primary me-2" @click="handleSave">Guardar Producto</button>
-      <button type="button" class="btn btn-secondary" @click="handleVolver">Volver</button>
     </div>
   </div>
+  <div v-if="showModal" class="modal-backdrop fade show"></div>
 </template>
-
 
 <script>
 import apiService from '../services/apiService.js';
 
+
 export default {
   name: 'RegisterProductModal',
+  emits:['update:showModal','product-registered'],
   props: {
     showModal: { type: Boolean, default: false },
     title: { type: String, default: 'Registrar Producto' },
@@ -86,9 +95,9 @@ export default {
     };
   },
   watch: {
-    showModal(newVal) {
-      if (newVal && this.initialCode) {
-        this.productData.codigo_barras  = this.initialCode;
+    initialCode(newCode) {
+      if (this.showModal) {
+        this.productData.codigo_barras = newCode;
       }
     }
   },
@@ -99,6 +108,8 @@ export default {
         .then(response => {
           // Emite el evento con la respuesta recibida si es necesario
           this.$emit('product-registered', response.data);
+          this.$emit('update:showModal',false);
+          this.$emit('close-all-register-modals');
           // Reinicia los datos del formulario
           this.productData = {
             codigo_barras: '',
@@ -118,6 +129,10 @@ export default {
           // Opcional: muestra un mensaje de error al usuario
         });
     },
+    closeModal(){ 
+      this.$emit('update:showModal',false);
+      this.$emit('close-all-register-modals');
+     },
     handleVolver() {
       this.$router.back();
     }
