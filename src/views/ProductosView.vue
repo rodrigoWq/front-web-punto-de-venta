@@ -1,64 +1,40 @@
 <template>
-    <AppNavbar />
-    <div id="productos-view">
-      <AppHeader title="Precios de Productos" style="margin-top: 10px;">
-        <template #buttons>
-        <!-- Puedes agregar botones adicionales si lo requieres -->
-        </template>
-      </AppHeader>
-      <AppFilter  v-model="searchTerm" placeholder="Buscar por nombre de producto" customClasses="mb-3">
-        <div class="mb-3">
-          <div class="d-flex justify-content-end" style="margin-right: 30px;">
-            <button type="button" class="btn btn-outline-primary me-2" :class="{ active: priceFilter === 'all' }" @click="priceFilter = 'all'">Todos</button>
-            <button type="button" class="btn btn-outline-primary me-2" :class="{ active: priceFilter === 'zero' }" @click="priceFilter = 'zero'">Sin Precio</button>
-            <button type="button" class="btn btn-outline-primary" :class="{ active: priceFilter === 'nonzero' }" @click="priceFilter = 'nonzero'">Con Precio</button>
-          </div>
-        </div>
-      </AppFilter>
+  <AppNavbar />
+  <div class="container mt-5" id="productos-view">
+    <AppHeader title="Precios de Productos">
+      <template #buttons></template>
+    </AppHeader>
 
-  
-      <!-- Tabla de Productos -->
-      <AppTable :headers="['Nombre', 'Precio', 'Categoría', 'Acciones']">
-        <tr v-for="product in filteredProducts" :key="product.producto_id">
-          <td>{{ product.nombre }}</td>
-          <td>{{ product.precio_venta || 'Sin precio' }}</td>
-          <td>{{ product.categoria_nombre }}</td>
-          <td>
-            <button class="btn btn-primary btn-sm" @click="openModal(product)">
-              Actualizar Precio
-            </button>
-          </td>
-        </tr>
-      </AppTable>
-  
-      <!-- Paginación -->
-      <AppPagination :currentPage="currentPage" :totalPages="totalPages" @page-changed="changePage" />
-  
-      <!-- Modal de Actualización -->
-      <div class="modal fade" id="updatePriceModal" tabindex="-1" aria-labelledby="updatePriceModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-          <div class="modal-content">
-            <div class="modal-header">
-              <h5 class="modal-title" id="updatePriceModalLabel">Actualizar Precio</h5>
-              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
-            </div>
-            <div class="modal-body">
-              <form @submit.prevent="updatePrice">
-                <div class="mb-3">
-                  <label for="newPrice" class="form-label">Nuevo Precio</label>
-                  <input type="number" id="newPrice" class="form-control" v-model.number="modalData.nuevoPrecio" required />
-                </div>
-                <div class="mb-3">
-                  <label for="vigencia" class="form-label">Fecha de Vigencia</label>
-                  <input type="date" id="vigencia" class="form-control" v-model="modalData.fechaVigencia" required />
-                </div>
-                <button type="submit" class="btn btn-success">Guardar Cambios</button>
-              </form>
-            </div>
+    <AppFilter v-model="searchTerm" placeholder="Buscar por nombre de producto" customClasses="mt-4 mb-4">
+      <button type="button" class="btn btn-success me-2" :class="{ active: priceFilter==='all' }" @click="priceFilter='all'">Todos</button>
+      <button type="button" class="btn btn-success me-2" :class="{ active: priceFilter==='zero' }" @click="priceFilter='zero'">Sin Precio</button>
+      <button type="button" class="btn btn-success" :class="{ active: priceFilter==='nonzero' }" @click="priceFilter='nonzero'">Con Precio</button>
+    </AppFilter>
+
+    <!-- Tabla de Productos -->
+    <AppTable :headers="['Nombre','Precio','Categoría','Acciones']">
+      <tr v-for="product in filteredProducts" :key="product.producto_id">
+        <td>{{product.nombre}}</td><td>{{product.precio_venta||'Sin precio'}}</td><td>{{product.categoria_nombre}}</td><td><button class="btn btn-primary btn-sm" @click="openModal(product)">Actualizar Precio</button></td>
+      </tr>
+    </AppTable>
+
+    <!-- Paginación -->
+    <AppPagination :currentPage="currentPage" :totalPages="totalPages" @page-changed="changePage" />
+
+    <!-- Modal de Actualización de Precio unificado -->
+    <div class="modal fade" id="updatePriceModal" tabindex="-1">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header"><h5 class="modal-title">Actualizar Precio</h5><button type="button" class="btn-close" @click="closeModal"></button></div>
+          <div class="modal-body">
+            <form @submit.prevent="updatePrice">
+              <div class="container-fluid"><div class="row mb-3"><div class="col-md-6"><label for="newPrice" class="form-label">Nuevo Precio</label><input type="number" id="newPrice" class="form-control" v-model.number="modalData.nuevoPrecio" required /></div><div class="col-md-6"><label for="vigencia" class="form-label">Fecha de Vigencia</label><input type="date" id="vigencia" class="form-control" v-model="modalData.fechaVigencia" required /></div></div><div class="row"><div class="col text-end"><button type="submit" class="btn btn-success">Guardar Cambios</button></div></div></div>
+            </form>
           </div>
         </div>
       </div>
     </div>
+  </div>
 </template>
   
 <script>
@@ -174,3 +150,15 @@ export default {
   }
 };
 </script>
+
+<style scoped>
+.btn-success {
+  background-color: #28a745;
+  border-color: #28a745;
+}
+
+.header-buttons {
+  display: flex;
+  justify-content: flex-end;
+}
+</style>

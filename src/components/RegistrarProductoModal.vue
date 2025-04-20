@@ -33,10 +33,10 @@
 
           <div class="row g-3 mt-3">
             <div class="col-md-6"><label class="form-label">Categoría</label>
-              <input type="number" class="form-control" v-model.number="productData.categoria_id" placeholder="ID categoría">
+              <input type="text" class="form-control" v-model.number="productData.categoria_id" placeholder="categoría">
             </div>
             <div class="col-md-6"><label class="form-label">Unidad Medida</label>
-              <input type="number" class="form-control" v-model.number="productData.unidad_medida_id" placeholder="ID unidad">
+              <input type="text" class="form-control" v-model.number="productData.unidad_medida_id" placeholder="unidad">
             </div>
           </div>
 
