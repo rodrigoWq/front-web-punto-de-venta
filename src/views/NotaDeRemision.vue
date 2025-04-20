@@ -203,6 +203,7 @@ export default {
     onProductRegistered(newProduct) {
       // Aquí asignas el producto recién creado al 'productoData' actual
       this.productoData = { ...newProduct };
+      this.autocompletarProducto();
     },
     closeRegisterModal() {
       this.showRegisterModal = false;

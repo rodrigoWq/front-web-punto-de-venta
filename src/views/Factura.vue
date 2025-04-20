@@ -409,6 +409,7 @@ export default {
         // cuando termine de registrar → lo asignamos al form y cerramos
         this.productoData      = { ...newProd };
         this.showProductModal  = false;
+        this.autocompletarProducto();
       },
     
       closeAllRegisterModals() {

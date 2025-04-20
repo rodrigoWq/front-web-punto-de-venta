@@ -114,7 +114,11 @@ export default {
       apiService.post(url, this.productData)
         .then(response => {
           // Emite el evento con la respuesta recibida si es necesario
-          this.$emit('product-registered', response.data);
+          this.$emit('product-registered', {
+            ...response.data,
+            codigo_barras: response.data.codigo_barras, // campo original
+            codigo:        response.data.codigo_barras  // alias para el input
+          });
           this.$emit('update:showModal',false);
           this.$emit('close-all-register-modals');
           // Reinicia los datos del formulario
@@ -129,7 +133,7 @@ export default {
             tipo_iva: 1
           };
           this.$emit('close');
-          this.$router.back();
+          
         })
         .catch(error => {
           console.error("Error registrando producto:", error);
