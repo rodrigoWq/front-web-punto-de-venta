@@ -84,10 +84,25 @@ export default {
   },
   watch: {
     id(newVal) {
-    if (newVal) {
-      this.loadProvider();
-    }
-  }
+      if (newVal) {
+        this.loadProvider();
+      }
+    },
+    // al mostrarse el modal en modo NUEVO (sin id), limpiar form
+    showModal(newVal) {
+      if (newVal && !this.isEditMode) {
+        this.providerData = {
+          nombre: '',
+          contacto: '',
+          identificacion_fiscal: '',
+          direccion: '',
+          telefono_celular: '',
+          email: '',
+          nombre_fantasia: '',
+          condiciones_pago: ''
+        };
+      }
+    },
   },
   methods: {
     handleSave() {

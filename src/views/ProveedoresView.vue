@@ -4,7 +4,7 @@
       <AppHeader title="Gestión de Proveedores">
         <template #buttons>
           <!-- Al hacer click navega a la pantalla de registro (ya existente) -->
-          <button class="btn btn-success" @click="$router.push({ name: 'RegistrarProveedor' })">
+          <button class="btn btn-success" @click="()=>{ editProviderId=null; showProviderModal=true }">
             Registrar Proveedor
           </button>
         </template>
@@ -31,6 +31,13 @@
       </AppTable>
   
       <AppPagination :currentPage="currentPage" :totalPages="totalPages" @page-changed="changePage" />
+      <!-- Modal Registrar/Editar Proveedor -->
+      <RegistrarProveedorModal
+        v-model:showModal="showProviderModal"
+        :id="editProviderId"
+        :initial-ruc="editProviderId ? '' : undefined"
+        @provider-registered="cargarProveedores"
+      />
     </div>
   </template>
   
@@ -41,6 +48,8 @@ import AppFilter from '../components/AppFilter.vue';
 import AppTable from '../components/AppTable.vue';
 import AppPagination from '../components/AppPagination.vue';
 import apiService from '../services/apiService';
+import RegistrarProveedorModal from '@/components/RegistrarProveedorModal.vue';
+
 
 export default {
   name: 'ProveedoresABM',
@@ -50,6 +59,7 @@ export default {
     AppFilter,
     AppTable,
     AppPagination,
+    RegistrarProveedorModal,
   },
   data() {
     return {
@@ -57,6 +67,9 @@ export default {
       searchInput: '',     // Filtro de búsqueda por nombre
       currentPage: 1,
       itemsPerPage: 5,
+      showProviderModal: false,
+      editProviderId: null 
+
     };
   },
   computed: {
@@ -89,7 +102,8 @@ export default {
     },
     editarProveedor(provider) {
       // Navega a la pantalla de registro/en edición pasando el ID del proveedor
-      this.$router.push({ name: 'EditarProveedor', params: { id: provider.proveedor_id } });
+      this.editProviderId   = provider.proveedor_id;
+      this.showProviderModal = true;
     },
     async eliminarProveedor(id) {
       if (confirm('¿Estás seguro de eliminar este proveedor?')) {
