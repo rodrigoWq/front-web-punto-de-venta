@@ -97,7 +97,7 @@
 
     <RegisterProductModal
       v-model:showModal="showProductModal"
-      :initial-code="productoData.codigo_barras"
+      :initial-code="initialProductCode"
       @product-registered="onProductRegistered"
       @close-all-register-modals="showRegisterModal = false"
     />
@@ -189,12 +189,12 @@ export default {
           this.productoData.id = producto.producto_id || null; 
         } else {
           // Si no se encuentra, precargar el código en el modal de registro
-          this.nuevoProducto.codigo = this.productoData.codigo;
-          this.initialProductCode = this.productoData.codigo;
+          this.nuevoProducto.codigo = this.productoData.codigo_barras;
+          this.initialProductCode = this.productoData.codigo_barras;
         }
       } catch (error) {
         console.error("Error al obtener el producto:", error);
-        this.nuevoProducto.codigo = this.productoData.codigo;
+        this.nuevoProducto.codigo = this.productoData.codigo_barras;
         this.registerModalTitle = "Producto no encontrado";
         this.initialProductCode = this.productoData.codigo_barras;
         this.showRegisterModal = true;
@@ -327,7 +327,10 @@ export default {
     irARegistro() {
       if (this.registerModalTitle === "Producto no encontrado") {
         // Navega a la página de registro de producto
+        this.initialProductCode = this.productoData.codigo_barras;
         this.showProductModal   = true;
+        console.log('[NotaDeRemision] initialProductCode →', this.initialProductCode);
+
       } else if (this.registerModalTitle === "Proveedor no encontrado") {
         this.showProviderModal = true  
       }

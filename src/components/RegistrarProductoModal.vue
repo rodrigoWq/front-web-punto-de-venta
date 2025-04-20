@@ -83,7 +83,7 @@ export default {
   data() {
     return {
       productData: {
-        codigo_barras: '',
+        codigo_barras: this.initialCode,
         nombre: '',
         descripcion: '',
         url_imagen: '',
@@ -98,8 +98,15 @@ export default {
     initialCode(newCode) {
       if (this.showModal) {
         this.productData.codigo_barras = newCode;
+        console.log('[RegisterProductModal] initialCode cambió a', newCode);
       }
+    },
+    showModal(val) {
+    if (val) {
+      this.productData.codigo_barras = this.initialCode;
+      console.log('[RegisterProductModal] modal abierto, código precargado =', this.initialCode);
     }
+  },
   },
   methods: {
     handleSave() {

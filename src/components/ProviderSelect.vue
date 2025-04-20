@@ -49,12 +49,18 @@
     computed: {
       filteredProviders() {
         const q = this.inputValue.trim().toLowerCase();
-        return q
-          ? this.providers.filter(p =>
-              p.nro_documento.toLowerCase().includes(q) ||
-              p.nombre.toLowerCase().includes(q)
-            )
-          : this.providers;
+        return this.providers
+          // 1) sólo los que coinciden con la búsqueda
+          .filter(p =>
+            !q ||
+            p.nro_documento.toLowerCase().includes(q) ||
+            p.nombre.toLowerCase().includes(q)
+          )
+          // 2) luego excluye el que ya está seleccionado
+          .filter(p =>
+            p.nro_documento !== this.modelValue &&
+            `${p.nro_documento} – ${p.nombre}` !== this.modelValue
+          );
       },
       inputValue: {
         get() { return this.modelValue; },
