@@ -6,7 +6,7 @@
           <div class="row g-3 mb-3">
             <ProviderSelect
               v-model="selectedProviderInput"
-              :disabled="readOnly"
+              :disabled="readOnly && !fromDeliveryNote"
               @provider-selected="onProviderSelected"
               @register="openProviderModal"
             />
@@ -19,17 +19,17 @@
           <div class="row g-3 mb-3">
               <div class="col-md-6">
                   <label for="fecha_emision" class="form-label">Fecha de Emisión</label>
-                  <input type="date" v-model="factura.fechaEmision" class="form-control" :readonly="readOnly">
+                  <input type="date" v-model="factura.fechaEmision" class="form-control" :readonly="readOnly && !fromDeliveryNote">
               </div>
               <div class="col-md-6">
                   <label for="timbrado" class="form-label">Timbrado</label>
-                  <input type="text" v-model="factura.timbrado" class="form-control" placeholder="Número de timbrado" :readonly="readOnly">
+                  <input type="text" v-model="factura.timbrado" class="form-control" placeholder="Número de timbrado" :readonly="readOnly && !fromDeliveryNote">
               </div>
           </div>
           <div class="row g-3 mb-3">
               <div class="col-md-6">
                   <label for="nro_factura" class="form-label">N° de Factura</label>
-                  <input type="text" v-model="factura.nroFactura" class="form-control" placeholder="Número de factura" :readonly="readOnly">
+                  <input type="text" v-model="factura.nroFactura" class="form-control" placeholder="Número de factura" :readonly="readOnl && !fromDeliveryNotey">
               </div>
               <div class="col-md-6">
                   <label for="condicion_venta" class="form-label">Condición de Venta</label>
@@ -121,12 +121,12 @@
 
           <td>
             <template v-if="productoEditandoIndex === index">
-              <button type="button" class="btn btn-success btn-sm me-1" @click="guardarEdicionProducto" :disabled="readOnly">Guardar</button>
-              <button type="button" class="btn btn-danger btn-sm" @click="cancelarEdicion" :disabled="readOnly">Cancelar</button>
+              <button type="button" class="btn btn-success btn-sm me-1" @click="guardarEdicionProducto" :disabled="readOnly && !fromDeliveryNote">Guardar</button>
+              <button type="button" class="btn btn-danger btn-sm" @click="cancelarEdicion" :disabled="readOnly && !fromDeliveryNote">Cancelar</button>
             </template>
             <template v-else>
-              <button type="button" class="btn btn-primary btn-sm me-1" @click="editarProducto(index)" :disabled="readOnly">Editar</button>
-              <button type="button" class="btn btn-danger btn-sm" @click="eliminarProducto(index)" :disabled="readOnly">Eliminar</button>
+              <button type="button" class="btn btn-primary btn-sm me-1" @click="editarProducto(index)" :disabled="readOnly && !fromDeliveryNote">Editar</button>
+              <button type="button" class="btn btn-danger btn-sm" @click="eliminarProducto(index)" :disabled="readOnly && !fromDeliveryNote">Eliminar</button>
             </template>
           </td>
 
@@ -160,7 +160,7 @@
 
 
           <div class ="d-grid gap-2 mt-4">
-            <button v-if="!readOnly" type="submit" class="btn btn-success mt-4" >Guardar Factura</button>
+            <button v-if="!readOnly || fromDeliveryNote" type="submit" class="btn btn-success mt-4" >Guardar Factura</button>
           </div>
       </form>
       <RegistrarProveedorModal
