@@ -5,6 +5,7 @@
           <!-- Información de factura -->
           <div class="row g-3 mb-3">
             <ProviderSelect
+              ref="providerSelect"
               v-model="selectedProviderInput"
               :disabled="readOnly && !fromDeliveryNote"
               @provider-selected="onProviderSelected"
@@ -366,6 +367,9 @@ export default {
             nombre       :newProv.nombre
         })
         this.showProviderModal=false;      // cierra el modal
+        this.$nextTick(() => {
+          this.$refs.providerSelect.loadProviders();
+        });
       },
       agregarProducto() {
           this.calcularImpuestoPorTipo();
@@ -436,7 +440,7 @@ export default {
               tipo_moneda: this.factura.tipo_moneda || 'USD',
               credito_contado: this.factura.condicionVenta === 'contado' ? 'Contado' : 'Crédito',
               tipo_documento: 'RUC',
-              nro_documento: this.factura.ruc.toString(),
+              nro_documento: this.selectedProviderInput,
               nombre_razon_social: this.factura.razonSocial,
               direccion: this.factura.direccion || '',
               pendiente: false,

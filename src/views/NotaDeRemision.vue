@@ -5,6 +5,7 @@
       <!-- Encabezado -->
       <div class="row g-3 mb-3">
         <ProviderSelect
+          ref="providerSelect"
           v-model="selectedProviderInput"
           :disabled="readOnly"
           @provider-selected="onProviderSelected"
@@ -288,8 +289,8 @@ export default {
             tipo_moneda: this.notaData.tipo_moneda || 'PYG',
             credito_contado: this.notaData.condicionVenta,
             tipo_documento: 'RUC',
-            nro_documento: this.notaData.nro_documento,
-            nombre_razon_social: this.notaData.nombre_rason_social || this.notaData.nombre_rason_social,  // O ajustar según convenga
+            nro_documento: this.selectedProviderInput,
+            nombre_razon_social: this.notaData.nombre_razon_social,  // O ajustar según convenga
             direccion: this.notaData.direccion,
             pendiente: this.notaData.pendiente
           },
@@ -359,9 +360,12 @@ export default {
       this.productoEditandoIndex = null;
     },
     onProviderRegistered(nuevoProv) {
-      this.notaData.nro_documento       = nuevoProv.identificacion_fiscal || ''
-      this.notaData.nombre_razon_social = nuevoProv.nombre || ''
-      this.selectedProviderInput        = this.notaData.nro_documento
+      this.selectedProviderInput        = nuevoProv.nro_documento || '';
+      this.notaData.nombre_razon_social = nuevoProv.nombre       || '';
+      this.showProviderModal            = false;
+      this.$nextTick(() => {
+        this.$refs.providerSelect.loadProviders();
+      });
     },
     resetNota() {
       this.notaData = {
