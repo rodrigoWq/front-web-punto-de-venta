@@ -21,8 +21,26 @@
 
           <!-- fila 2 -->
           <div class="row g-3 mt-3">
-            <div class="col-md-6"><label class="form-label">Identificación Fiscal</label><input type="text" class="form-control" v-model="providerData.identificacion_fiscal" placeholder="Identificación fiscal"></div>
-            <div class="col-md-6"><label class="form-label">Dirección</label><input type="text" class="form-control" v-model="providerData.direccion" placeholder="Dirección"></div>
+            <div class="col-md-6">
+              <label class="form-label">Nro. Documento</label>
+              <input type="text" class="form-control" v-model="providerData.nro_documento" placeholder="Nro. de documento" />
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">RUC</label>
+              <input type="text" class="form-control" v-model="providerData.ruc" placeholder="RUC" />
+            </div>
+          </div>
+
+          
+          <div class="row g-3 mt-3">
+            <div class="col-md-6">
+              <label class="form-label" style="padding-left: 5px;">CI</label>
+              <input type="text" class="form-control" v-model="providerData.ci" placeholder="CI" />
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Dirección</label>
+              <input type="text" class="form-control" v-model="providerData.direccion" placeholder="Dirección" />
+            </div>
           </div>
 
           <!-- fila 3 -->
@@ -31,7 +49,8 @@
             <div class="col-md-6"><label class="form-label">Email</label><input type="email" class="form-control" v-model="providerData.email" placeholder="Email"></div>
           </div>
 
-          <!-- fila 4 -->
+
+          <!-- fila 5 -->
           <div class="row g-3 mt-3">
             <div class="col-md-6"><label class="form-label">Nombre Fantasía</label><input type="text" class="form-control" v-model="providerData.nombre_fantasia" placeholder="Nombre Fantasía"></div>
             <div class="col-md-6"><label class="form-label">Condiciones de Pago</label><input type="text" class="form-control" v-model="providerData.condiciones_pago" placeholder="Condiciones de pago"></div>
@@ -73,7 +92,9 @@ export default {
       providerData: {
         nombre: '',
         contacto: '',
-        identificacion_fiscal: '',
+        nro_documento: '',
+        ruc: '',
+        ci: '', 
         direccion: '',
         telefono_celular: '',
         email: '',
@@ -94,7 +115,9 @@ export default {
         this.providerData = {
           nombre: '',
           contacto: '',
-          identificacion_fiscal: '',
+          nro_documento: '',
+          ruc: '',
+          ci: '',
           direccion: '',
           telefono_celular: '',
           email: '',
@@ -149,7 +172,9 @@ export default {
           this.providerData = {
             nombre: response.data.nombre || '',
             contacto: response.data.contacto || '',
-            identificacion_fiscal: response.data.nro_documento || '',
+            nro_documento:  response.data.nro_documento || response.data.ruc ||response.data.ci,
+            ruc:            response.data.ruc           || '',
+            ci:             response.data.ci            || '',
             direccion: response.data.direccion || '',
             telefono_celular: response.data.telefono_celular || '',
             email: response.data.email || '',
