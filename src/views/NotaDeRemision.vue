@@ -73,10 +73,10 @@
       <h3>Productos Agregados</h3>
       <AppTable :headers="['Código de Barra','Cantidad','Unidad de Medida','Descripción','Acciones']">
         <tr v-for="(producto, index) in productos" :key="index">
-          <td><input v-if="productoEditandoIndex === index" v-model="productoData.codigo_barras" class="form-control form-control-sm" /><span v-else>{{ producto.codigo_barras }}</span></td>
+          <td><span>{{ producto.codigo_barras }}</span></td>
           <td><input v-if="productoEditandoIndex === index" v-model.number="productoData.cantidad" type="number" class="form-control form-control-sm" /><span v-else>{{ producto.cantidad }}</span></td>
-          <td><input v-if="productoEditandoIndex === index" v-model="productoData.unidad_medida" class="form-control form-control-sm" /><span v-else>{{ producto.unidad_medida }}</span></td>
-          <td><input v-if="productoEditandoIndex === index" v-model="productoData.descripcion" class="form-control form-control-sm" /><span v-else>{{ producto.descripcion }}</span></td>
+          <td><span>{{ producto.unidad_medida }}</span></td>
+          <td><span>{{ producto.descripcion }}</span></td>
           <td>
             <template v-if="productoEditandoIndex === index">
               <button type="button" class="btn btn-success btn-sm me-1" @click="guardarEdicionProducto" :disabled="readOnly">Guardar</button>

@@ -46,7 +46,7 @@
         <div class="row g-3 mb-3">
         <div class="col-md-2">
           <label class="form-label">Código</label>
-          <input type="text" v-model="productoData.codigo" class="form-control" placeholder="Código" @blur="autocompletarProducto" @keydown.enter.prevent :readonly="readOnly"/>
+          <input type="text" v-model="productoData.codigo_producto" class="form-control" placeholder="Código" @blur="autocompletarProducto" @keydown.enter.prevent :readonly="readOnly"/>
         </div>
         <div class="col-md-3">
           <label class="form-label">Descripción</label>
@@ -206,7 +206,7 @@ export default {
       return {
           factura: new Factura(), // Instancia de Factura
           productoData: { // Datos temporales del producto
-              codigo: '',
+              codigo_producto: '',
               producto_id: null,
               descripcion: '',
               cantidad: 0,
@@ -236,9 +236,9 @@ export default {
   },
   methods: {
     async autocompletarProducto() {
-      if (!this.productoData.codigo) return;
+      if (!this.productoData.codigo_producto) return;
       try {
-        const url = `${process.env.VUE_APP_API_BASE_URL}/api/products/barcode/${this.productoData.codigo}`;
+        const url = `${process.env.VUE_APP_API_BASE_URL}/api/products/barcode/${this.productoData.codigo_producto}`;
         const response = await apiService.get(url);
         const producto = response.data;
         if (producto) {
@@ -247,13 +247,13 @@ export default {
           this.productoData.tipo_iva_id = producto.tipo_iva;
           this.productoData.producto_id = producto.producto_id || null; 
         } else {
-          this.initialProductCode = this.productoData.codigo;
+          this.initialProductCode = this.productoData.codigo_producto;
           this.registerModalTitle  = 'Producto no encontrado';
           this.showRegisterModal   = true;
         }
       } catch (error) {
         console.error("Error al obtener el producto:", error);
-        this.initialProductCode = this.productoData.codigo;
+        this.initialProductCode = this.productoData.codigo_producto;
         this.registerModalTitle  = 'Producto no encontrado';
         this.showRegisterModal   = true;
       }
