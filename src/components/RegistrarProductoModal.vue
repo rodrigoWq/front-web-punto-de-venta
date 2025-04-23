@@ -32,12 +32,14 @@
           </div>
 
           <div class="row g-3 mt-3">
-            <div class="col-md-6"><label class="form-label">Categoría</label>
-              <input type="text" class="form-control" v-model.number="productData.categoria_id" placeholder="categoría">
-            </div>
-            <div class="col-md-6"><label class="form-label">Unidad Medida</label>
-              <input type="text" class="form-control" v-model.number="productData.unidad_medida_id" placeholder="unidad">
-            </div>
+            <CategorySelect
+              v-model="productData.categoria_id"
+              :disabled="readOnly" 
+            />
+            <MeasureUnitSelect
+              v-model="productData.unidad_medida_id"
+              :disabled="readOnly"
+            />
           </div>
 
           <div class="row g-3 mt-3">
@@ -70,10 +72,13 @@
 
 <script>
 import apiService from '../services/apiService.js';
+import CategorySelect from './CategorySelect.vue'; 
+import MeasureUnitSelect from './MeasureUnitSelect.vue';
 
 
 export default {
   name: 'RegisterProductModal',
+  components: { CategorySelect, MeasureUnitSelect },
   emits:['update:showModal','product-registered'],
   props: {
     showModal: { type: Boolean, default: false },
