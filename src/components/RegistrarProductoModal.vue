@@ -84,6 +84,7 @@ export default {
     showModal: { type: Boolean, default: false },
     title: { type: String, default: 'Registrar Producto' },
     initialCode: { type: String, default: '' },
+    product: { type:Object, default:null }
   },
   data() {
     return {
@@ -107,42 +108,61 @@ export default {
       }
     },
     showModal(val) {
-    if (val) {
-      this.productData.codigo_barras = this.initialCode;
-      console.log('[RegisterProductModal] modal abierto, código precargado =', this.initialCode);
-    }
-  },
+      if (val) {
+        if (this.product) {
+          
+          this.productData = { ...this.product };
+          console.log('[RegisterProductModal] modo edición, datos cargados:', this.productData);
+        } else {
+          this.resetForm();
+          this.productData.codigo_barras = this.initialCode;
+          console.log('[RegisterProductModal] alta, código precargado =', this.initialCode);
+        }
+      }
+    },
   },
   methods: {
     handleSave() {
-      const url = process.env.VUE_APP_API_BASE_URL + '/api/products/';
-      apiService.post(url, this.productData)
+      // 1. Determinar si es edición (PUT) o creación (POST)
+      const isEdit = !!this.productData.producto_id;
+      const baseUrl = process.env.VUE_APP_API_BASE_URL + '/api/products';
+      const url     = isEdit
+        ? `${baseUrl}/${this.productData.producto_id}`  // PUT sobre /api/products/:id
+        : baseUrl;                                      // POST sobre /api/products
+
+      // 2. Ejecutar la llamada correcta
+      const request = isEdit
+        ? apiService.put(url, this.productData)
+        : apiService.post(url, this.productData);
+
+      // 3. Manejar la respuesta manteniendo tus emits y reseteos
+      request
         .then(response => {
-          // Emite el evento con la respuesta recibida si es necesario
+          const payload = response.data;
+          // Emitir igual que antes, con los campos alias
           this.$emit('product-registered', {
-            ...response.data,
-            codigo_barras: response.data.codigo_barras, // campo original
-            codigo:        response.data.codigo_barras  // alias para el input
+            ...payload,
+            codigo_barras: payload.codigo_barras,
+            codigo:        payload.codigo_barras
           });
-          this.$emit('update:showModal',false);
+          this.$emit('update:showModal', false);
           this.$emit('close-all-register-modals');
-          // Reinicia los datos del formulario
-          this.productData = {
-            codigo_barras: '',
-            nombre: '',
-            descripcion: '',
-            url_imagen: '',
-            categoria_id: null,
-            unidad_medida_id: null,
-            activo: true,
-            tipo_iva: 1
-          };
+          if (!isEdit) {
+            this.productData = {
+              codigo_barras: '',
+              nombre:        '',
+              descripcion:   '',
+              url_imagen:    '',
+              categoria_id:  null,
+              unidad_medida_id: null,
+              activo:        true,
+              tipo_iva:      1
+            };
+          }
           this.$emit('close');
-          
         })
         .catch(error => {
-          console.error("Error registrando producto:", error);
-          // Opcional: muestra un mensaje de error al usuario
+          console.error("Error guardando producto:", error);
         });
     },
     closeModal(){ 
@@ -151,7 +171,19 @@ export default {
      },
     handleVolver() {
       this.$router.back();
-    }
+    },
+    resetForm() {
+      this.productData = {
+        codigo_barras:   this.initialCode,
+        nombre:          '',
+        descripcion:     '',
+        url_imagen:      '',
+        categoria_id:    null,
+        unidad_medida_id:null,
+        activo:          true,
+        tipo_iva:        1
+      };
+    },
   }
 };
 </script>

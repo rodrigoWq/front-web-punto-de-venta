@@ -391,7 +391,7 @@ export default {
       },
       limpiarCamposProducto() {
         this.productoData = {
-          codigo: '',
+          codigo_producto: '',
           descripcion: '',
           cantidad: 0,
           precio_unitario_neto: 0,
