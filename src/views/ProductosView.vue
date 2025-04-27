@@ -41,22 +41,22 @@
     </AppFilter>
 
     <!-- 🔄 MODIFICADO – cabeceras y columnas -->
-    <AppTable :headers="['Nombre','Precio','Stock','Categoría','Acciones']">
+    <AppTable :headers="['Nombre','Precio Actual','Categoría','Ultimo precio','Acciones']">
       <tr
         v-for="product in pagedProducts"
         :key="product.producto_id"
       >
         <td>{{ product.nombre }}</td>
         <td>{{ product.precio_venta_actual ?? 'Sin precio' }}</td>
-        <td>{{ product.stock_disponible }}</td>
         <td>{{ product.categoria_nombre }}</td>
+        <td>{{ product.precio_venta_anterior ?? 'Sin precio' }}</td>
 
         <!-- 🆕 acciones ABM -->
         <td class="d-flex gap-1">
           <button
             class="btn btn-success btn-sm"
             @click="openPriceModal(product)"
-          >$ Precio</button>
+          >$ Precio Venta</button>
 
           <button
             class="btn btn-warning btn-sm"
@@ -146,15 +146,15 @@ import AppTable       from '../components/AppTable.vue';
 import AppPagination  from '../components/AppPagination.vue';
 import AppNavbar      from '../components/AppNavbar.vue';
 
-import RegistrarProducto from '../components/RegistrarProductoModal.vue';          // 🆕
-import apiService        from '../services/apiService.js';                    // ≡
-import * as bootstrap    from 'bootstrap';                                    // ≡
+import RegistrarProducto from '../components/RegistrarProductoModal.vue';          // 
+import apiService        from '../services/apiService.js';                    // 
+import * as bootstrap    from 'bootstrap';                                    // 
 
 export default {
-  name: 'ProductosView',                                                      // ≡
+  name: 'ProductosView',                                                      // 
   components: {
     AppTable, AppPagination, AppHeader, AppFilter, AppNavbar,
-    RegistrarProducto                                                         // 🆕
+    RegistrarProducto                                                         // 
   },
 
   data() {
@@ -242,7 +242,7 @@ export default {
       this.fetchProducts();
     },
 
-    deleteProduct(product) {                                                  // 🆕
+    deleteProduct(product) {                                                  
       if (!confirm(`¿Eliminar “${product.nombre}”?`)) return;
       apiService.delete(this.api(`/api/products/${product.producto_id}`))
         .then(() => {
@@ -253,7 +253,7 @@ export default {
     },
 
     /* ---------- Precio ---------- */
-    openPriceModal(product) {                                                 // 🔄
+    openPriceModal(product) {                                                 
       this.modalData.productId      = product.producto_id;
       this.modalData.nuevoPrecio    = product.precio_venta_actual ?? 0;
       this.modalData.fechaVigencia  = this.formatDate(new Date());
@@ -262,15 +262,17 @@ export default {
       this.priceModalInstance ??= new bootstrap.Modal(el);
       this.priceModalInstance.show();
     },
-    closePriceModal() { this.priceModalInstance?.hide(); },                   // 🆕
+    closePriceModal() { this.priceModalInstance?.hide(); },                   
 
-    updatePrice() {                                                           // 🔄
-      const { productId, nuevoPrecio, fechaVigencia } = this.modalData;
-      apiService.post(this.api('/api/products/updatePrice'), {
-        id: productId,
-        precio: nuevoPrecio,
-        fechaVigencia
-      })
+    updatePrice() {                                                           
+        const { productId, nuevoPrecio, fechaVigencia } = this.modalData;
+        apiService.post(
+          this.api(`/api/sales/price/${productId}`),
+          {
+            precio_venta: nuevoPrecio,
+            vigencia_desde: fechaVigencia
+          }
+        )
         .then(() => {
           const prod = this.products.find(p => p.producto_id === productId);
           if (prod) prod.precio_venta_actual = nuevoPrecio;
