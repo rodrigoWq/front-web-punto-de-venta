@@ -41,13 +41,13 @@
     </AppFilter>
 
     <!-- 🔄 MODIFICADO – cabeceras y columnas -->
-    <AppTable :headers="['Nombre','Precio Actual','Categoría','Ultimo precio','Acciones']">
+    <AppTable :headers="['Nombre','Precio Actual','Categoría','Precio última compra','Acciones']">
       <tr
         v-for="product in pagedProducts"
         :key="product.producto_id"
       >
         <td>{{ product.nombre }}</td>
-        <td>{{ product.precio_venta_actual ?? 'Sin precio' }}</td>
+        <td>{{ String(product.precio_venta_actual).split('.')[0] }}</td>
         <td>{{ product.categoria_nombre }}</td>
         <td>{{ product.precio_venta_anterior ?? 'Sin precio' }}</td>
 
