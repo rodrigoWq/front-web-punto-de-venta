@@ -103,6 +103,11 @@ export default {
       productCode: '',
       productQuantity: 1,
       rucCliente: '',
+      cabecera: {
+        referencia: '',
+        observaciones: '',
+        tipo_entrega: 'domicilio'
+      },
       productos: [],
       paginaActual: 1,
       itemsPorPagina: 5,
@@ -155,6 +160,51 @@ export default {
         alert("Error al obtener el producto");
       }
     },
+    async confirmarVenta() {
+      try {
+        // 1) Traer datos del cliente según RUC/CI
+        const { data: cliente } = await apiService.get(
+          `${process.env.VUE_APP_API_BASE_URL}/api/clients/search/${this.rucCliente}`
+        );
+
+        // 2) Armar la cabecera con lo que ya tenés en cliente + lo que pusiste en cabecera
+        const cab = {
+          nombre_cliente: cliente.nombre_completo,
+          nro_documento:   cliente.nro_documento,
+          telefono:        cliente.telefono,
+          direccion:       cliente.direccion,
+          email:           cliente.email,
+          referencia:      this.cabecera.referencia,
+          observaciones:   this.cabecera.observaciones,
+          tipo_entrega:    this.cabecera.tipo_entrega
+        };
+
+        // 3) Payload final
+        const payload = {
+          cabecera: cab,
+          detalles: this.productos.map(p => ({
+            producto_id: p.codigo,
+            cantidad:    p.cantidad
+          }))
+        };
+
+        // 4) Envío
+
+        console.log('Payload:', payload);
+        await apiService.post(`${process.env.VUE_APP_API_BASE_URL}/api/orders/pending`, payload);
+        alert('Pedido registrado correctamente');
+
+        // 5) Limpio todo
+        this.productos = [];
+        this.paginaActual = 1;
+        this.cabecera.referencia = '';
+        this.cabecera.observaciones = '';
+        this.cabecera.tipo_entrega  = 'domicilio';
+      } catch (error) {
+        console.error('Error al confirmar venta:', error);
+        alert('Error al registrar el pedido');
+      }
+    },
     eliminarProducto(index) {
       if (confirm("¿Estás seguro de que deseas eliminar este producto?")) {
         this.productos.splice(index, 1);
@@ -196,7 +246,7 @@ export default {
     async verificarRUC() {
       if (!this.rucCliente.trim()) return;
       try {
-        const url = `${process.env.VUE_APP_API_BASE_URL}/api/clients/${this.rucCliente}`;
+        const url = `${process.env.VUE_APP_API_BASE_URL}/api/clients/search/${this.rucCliente}`;
         const response = await apiService.get(url);
         const cliente = response.data;
         if (!cliente || Object.keys(cliente).length === 0) {
