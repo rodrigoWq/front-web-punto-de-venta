@@ -10,7 +10,7 @@
           <div class="col">
             <label for="productCode" class="form-label">Código del producto</label>
             <div class="input-group">
-              <input type="text" class="form-control" v-model="productCode" placeholder="Ingresa el código" />
+              <input type="text" class="form-control" v-model="productCode" placeholder="Ingresa el código"  @keyup.enter.prevent="agregarProducto" />
               <button type="button" class="btn btn-success" @click="agregarProducto">
                 <i class="bi bi-plus"></i>
               </button>
@@ -26,6 +26,15 @@
               <input type="text" class="form-control" v-model="rucCliente" placeholder="Ingresa el RUC/CI del cliente"  @blur="verificarRUC"  />
             </div>
           </div>
+          <div class="col">
+            <label for="nombreCliente" class="form-label">Cliente</label>
+            <input
+              type="text"
+              class="form-control"
+              v-model="clienteNombre"
+              readonly
+            />
+          </div>
         </div>
       </div>
   
@@ -38,7 +47,7 @@
             <td>{{ producto.nombre }}</td>
             <td>{{ producto.cantidad }}</td>
             <td>{{ producto.unidad_medida }}</td>
-            <td>{{ producto.precio }}</td>
+            <td>{{ String(producto.precio).split('.')[0] }}</td>
             <td>
               <button type="button" class="btn btn-danger btn-sm" @click="eliminarProducto(index)">
                 <i class="bi bi-trash"></i>
@@ -67,7 +76,7 @@
     <!-- Footer Fijo al Final -->
     <div class="footer d-flex w-100 align-items-center">
       <div class="flex-grow-1 text-center">
-        Cajero en turno: Juan Pérez | Hora: 10:45 AM
+        Cajero en turno: {{ userName }} | Hora: {{ currentTime }}
       </div>
       <button type="button" class="btn btn-primary ms-auto">
         Reimprimir último ticket
@@ -103,6 +112,9 @@ export default {
       productCode: '',
       productQuantity: 1,
       rucCliente: '',
+      clienteNombre: '',
+      userName: '',
+      currentTime: '',
       cabecera: {
         referencia: '',
         observaciones: '',
@@ -249,12 +261,17 @@ export default {
         const url = `${process.env.VUE_APP_API_BASE_URL}/api/clients/search/${this.rucCliente}`;
         const response = await apiService.get(url);
         const cliente = response.data;
-        if (!cliente || Object.keys(cliente).length === 0) {
+        if (cliente && Object.keys(cliente).length > 0) {
+          this.clienteNombre = cliente.nombre_completo;
+          this.showClienteModal = false;
+        }else {
+          this.clienteNombre = '';
           this.showClienteModal = true;
         }
       } catch (error) {
         // Si el error es por cliente no encontrado, se puede mostrar el modal
         if (error.response && error.response.status === 404) {
+          this.clienteNombre = '';
           this.showClienteModal = true;
         } else {
           console.error("Error al verificar RUC:", error);
@@ -264,6 +281,9 @@ export default {
 
   },
   mounted() {
+    this.userName    = localStorage.getItem("user_name") || '';
+      this.currentTime = new Date()
+        .toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     
   }
 };

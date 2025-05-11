@@ -95,6 +95,7 @@ import apiService from '@/services/apiService';
                 // Guardamos el token con la clave "authToken" para que el interceptor lo reconozca
                 localStorage.setItem("authToken", data.token);
                 localStorage.setItem("rol_id", data.rol_id);
+                localStorage.setItem("user_name", data.user_name);
                 console.log(data);
                 this.$router.push("/pantalla-inicio");
               } else {
