@@ -70,20 +70,22 @@
             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
           <div class="modal-body">
-            <!-- Contenido que antes estaba en #body -->
             <div class="mb-3">
-              <label for="productCodeSearch" class="form-label">Código del producto</label>
-              <input type="text" class="form-control" v-model="productCodeSearch" @keydown.enter.prevent="buscarProducto" placeholder="Ingresa el código">
-            </div>
-            <div class="mb-3">
-              <label for="productNameSearch" class="form-label">Nombre del producto</label>
-              <input type="text" class="form-control" v-model="productNameSearch" @keydown.enter.prevent="buscarProducto" placeholder="Ingresa el nombre del producto">
+              <label for="productCodeSearch" class="form-label">Código de Barras</label>
+              <input
+                id="productCodeSearch"
+                type="text"
+                class="form-control"
+                v-model="productCodeSearch"
+                @keydown.enter.prevent="buscarProducto"
+                placeholder="Ingresa el código de barras"
+              />
             </div>
             <div id="searchResult" class="mt-3" v-html="searchResult"></div>
           </div>
           <div class="modal-footer">
             <!-- Botones que antes estaban en #footer -->
-            <button type="button" class="btn btn-secondary me-2" data-bs-dismiss="modal">Cerrar</button>
+            <button type="button" class="btn btn-secondary me-2" data-bs-dismiss="modal" @click="clearSearchForm">Cerrar</button>
             <button type="button" class="btn btn-primary" @click="buscarProducto">Buscar</button>
           </div>
         </div>
@@ -117,9 +119,12 @@
 
 
 
-  </template>
+</template>
   
-  <script>
+<script>
+// Agregar al inicio del script
+import apiService from '../services/apiService.js';
+
 export default {
     name: 'AppNavbar',
     // Added data properties:
@@ -134,43 +139,47 @@ export default {
     },
     // Added methods:
     methods: {
-      buscarProducto() {
-        this.searchResult = "";
+      // Reemplazar el método buscarProducto en “methods”
+      async buscarProducto() {
+        this.searchResult = '';
         const codigo = this.productCodeSearch.trim();
-        const nombre = this.productNameSearch.trim();
-        if (!codigo && !nombre) {
-          this.searchResult = '<div class="alert alert-warning">Por favor, ingresa el código o el nombre del producto.</div>';
+        if (!codigo) {
+          this.searchResult = '<div class="alert alert-warning">Por favor, ingresa el código de barras.</div>';
           return;
         }
-        console.log( `${process.env.VUE_APP_PRODUCT_CHECK_URL_CODE}${codigo}`)
-        const url = codigo
-          ? `${process.env.VUE_APP_PRODUCT_CHECK_URL_CODE}${codigo}`
-          : `${process.env.VUE_APP_PRODUCT_CHECK_URL_NAME}nombre=${encodeURIComponent(nombre)}`;
+        try {
+          const url = `${process.env.VUE_APP_API_BASE_URL}/api/products/barcode/${codigo}`;
+          const response = await apiService.get(url);
+          const producto = response.data;
+          console.log("Producto encontrado:", producto);
+          if (producto && producto.producto_id) {
+            // Aquí puedes agregar la lógica para mostrar el producto encontrado
+            this.searchResult = `
+              <div class="alert alert-success">
+                <strong>Producto encontrado:</strong><br>
+                <strong>Nombre:</strong> ${producto.nombre}<br>
+                <strong>Categoría:</strong> ${producto.categoria_nombre}<br>
+                <strong>Descripción:</strong> ${producto.descripcion ?? '—'}<br>
+                <strong>Disponibilidad:</strong> ${producto.stock_disponible > 0 ? 'Disponible' : 'Sin stock'}<br>
+                <strong>Precio:</strong> $${(producto.precio_venta_actual ?? 0)}<br>
+                <strong>Unidad de Medida:</strong> ${producto.unidad_medida_nombre}<br>
+                <strong>IVA:</strong> ${producto.porcentaje_iva}%<br>
 
-        fetch(url)
-          .then(response => response.json())
-          .then(producto => {
-            if (producto) {
-              this.searchResult = `
-                <div class="alert alert-success">
-                  <strong>Producto encontrado:</strong><br>
-                  <strong>Nombre:</strong> ${producto.nombre}<br>
-                  <strong>Código:</strong> ${producto.codigo_barras}<br>
-                  <strong>Precio:</strong> $${producto.precio.toFixed(2)}<br>
-                  <strong>Stock:</strong> ${producto.stock_disponible}<br>
-                  <strong>Unidad de Medida:</strong> ${producto.unidad_medida}<br>
-                </div>`;
-            } else {
-              this.searchResult = '<div class="alert alert-danger">Producto no encontrado.</div>';
-            }
-          })
-          .catch(error => {
-            console.error("Error al buscar el producto:", error);
-            this.searchResult = '<div class="alert alert-danger">Error al buscar el producto.</div>';
-          });
+              </div>`;
+          } else {
+            this.searchResult = '<div class="alert alert-danger">Producto no encontrado.</div>';
+          }
+        } catch (e) {
+          console.error("Error al obtener el producto:", e);
+          this.searchResult = '<div class="alert alert-danger">Error al buscar el producto.</div>';
+        }
       },
       toggleMenu() {
         this.showMenu = !this.showMenu;
+      },
+      clearSearchForm() {
+        this.productCodeSearch = '';
+        this.searchResult      = '';
       },
       async retomarVenta(ventaId) {
         try {
@@ -211,7 +220,7 @@ export default {
     }
   };
 
-  </script>
+</script>
   
   <style scoped>
   .navbar {

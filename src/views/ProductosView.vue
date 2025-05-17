@@ -23,12 +23,6 @@
       <button
         type="button"
         class="btn btn-success me-2"
-        :class="{ active: priceFilter==='all' }"
-        @click="priceFilter='all'"
-      >Todos</button>
-      <button
-        type="button"
-        class="btn btn-success me-2"
         :class="{ active: priceFilter==='zero' }"
         @click="priceFilter='zero'"
       >Sin Precio</button>
@@ -38,6 +32,10 @@
         :class="{ active: priceFilter==='nonzero' }"
         @click="priceFilter='nonzero'"
       >Con Precio</button>
+      <select v-model="categoryFilter"  class="form-select float-start me-3" style="width:auto">
+        <option value="all">Todas Categorías</option>
+        <option v-for="cat in uniqueCategories" :key="cat" :value="cat">{{ cat }}</option>
+      </select>
     </AppFilter>
 
     <!-- 🔄 MODIFICADO – cabeceras y columnas -->
@@ -165,6 +163,7 @@ export default {
       itemsPerPage: 10,
       priceFilter: 'all',
       searchTerm: '',
+      categoryFilter: 'all',
       showProductModal: false,
       editingProduct: null,
       productModalInstance: null,
@@ -190,6 +189,12 @@ export default {
         );
       }
 
+      if (this.categoryFilter !== 'all') {
+        filtered = filtered.filter(p =>
+          p.categoria_nombre === this.categoryFilter
+        );
+      }
+
       if (this.priceFilter === 'zero') {
         filtered = filtered.filter(p =>
           !p.precio_venta_actual || Number(p.precio_venta_actual) === 0
@@ -207,6 +212,13 @@ export default {
       const start = (this.currentPage - 1) * this.itemsPerPage;
       return this.filteredProducts.slice(start, start + this.itemsPerPage);
     },
+
+    uniqueCategories() {
+      return [...new Set(
+        this.products.map(p => p.categoria_nombre).filter(Boolean)
+      )].sort();
+    },
+    
 
     // 🔄 total páginas calcula sobre filteredProducts
     totalPages() {

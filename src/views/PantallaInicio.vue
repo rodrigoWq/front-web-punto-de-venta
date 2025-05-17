@@ -277,15 +277,23 @@ export default {
           console.error("Error al verificar RUC:", error);
         }
       }
-    }
+    },
+    updateTime() {
+      this.currentTime = new Date()
+        .toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    },
+
 
   },
   mounted() {
     this.userName    = localStorage.getItem("user_name") || '';
-      this.currentTime = new Date()
-        .toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    
-  }
+    this.updateTime();
+    this._timeInterval = setInterval(this.updateTime, 60_000);
+  },
+  beforeUnmount() {
+    clearInterval(this._timeInterval);
+  },
+
 };
 </script>
 
