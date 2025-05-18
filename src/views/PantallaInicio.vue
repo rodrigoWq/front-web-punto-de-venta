@@ -139,7 +139,7 @@ export default {
     totalAmount() {
       return this.productos.reduce((acc, producto) => {
         return acc + producto.cantidad * producto.precio;
-      }, 0).toFixed(2);
+      }, 0);
     },
     productosPaginados() {
     const start = (this.paginaActual - 1) * this.itemsPorPagina;
