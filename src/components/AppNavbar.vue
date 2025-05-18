@@ -22,7 +22,7 @@
               </router-link>
             </li>
             <li class="nav-item" v-if="$route.path === '/pantalla-inicio'">
-              <a class="nav-link" href="#" data-bs-toggle="modal" data-bs-target="#onHoldSalesModal">
+              <a class="nav-link" href="#" data-bs-toggle="modal" data-bs-target="#onHoldSalesModal" @click="obtenerVentasEnEspera">
                 <i class="bi bi-hourglass-split"></i> Ventas en espera
               </a>
             </li>
@@ -93,29 +93,42 @@
     </div>
 
 
-    <!-- Modal Ventas en Espera -->
-    <div class="modal fade" id="onHoldSalesModal" tabindex="-1" aria-labelledby="onHoldSalesModalLabel" aria-hidden="true">
-      <div class="modal-dialog">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title" id="onHoldSalesModalLabel">Ventas en Espera</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-          </div>
-          <div class="modal-body">
-            <ul class="list-group">
-              <li v-for="venta in ventasEnEspera" :key="venta.id" class="list-group-item">
-                {{ venta.descripcion }} - {{ formatCurrency(venta.monto_total) }}
-                <!-- Reemplaza AppButton por un botón nativo -->
-                <button type="button" class="btn btn-primary btn-sm" @click="retomarVenta(venta.id)">Retomar</button>
-              </li>
-            </ul>
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
-          </div>
+  <!-- Modal Ventas en Espera -->
+  <div class="modal fade" id="onHoldSalesModal" tabindex="-1" aria-labelledby="onHoldSalesModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="onHoldSalesModalLabel">Ventas en Espera</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body p-0">
+          <ul class="list-group list-group-flush">
+            <li
+              v-for="venta in ventasEnEspera"
+              :key="venta.pedido_id"
+              class="list-group-item d-flex align-items-center"
+            >
+              <!-- Referencia ocupa el resto, envolver si es larga -->
+              <span class="flex-grow-1 text-break">{{ venta.referencia || '—' }}</span>
+              <!-- Botón fijo a la izquierda -->
+              <button
+                type="button"
+                class="btn btn-primary btn-sm me-3 flex-shrink-0"
+                data-bs-dismiss="modal"
+                @click="retomarVenta(venta.pedido_id)"
+              >
+                Retomar
+              </button>
+            </li>
+          </ul>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
         </div>
       </div>
     </div>
+  </div>
+
 
 
 
@@ -183,13 +196,29 @@ export default {
       },
       async retomarVenta(ventaId) {
         try {
-          const response = await fetch(`${process.env.VUE_APP_PENDING_SALES_URL}/id=${ventaId}`);
-          const data = await response.json();
-          alert("Venta retomada con éxito.");
-          // Emit event to parent if needed:
-          this.$emit("venta-retomada", data.items_venta);
+          const { data } = await apiService.get(
+            `${process.env.VUE_APP_API_BASE_URL}/api/orders/pending/${ventaId}`
+          );
+          
+          // Mapeamos cada detalle al formato que usa PantallaInicio
+          const productos = (data.detalles || []).map(d => ({
+            codigo: d.producto_id,
+            nombre: d.producto_nombre || '',
+            cantidad: d.cantidad,
+            unidad_medida: '',                 // no viene; dejamos vacío
+            precio: Number(d.precio) || 0
+          }));
+    
+          // Emitimos todo lo que necesita PantallaInicio
+          this.$emit('venta-retomada', {
+            ruc:    data.nro_documento || '',
+            nombre: data.nombre_cliente || '',
+            productos
+          });
+    
         } catch (error) {
-          console.error("Error al retomar la venta:", error);
+          console.error('Error al retomar la venta:', error);
+          alert('No se pudo retomar la venta.');
         }
       },
       formatCurrency(value) {
@@ -199,13 +228,13 @@ export default {
         }).format(value);
       },
       async obtenerVentasEnEspera() {
-        // try {
-        //   const response = await fetch(`${process.env.VUE_APP_PENDING_SALES_LIST_URL}`);
-        //   const data = await response.json();
-        //   this.ventasEnEspera = data.ventas;
-        // } catch (error) {
-        //   console.error("Error al obtener ventas en espera:", error);
-        // }
+        try {
+          const { data } = await apiService.get(`${process.env.VUE_APP_API_BASE_URL}/api/orders/pending`);
+          this.ventasEnEspera = data.pedidos;          // solo referencia se usará en la vista
+        } catch (error) {
+          console.error('Error al obtener ventas en espera:', error);
+          this.ventasEnEspera = [];
+        }
       },
       cerrarSesion() {
         // Lógica de cierre de sesión: remover token, rol, etc.

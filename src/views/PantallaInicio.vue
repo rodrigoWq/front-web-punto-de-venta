@@ -1,7 +1,7 @@
 <template>
   <div id="pantalla-inicio">
     <!-- Navegación (sin cambios) -->
-    <AppNavbar />
+    <AppNavbar @venta-retomada="cargarPedido" />
     <!-- Contenido Principal -->
     <div class="container mt-4 flex-grow-1">
       <!-- Formulario de Producto -->
@@ -11,9 +11,6 @@
             <label for="productCode" class="form-label">Código del producto</label>
             <div class="input-group">
               <input type="text" class="form-control" v-model="productCode" placeholder="Ingresa el código"  @keyup.enter.prevent="agregarProducto" />
-              <button type="button" class="btn btn-success" @click="agregarProducto">
-                <i class="bi bi-plus"></i>
-              </button>
             </div>
           </div>
           <div class="col">
@@ -28,12 +25,12 @@
           </div>
           <div class="col">
             <label for="nombreCliente" class="form-label">Cliente</label>
-            <input
-              type="text"
-              class="form-control"
-              v-model="clienteNombre"
-              readonly
-            />
+            <div class="input-group">
+              <input type="text" id="nombreCliente" class="form-control" v-model="clienteNombre" readonly />
+              <button type="button" class="btn btn-success" @click="agregarProducto">
+                <i class="bi bi-plus"></i>
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -66,7 +63,7 @@
       </h4> 
       <!-- Reemplazo en la sección de Total y Acciones -->
       <div class="button-container">
-        <button type="button" class="btn btn-warning" @click="ponerVentaEnEspera">Poner Venta en Espera</button>
+        <button type="button" class="btn btn-warning" @click="openPendingModal">Poner Venta en Espera</button>
         <button type="button" class="btn btn-danger" @click="cancelarVenta">Cancelar Venta</button>
         <button type="button" class="btn btn-success" @click="confirmarVenta">Confirmar Venta</button>
       </div>
@@ -88,6 +85,15 @@
 
 
   </div>
+  <PendingSaleModal
+    v-if="showPendingModal"
+    :initialReferencia="cabecera.referencia"
+    :initialNombre="clienteNombre"
+    :initialNroDocumento="rucCliente"
+    @close="showPendingModal = false"
+    @submit="handlePendingSubmit"
+  />
+  
 </template>
 
 <script>
@@ -97,6 +103,7 @@ import AppNavbar from '../components/AppNavbar.vue';
 import AppPagination from '../components/AppPagination.vue';
 import apiService from '../services/apiService.js';
 import ModalCliente from '../components/ClienteModal.vue';
+import PendingSaleModal from '../components/PendingSaleModal.vue';
 
 
 export default {
@@ -106,6 +113,7 @@ export default {
     AppNavbar,
     AppPagination,
     ModalCliente,
+    PendingSaleModal
   },
   data() {
     return {
@@ -123,6 +131,7 @@ export default {
       productos: [],
       paginaActual: 1,
       itemsPorPagina: 5,
+      showPendingModal: false,
       showClienteModal: false
     };
   },
@@ -225,34 +234,50 @@ export default {
     cambiarPagina(page) {
       this.paginaActual = page;
     },
-    async ponerVentaEnEspera() {
-      const confirmacion = confirm("¿Estás seguro de que deseas poner esta venta en espera?");
-      if (!confirmacion) return;
-      const data = {
-        venta_id: null,
-        cliente_id: 1,
-        items_venta: this.productos.map(producto => ({
-          producto_id: producto.codigo,
-          cantidad: producto.cantidad,
-          precio: producto.precio
-        })),
-        monto_total: this.totalAmount,
-        fecha_venta: new Date().toISOString().slice(0, 10)
-      };
+    openPendingModal() {
+      this.showPendingModal = true;
+    },
+    async handlePendingSubmit({ referencia, nombre, nroDocumento }) {
+    // Validación ya hecha en el hijo
       try {
-        const response = await fetch(`${process.env.VUE_APP_PENDING_SALES_URL}`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(data)
-        });
-        const result = await response.json();
-        if (result.message) {
-          alert("Venta puesta en espera correctamente.");
-          this.productos = [];
+        let clienteData = null;
+        if (nroDocumento) {
+          const { data } = await apiService.get(
+            `${process.env.VUE_APP_API_BASE_URL}/api/clients/search/${nroDocumento}`
+          );
+          clienteData = data;
         }
+        const cab = {
+          nombre_cliente: nombre || (clienteData?.nombre_completo ?? ''),
+          nro_documento: nroDocumento || (clienteData?.nro_documento ?? ''),
+          referencia,
+          telefono: clienteData?.telefono ?? '',
+          direccion: clienteData?.direccion ?? '',
+          email: clienteData?.email ?? '',
+          observaciones: this.cabecera.observaciones,
+          tipo_entrega: this.cabecera.tipo_entrega
+        };
+        const detalles = this.productos.map(p => ({ producto_id: p.codigo, cantidad: p.cantidad }));
+        await apiService.post(
+          `${process.env.VUE_APP_API_BASE_URL}/api/orders/pending`,
+          { cabecera: cab, detalles }
+        );
+        console.log('Venta puesta en espera:', cab, detalles);
+        alert('Venta puesta en espera correctamente.');
+        // limpiar estado
+        this.productos = [];
+        this.paginaActual = 1;
+        this.cabecera.referencia = '';
+        this.cabecera.observaciones = '';
+        this.cabecera.tipo_entrega = 'domicilio';
+        this.showPendingModal = false;
+        this.productCode     = '';
+        this.productQuantity = 1;
+        this.rucCliente      = '';
+        this.clienteNombre   = '';
       } catch (error) {
-        console.error("Error:", error);
-        alert("Hubo un error al poner la venta en espera.");
+        console.error(error);
+        alert('Error al poner la venta en espera.');
       }
     },
     async verificarRUC() {
@@ -282,8 +307,12 @@ export default {
       this.currentTime = new Date()
         .toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     },
-
-
+    cargarPedido({ ruc, nombre, productos }) {
+      this.rucCliente    = ruc;
+      this.clienteNombre = nombre;
+      this.productos     = productos;
+      this.paginaActual  = 1;
+    }
   },
   mounted() {
     this.userName    = localStorage.getItem("user_name") || '';

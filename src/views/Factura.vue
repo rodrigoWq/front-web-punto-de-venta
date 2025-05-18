@@ -501,7 +501,7 @@ export default {
           return suma + base;
         }                                   
         return suma + base;
-      }, 0).toFixed(2);   
+      }, 0);
     },
   },
   watch: {
