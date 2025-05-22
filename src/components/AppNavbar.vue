@@ -205,7 +205,7 @@ export default {
             codigo: d.producto_id,
             nombre: d.producto_nombre || '',
             cantidad: d.cantidad,
-            unidad_medida: '',                 // no viene; dejamos vacío
+            unidad_medida: d.unidad_medida_nombre,                 // no viene; dejamos vacío
             precio: Number(d.precio) || 0
           }));
     
