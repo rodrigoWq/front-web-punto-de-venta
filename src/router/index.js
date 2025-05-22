@@ -10,7 +10,9 @@ import RegistrarProveedor from '@/components/RegistrarProveedorModal.vue';
 import RegistrarProductoModal from '@/components/RegistrarProductoModal.vue';
 import ProductosView from '@/views/ProductosView.vue'; // Importa la pantalla de Productos
 import ProveedoresView from '@/views/ProveedoresView.vue';
+import PermisosView from '@/views/PermisosView.vue';
 import ListarComprobantesNT from '@/views/ListarComprobantesNT.vue';
+import RolesView from '@/views/RolesView.vue';
 
 const routes = [
   {
@@ -22,6 +24,16 @@ const routes = [
     path: '/registrar-proveedor',
     name: 'RegistrarProveedor',
     component: RegistrarProveedor,
+  },
+  {
+    path: '/permisos',
+    name: 'Permisos',
+    component: PermisosView,
+  },
+  {
+    path: '/roles',
+    name: 'Roles',
+    component: RolesView
   },
   {
     path: '/proveedores/editar/:id',
