@@ -73,7 +73,7 @@
     <!-- Footer Fijo al Final -->
     <div class="footer d-flex w-100 align-items-center">
       <div class="flex-grow-1 text-center">
-        Cajero en turno: {{ userName }} | Hora: {{ currentTime }}
+        Cajero en turno: {{ userName }} | {{ currentDate }} | Hora: {{ currentTime }}
       </div>
       <button type="button" class="btn btn-primary ms-auto">
         Reimprimir último ticket
@@ -123,6 +123,7 @@ export default {
       clienteNombre: '',
       userName: '',
       currentTime: '',
+      currentDate: '',
       cabecera: {
         referencia: '',
         observaciones: '',
@@ -303,9 +304,24 @@ export default {
         }
       }
     },
-    updateTime() {
-      this.currentTime = new Date()
-        .toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    mostrarReloj() {
+      const fecha = new Date();
+      const hr = this.formatoHora(fecha.getHours());
+      const min = this.formatoHora(fecha.getMinutes());
+      const seg = this.formatoHora(fecha.getSeconds());
+      this.currentTime = `${hr}:${min}:${seg}`;
+
+      const meses = ['Ene', 'Feb', 'Marz', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+      const dias = ['Dom', 'Lun', 'Mar', 'Mie', 'Jue', 'Vie', 'Sab'];
+
+      const diaSemana = dias[fecha.getDay()];
+      const diaDelMes = fecha.getDate();
+      const mes = meses[fecha.getMonth()];
+      const anho = fecha.getFullYear();
+      this.currentDate = `${diaSemana}, ${diaDelMes} ${mes}, ${anho}`;
+    },
+    formatoHora(hora) {
+      return hora < 10 ? '0' + hora : hora;
     },
     cargarPedido({ ruc, nombre, productos }) {
       this.rucCliente    = ruc;
@@ -315,9 +331,9 @@ export default {
     }
   },
   mounted() {
-    this.userName    = localStorage.getItem("user_name") || '';
-    this.updateTime();
-    this._timeInterval = setInterval(this.updateTime, 60_000);
+    this.userName = localStorage.getItem("user_name") || '';
+    this.mostrarReloj();
+    this._timeInterval = setInterval(this.mostrarReloj, 1000);
   },
   beforeUnmount() {
     clearInterval(this._timeInterval);
