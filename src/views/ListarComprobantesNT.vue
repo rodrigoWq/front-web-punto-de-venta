@@ -36,7 +36,7 @@
             <button class="btn btn-primary btn-sm me-1" @click="verDetalleComprobante(comprobante)">
               Ver
             </button>
-            <button class="btn btn-danger btn-sm me-1" :disabled="comprobante.estado === 'anulado'">
+            <button class="btn btn-danger btn-sm me-1" :disabled="comprobante.estado === 'anulado'" @click="anularComprobante(comprobante)">
               Anular
             </button>
             <!-- Se muestra el botón solo si la nota no tiene factura -->
@@ -143,11 +143,19 @@
           parteEntera = parteEntera.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
           return parteEntera + parteDecimal;
         },
-        anularComprobante(index) {
-          if (confirm('¿Está seguro de que desea anular este comprobante?')) {
-            this.comprobantes[index].estado = 'anulado';
-            // Aquí se podría sincronizar el estado con el backend
-            alert('Comprobante anulado correctamente.');
+        async anularComprobante(comprobante) {
+          if (!confirm('¿Está seguro de que desea anular esta nota de remisión?')) return;
+          
+          try {
+             await ApiServices.delete(
+               `${process.env.VUE_APP_API_BASE_URL}/api/purchases/delivery-notes/${comprobante.nro_nota_remision}`
+             );
+             alert('Nota de remisión anulada correctamente.');
+            // Recarga la página actual de notas
+            await this.cargarComprobantes(this.paginaActual);
+          } catch (error) {
+            console.error('Error al anular nota de remisión:', error);
+            alert('No se pudo anular la nota de remisión. Intente de nuevo.');
           }
         },
         verDetalleComprobante(comprobante) {

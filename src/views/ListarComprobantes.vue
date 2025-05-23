@@ -37,7 +37,7 @@
           <td>Factura</td>
           <td>
             <button class="btn btn-primary btn-sm me-1" @click="verDetalleComprobante(comprobante)">Ver</button>
-            <button class="btn btn-danger btn-sm me-1" :disabled="comprobante.estado === 'anulado'">Anular</button>
+            <button class="btn btn-danger btn-sm me-1" :disabled="comprobante.estado === 'anulado'" @click="anularComprobante(comprobante)">Anular</button>
           </td>
         </tr>
       </tbody>
@@ -69,7 +69,8 @@ export default {
       comprobantes: [],
       searchInput: '',
       paginaActual: 1,
-      itemsPorPagina: 5
+      itemsPorPagina: 5,
+      totalPaginas: 1
     };
   },
   computed: {
@@ -85,9 +86,6 @@ export default {
       const start = (this.paginaActual - 1) * this.itemsPorPagina;
       const end = start + this.itemsPorPagina;
       return this.comprobantesFiltrados.slice(start, end);
-    },
-    totalPaginas() {
-      return Math.ceil(this.comprobantesFiltrados.length / this.itemsPorPagina);
     }
   },
   methods: {
@@ -108,7 +106,7 @@ export default {
         const pagination = response.data.pagination || {};
         this.totalItems = pagination.total || 0;
         this.paginaActual = pagination.page || 1;
-        this.itemsPorPagina = pagination.limit || 10;
+        this.itemsPorPagina = 5;
         this.totalPaginas = pagination.totalPages || 1;
       } catch (error) {
         console.error('Error al cargar facturas:', error);
@@ -121,7 +119,7 @@ export default {
       this.paginaActual = 1;
     },
     cambiarPagina(page) {
-      this.paginaActual = page;
+      this.cargarComprobantes(page);
     },
     formatearMonto(monto) {
       if (monto === undefined || monto === null) return "0,00";
@@ -134,11 +132,19 @@ export default {
     actualizarListaComprobantes() {
       this.paginaActual = 1;
     },
-    anularComprobante(index) {
-      if (confirm('¿Está seguro de que desea anular este comprobante?')) {
-        this.comprobantes[index].estado = 'anulado';
-        // Aquí podríamos implementar una lógica para sincronizar el estado con el backend si fuera necesario
+    async anularComprobante(comprobante) {
+      if (!confirm('¿Está seguro de que desea anular este comprobante?')) return;
+
+      try {
+        await ApiServices.delete(
+          `${process.env.VUE_APP_API_BASE_URL}/api/purchases/invoices/${comprobante.nro_comprobante}`
+        );
+        comprobante.estado = 'anulado';
         alert('Comprobante anulado correctamente.');
+        await this.cargarComprobantes(this.paginaActual);
+      } catch (error) {
+        console.error('Error al anular comprobante:', error);
+        alert('No se pudo anular el comprobante. Por favor, intente de nuevo.');
       }
     },
     verDetalleComprobante(comprobante) {
