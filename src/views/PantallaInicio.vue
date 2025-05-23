@@ -59,7 +59,7 @@
       <!-- Sección de Total y Acciones (justo por encima del footer real) -->
     <div class="total-footer-section">
       <h4>
-        Total: <span>{{ totalAmount }}</span>
+        Total: <span class="ms-1">{{ totalAmount }}</span>
       </h4> 
       <!-- Reemplazo en la sección de Total y Acciones -->
       <div class="button-container">

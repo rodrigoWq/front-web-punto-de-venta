@@ -104,7 +104,7 @@
         <div class="modal-body p-0">
           <ul class="list-group list-group-flush">
             <li
-              v-for="venta in ventasEnEspera"
+              v-for="venta in ventasPendientes"
               :key="venta.pedido_id"
               class="list-group-item d-flex align-items-center"
             >
@@ -118,6 +118,13 @@
                 @click="retomarVenta(venta.pedido_id)"
               >
                 Retomar
+              </button>
+              <button
+                type="button"
+                class="btn btn-danger btn-sm flex-shrink-0"
+                @click="confirmarEliminar(venta.pedido_id)"
+              >
+                <i class="bi bi-trash"></i>
               </button>
             </li>
           </ul>
@@ -149,6 +156,11 @@ export default {
         showMenu: false,
         ventasEnEspera: []
       };
+    },
+    computed: {
+      ventasPendientes() {
+        return this.ventasEnEspera.filter(v => v.estado === 'pendiente');
+      }
     },
     // Added methods:
     methods: {
@@ -219,6 +231,23 @@ export default {
         } catch (error) {
           console.error('Error al retomar la venta:', error);
           alert('No se pudo retomar la venta.');
+        }
+      },
+      confirmarEliminar(pedidoId) {
+        if (confirm('¿Estás seguro de que deseas eliminar esta venta pendiente?')) {
+          this.eliminarVenta(pedidoId);
+        }
+      },
+      async eliminarVenta(pedidoId) {
+        try {
+          await apiService.delete(
+            `${process.env.VUE_APP_API_BASE_URL}/api/orders/pending/${pedidoId}`
+          );
+          // Removemos de la lista local para actualizar la vista
+          this.ventasEnEspera = this.ventasEnEspera.filter(v => v.pedido_id !== pedidoId);
+        } catch (e) {
+          console.error('Error al eliminar venta:', e);
+          alert('No se pudo eliminar la venta.');
         }
       },
       formatCurrency(value) {

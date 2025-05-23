@@ -31,7 +31,7 @@
           <td>{{ comprobante.nro_comprobante || 'N/A' }}</td>
           <td>{{ comprobante.nro_documento || 'N/A' }}</td>
           <td>{{ comprobante.fecha_emision ? comprobante.fecha_emision.split('T')[0] : 'N/A' }}</td>
-          <td>{{ comprobante.total_iva_incluido || comprobante.total_sin_iva || 'N/A' }}</td>
+          <td>{{ Math.trunc(comprobante.total_iva_incluido) || Math.trunc(comprobante.total_sin_iva) || 'N/A' }}</td>
           <td>{{ comprobante.estado }}</td>
 
           <td>Factura</td>
