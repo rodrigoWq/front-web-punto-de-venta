@@ -3,7 +3,7 @@
     <div class="container">
       <AppHeader title="User Management" style="margin-top: 15px;">
         <template #buttons>
-          <button class="ms-2 permissions-btn" @click="irAPermisos">Permisos</button>
+          <button class="ms-2 permissions-btn" @click="irARoles">Roles</button>
           <button class="create-user-btn" @click="abrirModalCrearUsuario">Create User</button>
         </template>
       </AppHeader>
@@ -199,8 +199,8 @@
         const bsModal = Modal.getInstance(modalElement);
         bsModal.hide();
       },
-      irAPermisos() {
-        this.$router.push({ name: 'Permisos' });
+      irARoles() {
+        this.$router.push({ name: 'Roles' });
       },
       getUsuarios() {
         apiService.get('/users')
