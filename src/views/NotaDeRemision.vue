@@ -202,8 +202,14 @@ export default {
       }
     },
     onProductRegistered(newProduct) {
-      // Aquí asignas el producto recién creado al 'productoData' actual
-      this.productoData = { ...newProduct };
+      // vuelca el código de barra recién creado al input
+      this.productoData.codigo_barras    = newProduct.codigo_barras || newProduct.codigo;
+      // opcionalmente actualiza el resto de campos si los usas
+      this.productoData.descripcion      = newProduct.descripcion;
+      this.productoData.unidad_medida    = newProduct.unidad_medida || newProduct.unidadMedida;
+      this.productoData.fechaVencimiento = newProduct.fechaVencimiento;
+      // cierra el modal y relanza el autocomplete para traer cualquier dato adicional
+      this.showProductModal              = false;
       this.autocompletarProducto();
     },
     closeRegisterModal() {

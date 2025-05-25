@@ -410,9 +410,13 @@ export default {
           console.log(this.productoData) // Indicar que estamos en modo edición
       },
       onProductRegistered(newProd) {
-        // cuando termine de registrar → lo asignamos al form y cerramos
-        this.productoData      = { ...newProd };
-        this.showProductModal  = false;
+        // Asignamos explícitamente el nuevo código y demás campos al formulario
+        this.productoData.codigo_producto      = newProd.codigo;               // <- aquí el código
+        this.productoData.descripcion          = newProd.descripcion;          // <- descripción
+        this.productoData.precio_unitario_neto = newProd.precio_unitario_neto; // <- precio neto
+        this.productoData.tipo_iva_id          = newProd.tipo_iva_id;          // <- tipo de IVA
+        this.showProductModal                  = false;
+
         this.autocompletarProducto();
       },
     
