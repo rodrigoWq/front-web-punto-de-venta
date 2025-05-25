@@ -20,7 +20,7 @@
 
     <!-- tabla de permisos -->
     <AppTable :headers="['Nombre', 'Descripción', 'Acciones']">
-      <tr v-for="perm in permissions" :key="perm.permiso_id">
+      <tr v-for="perm in filteredPermissions" :key="perm.permiso_id">
         <td>{{ perm.nombre_permiso }}</td>
         <td>{{ perm.descripcion }}</td>
         <td class="d-flex gap-1">
@@ -78,10 +78,12 @@ export default {
   },
   computed: {
     filteredPermissions() {
-      if (!this.searchTerm) return this.permissions;
+      if (!this.searchTerm) return this.permissions
       return this.permissions.filter(p =>
-        p.nombre_permiso.toLowerCase().includes(this.searchTerm.toLowerCase())
-      );
+        p.nombre_permiso
+          .toLowerCase()
+          .includes(this.searchTerm.toLowerCase())
+      )
     },
     pagedPermissions() {
       const start = (this.page - 1) * this.limit;
@@ -104,8 +106,9 @@ export default {
     openPermissionModal() {
       this.showModal = true;
     },
-    handlePermissionSaved(perm) {
-      this.permissions.unshift(perm);
+    handlePermissionSaved() {
+      this.page = 1;               // vuelvo a la página 1
+      this.fetchPermissions()
       this.showModal = false;
     },
     deletePermission(id) {
@@ -119,6 +122,13 @@ export default {
   },
   mounted() {
     this.fetchPermissions();
-  }
+  },
+  watch: {
+    // Cuando cambie el término de búsqueda, reiniciamos la página y recargamos
+    searchTerm() {
+      this.page = 1
+      this.fetchPermissions()
+    }
+  },
 };
 </script>
