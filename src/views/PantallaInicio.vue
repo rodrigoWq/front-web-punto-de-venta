@@ -222,6 +222,10 @@ export default {
         this.cabecera.referencia = '';
         this.cabecera.observaciones = '';
         this.cabecera.tipo_entrega  = 'domicilio';
+        this.productCode     = '';
+        this.productQuantity = 1;
+        this.rucCliente      = '';
+        this.clienteNombre   = '';
       } catch (error) {
         console.error('Error al confirmar venta:', error);
         alert('Error al registrar el pedido');
