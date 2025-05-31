@@ -5,7 +5,7 @@
   <div class="container mt-5" id="productos-view">
 
     <!-- 🔄 MODIFICADO – agrego botón “Nuevo” -->
-    <AppHeader title="Gestión de Productos">
+    <AppHeader title="Gestión Precios de Productos">
       <template #buttons>
         <!-- 🆕 abrir alta -->
         <button class="btn btn-primary" @click="openProductModal()">
@@ -32,8 +32,8 @@
         :class="{ active: priceFilter==='nonzero' }"
         @click="priceFilter='nonzero'"
       >Con Precio</button>
-      <select v-model="categoryFilter"  class="form-select float-start me-3" style="width:auto">
-        <option value="all">Todas Categorías</option>
+      <select v-model="categoryFilter"  class="form-select float-start me-3" @change="onCategoryChange" style="width:auto">
+        <option value="all">All</option>
         <option v-for="cat in uniqueCategories" :key="cat" :value="cat">{{ cat }}</option>
       </select>
     </AppFilter>
@@ -45,9 +45,11 @@
         :key="product.producto_id"
       >
         <td>{{ product.nombre }}</td>
-        <td>{{ String(product.precio_venta_actual).split('.')[0] }}</td>
-        <td>{{ product.categoria_nombre }}</td>
-        <td>{{ product.precio_venta_anterior ?? 'Sin precio' }}</td>
+        <td>{{ (product.precio_venta > 0)
+                  ? String(product.precio_venta).split('.')[0]
+                  : 'Sin precio' }}</td>
+        <td>{{ product.categoria }}</td>
+        <td>{{ product.precio_ultima_compra ?? 'Sin precio' }}</td>
 
         <!-- 🆕 acciones ABM -->
         <td class="d-flex gap-1">
@@ -191,17 +193,17 @@ export default {
 
       if (this.categoryFilter !== 'all') {
         filtered = filtered.filter(p =>
-          p.categoria_nombre === this.categoryFilter
+          p.categoria === this.categoryFilter
         );
       }
 
       if (this.priceFilter === 'zero') {
         filtered = filtered.filter(p =>
-          !p.precio_venta_actual || Number(p.precio_venta_actual) === 0
+          !p.precio_venta || Number(p.precio_venta) === 0
         );
       } else if (this.priceFilter === 'nonzero') {
         filtered = filtered.filter(p =>
-          p.precio_venta_actual && Number(p.precio_venta_actual) > 0
+          p.precio_venta && Number(p.precio_venta) > 0
         );
       }
       return filtered;
@@ -215,7 +217,7 @@ export default {
 
     uniqueCategories() {
       return [...new Set(
-        this.products.map(p => p.categoria_nombre).filter(Boolean)
+        this.products.map(p => p.categoria).filter(Boolean)
       )].sort();
     },
     
@@ -233,7 +235,7 @@ export default {
 
     /* ---------- CRUD Productos ---------- */
     fetchProducts() {                                                         
-      apiService.get(this.api('/api/products'))
+      apiService.get(this.api('/api/sales/price'))
         .then(({ data }) => { this.products = data; })
         .catch(err   => { console.error('Error fetching products:', err); });
     },
@@ -244,6 +246,12 @@ export default {
     },
     closeProductModal() {                                                     
       this.showProductModal = false;
+    },
+    onCategoryChange() {
+      // Si elige "all", reseteamos priceFilter a "all"
+      if (this.categoryFilter === 'all') {
+        this.priceFilter = 'all';
+      }
     },
 
     handleProductSaved(saved) {                                               
@@ -267,7 +275,7 @@ export default {
     /* ---------- Precio ---------- */
     openPriceModal(product) {                                                 
       this.modalData.productId      = product.producto_id;
-      this.modalData.nuevoPrecio    = product.precio_venta_actual ?? 0;
+      this.modalData.nuevoPrecio    = product.precio_venta ?? 0;
       this.modalData.fechaVigencia  = this.formatDate(new Date());
 
       const el = document.getElementById('updatePriceModal');
@@ -287,7 +295,7 @@ export default {
         )
         .then(() => {
           const prod = this.products.find(p => p.producto_id === productId);
-          if (prod) prod.precio_venta_actual = nuevoPrecio;
+          if (prod) prod.precio_venta = nuevoPrecio;
           this.closePriceModal();
         })
         .catch(err => console.error('Error updating price:', err));
@@ -308,7 +316,16 @@ export default {
   mounted() { this.fetchProducts(); }                                         // ≡
 };
 </script>
-
+/*    {
+        "producto_id": 22,
+        "nombre": "prueba",
+        "descripcion": "des",
+        "stock_disponible": 641,
+        "categoria": "Confitería",
+        "unidad_medida": "g",
+        "precio_venta": 44000,
+        "precio_ultima_compra": 70000
+    }, */
 
 <style scoped>
 .btn-success {
