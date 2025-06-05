@@ -11,19 +11,16 @@
   
       <AppFilter v-model="filtroNombre" placeholder="Search by name..." customClasses="filter-section">
         <button :class="['me-2', { active: filtroRol === 'all' }]" @click="filtrarRol('all')">All Roles</button>
-        <button :class="['me-2', { active: filtroRol === 'Admin' }]" @click="filtrarRol('Admin')">Admin</button>
-        <button :class="['me-2', { active: filtroRol === 'Manager' }]" @click="filtrarRol('Manager')">Manager</button>
-        <button :class="['me-2', { active: filtroRol === 'User' }]" @click="filtrarRol('User')">User</button>
         <button :class="['me-2', { active: filtroEstado === 'active' }]" @click="filtrarEstado('active')">Active</button>
         <button :class="{ active: filtroEstado === 'inactive'   }" @click="filtrarEstado('inactive')">Inactive</button>
       </AppFilter>
 
   
       <!-- Tabla de Usuarios -->
-      <AppTable :headers="['Name', 'Teléfono', 'Role', 'Status', 'Actions']">
+      <AppTable :headers="['Name', 'Role', 'Status', 'Actions']">
         <tr v-for="usuario in usuariosFiltrados" :key="usuario.id">
           <td>{{ usuario.nombre }}</td>
-          <td>{{ usuario.telefono }}</td>
+         <!-- <td>{{ usuario.telefono }}</td> -->
           <td>{{ usuario.rol }}</td>
           <td>
             <span :class="['status', usuario.status]">{{ usuario.status }}</span>
@@ -37,9 +34,9 @@
 
       <AppPagination :currentPage="currentPage" :totalPages="totalPages" @page-changed="changePage" />
 
-      <!-- Modal Crear Usuario -->
-      <div class="modal fade" id="crearUsuarioModal" tabindex="-1" aria-labelledby="crearUsuarioModalLabel"  >
-        <div class="modal-dialog">
+      <!-- Modal Crear Usuario (fragmento modificado) -->
+      <div class="modal fade" id="crearUsuarioModal" tabindex="-1" aria-labelledby="crearUsuarioModalLabel">
+        <div class="modal-dialog modal-lg"> <!-- Se añadió modal-lg para ensanchar -->
           <div class="modal-content">
             <div class="modal-header">
               <h5 class="modal-title" id="crearUsuarioModalLabel">Crear Usuario</h5>
@@ -47,31 +44,55 @@
             </div>
             <div class="modal-body">
               <form @submit.prevent="crearUsuario">
-                <div class="mb-3">
-                  <label for="nombreUsuario" class="form-label">Nombre</label>
-                  <input type="text" id="nombreUsuario" v-model="nuevoUsuario.nombre" class="form-control" required>
+                <div class="row">
+                  <div class="col-md-6 mb-3">
+                    <label for="usuario" class="form-label">Usuario</label>
+                    <input type="text" id="usuario" v-model="nuevoUsuario.usuario" class="form-control" required>
+                  </div>
+                  <div class="col-md-6 mb-3">
+                    <label for="password" class="form-label">Password</label>
+                    <input type="password" id="password" v-model="nuevoUsuario.password" class="form-control" required>
+                  </div>
                 </div>
-                <div class="mb-3">
-                  <label for="telefonoUsuario" class="form-label">Teléfono</label>
-                  <input type="text" id="telefonoUsuario" v-model="nuevoUsuario.telefono" class="form-control" required>
+
+                <div class="row">
+                  <div class="col-md-6 mb-3">
+                    <label for="rolId" class="form-label">Rol</label>
+                    <select id="rolId" v-model="nuevoUsuario.rol_id" class="form-select" required>
+                      <option disabled value="">Seleccione un rol</option>
+                      <option v-for="r in roles" :key="r.rol_id" :value="r.rol_id">
+                        {{ r.nombre_rol }}
+                      </option>
+                    </select>
+                  </div>
+                  <div class="col-md-6 mb-3">
+                    <label for="nombre" class="form-label">Nombre</label>
+                    <input type="text" id="nombre" v-model="nuevoUsuario.nombre" class="form-control" required>
+                  </div>
                 </div>
-                <div class="mb-3">
-                  <label for="rolUsuario" class="form-label">Rol</label>
-                  <select id="rolUsuario" v-model="nuevoUsuario.rol" class="form-select" required>
-                    <option disabled value="">Seleccione un rol</option>
-                    <option>Admin</option>
-                    <option>Manager</option>
-                    <option>User</option>
-                  </select>
+
+                <div class="row">
+                  <div class="col-md-6 mb-3">
+                    <label for="apellido" class="form-label">Apellido</label>
+                    <input type="text" id="apellido" v-model="nuevoUsuario.apellido" class="form-control" required>
+                  </div>
+                  <div class="col-md-6 mb-3">
+                    <label for="email" class="form-label">Email</label>
+                    <input type="email" id="email" v-model="nuevoUsuario.email" class="form-control" required>
+                  </div>
                 </div>
-                <div class="mb-3">
-                  <label for="statusUsuario" class="form-label">Estado</label>
-                  <select id="statusUsuario" v-model="nuevoUsuario.status" class="form-select" required>
-                    <option disabled value="">Seleccione un estado</option>
-                    <option value="active">Activo</option>
-                    <option value="inactive">Inactivo</option>
-                  </select>
+
+                <div class="row">
+                  <div class="col-md-6 mb-3">
+                    <label for="direccion" class="form-label">Dirección</label>
+                    <input type="text" id="direccion" v-model="nuevoUsuario.direccion" class="form-control">
+                  </div>
+                  <div class="col-md-6 mb-3">
+                    <label for="fechaNacimiento" class="form-label">Fecha de Nacimiento</label>
+                    <input type="date" id="fechaNacimiento" v-model="nuevoUsuario.fecha_nacimiento" class="form-control">
+                  </div>
                 </div>
+
                 <button type="submit" class="btn btn-primary">Crear</button>
               </form>
             </div>
@@ -80,9 +101,9 @@
       </div>
 
 
-      <!-- Modal Editar Usuario -->
-      <div class="modal fade" id="editarUsuarioModal" tabindex="-1" aria-labelledby="editarUsuarioModalLabel"  >
-        <div class="modal-dialog">
+      <!-- Modal Editar Usuario (fragmento modificado) -->
+      <div class="modal fade" id="editarUsuarioModal" tabindex="-1" aria-labelledby="editarUsuarioModalLabel">
+        <div class="modal-dialog modal-lg">
           <div class="modal-content">
             <div class="modal-header">
               <h5 class="modal-title" id="editarUsuarioModalLabel">Editar Usuario</h5>
@@ -90,35 +111,64 @@
             </div>
             <div class="modal-body">
               <form @submit.prevent="editarUsuario">
-                <div class="mb-3">
-                  <label for="nombreUsuarioEdit" class="form-label">Nombre</label>
-                  <input type="text" id="nombreUsuarioEdit" v-model="usuarioActual.nombre" class="form-control" required>
+                <div class="row">
+                  <div class="col-md-6 mb-3">
+                    <label for="usuarioEdit" class="form-label">Usuario</label>
+                    <input type="text" id="usuarioEdit" v-model="usuarioActual.usuario" class="form-control" required>
+                  </div>
+                  
+                  <div class="col-md-6 mb-3">
+                    <label for="passwordEdit" class="form-label">Password</label>
+                    <input type="password" id="passwordEdit" v-model="usuarioActual.password" class="form-control">
+                  </div>
+                  
+                  <div class="col-md-6 mb-3">
+                    <label for="rolIdEdit" class="form-label">Rol</label>
+                    <select id="rolIdEdit" v-model="usuarioActual.rol_id" class="form-select" required>
+                      <option disabled value="">Seleccione un rol</option>
+                      <option v-for="r in roles" :key="r.rol_id" :value="r.rol_id">
+                        {{ r.nombre_rol }}
+                      </option>
+                    </select>
+                  </div>
                 </div>
-                <div class="mb-3">
-                  <label for="telefonoUsuarioEdit" class="form-label">Teléfono</label>
-                  <input type="text" id="telefonoUsuarioEdit" v-model="usuarioActual.telefono" class="form-control" required>
+
+                <div class="row">
+                  <div class="col-md-6 mb-3">
+                    <label for="nombreEdit" class="form-label">Nombre</label>
+                    <input type="text" id="nombreEdit" v-model="usuarioActual.nombre" class="form-control" required>
+                  </div>
+                  <div class="col-md-6 mb-3">
+                    <label for="apellidoEdit" class="form-label">Apellido</label>
+                    <input type="text" id="apellidoEdit" v-model="usuarioActual.apellido" class="form-control" required>
+                  </div>
                 </div>
-                <div class="mb-3">
-                  <label for="rolUsuarioEdit" class="form-label">Rol</label>
-                  <select id="rolUsuarioEdit" v-model="usuarioActual.rol" class="form-select" required>
-                    <option>Admin</option>
-                    <option>Manager</option>
-                    <option>User</option>
-                  </select>
+
+                <div class="row">
+                  <div class="col-md-6 mb-3">
+                    <label for="emailEdit" class="form-label">Email</label>
+                    <input type="email" id="emailEdit" v-model="usuarioActual.email" class="form-control" required>
+                  </div>
+                  <div class="col-md-6 mb-3">
+                    <label for="direccionEdit" class="form-label">Dirección</label>
+                    <input type="text" id="direccionEdit" v-model="usuarioActual.direccion" class="form-control">
+                  </div>
                 </div>
-                <div class="mb-3">
-                  <label for="statusUsuarioEdit" class="form-label">Estado</label>
-                  <select id="statusUsuarioEdit" v-model="usuarioActual.status" class="form-select" required>
-                    <option value="active">Activo</option>
-                    <option value="inactive">Inactivo</option>
-                  </select>
+
+                <div class="row">
+                  <div class="col-md-6 mb-3">
+                    <label for="fechaNacimientoEdit" class="form-label">Fecha de Nacimiento</label>
+                    <input type="date" id="fechaNacimientoEdit" v-model="usuarioActual.fecha_nacimiento" class="form-control">
+                  </div>
                 </div>
+
                 <button type="submit" class="btn btn-primary">Guardar</button>
               </form>
             </div>
           </div>
         </div>
       </div>
+
 
 
     </div>
@@ -150,17 +200,33 @@
         filtroRol: 'all',
         filtroEstado: 'all',
         usuarios: [], // Datos de usuarios
+        roles: [],
         currentPage: 1,
         itemsPerPage: 10,
-        mostrarModalCrear: false,
-        mostrarModalEditar: false,
         nuevoUsuario: {
+          usuario: '',
+          password: '',
+          rol_id: null,
           nombre: '',
-          telefono: '',
-          rol: '',
-          status: ''
+          apellido: '',
+          email: '',
+          telefono: '',          // puedes conservarlo si más adelante lo vas a utilizar
+          direccion: '',
+          fecha_nacimiento: ''
         },
-        usuarioActual: {},
+        usuarioActual: {
+          id: null,              // almacenará usuario_id
+          usuario: '',
+          password: '',         // opcional, si vas a permitir cambiar contraseña
+          rol_id: null,
+          nombre: '',
+          apellido: '',
+          email: '',
+          telefono: '',
+          direccion: '',
+          fecha_nacimiento: '',
+          activo: true           // para saber el estado actual del usuario
+        },
       };
     },
     computed: {
@@ -178,22 +244,63 @@
         return filtered.slice((this.currentPage - 1) * this.itemsPerPage, this.currentPage * this.itemsPerPage);
       },
       totalPages() {
-        let filtered = this.usuarios.filter(this.applyFilters);
+        let filtered = this.usuarios;
+        if (this.filtroNombre.trim()) {
+          filtered = filtered.filter(u => u.nombre.toLowerCase().includes(this.filtroNombre.toLowerCase()));
+        }
+        if (this.filtroRol !== 'all') {
+          filtered = filtered.filter(u => u.rol === this.filtroRol);
+        }
+        if (this.filtroEstado !== 'all') {
+          filtered = filtered.filter(u => u.status === this.filtroEstado);
+        }
         return Math.ceil(filtered.length / this.itemsPerPage);
-  }
+      }
     },
     methods: {
       abrirModalCrearUsuario() {
+        this.nuevoUsuario = {
+          usuario: '',
+          password: '',
+          rol_id: null,
+          nombre: '',
+          apellido: '',
+          email: '',
+          telefono: '',
+          direccion: '',
+          fecha_nacimiento: ''
+        };
         const modalElement = document.getElementById('crearUsuarioModal');
         const bsModal = new Modal(modalElement, {});
         bsModal.show();
       },
-      applyFilters(usuario) {
-        const nombreMatch = !this.filtroNombre || (usuario.nombre || '').toLowerCase().includes(this.filtroNombre.toLowerCase());
-        const rolMatch = this.filtroRol === 'all' ? true : usuario.rol === this.filtroRol;
-        const estadoMatch = this.filtroEstado === 'all' ? true : usuario.status === this.filtroEstado;
-        return nombreMatch && rolMatch && estadoMatch;
+      getRoles() {
+        apiService.get('/api/roles')
+          .then(response => {
+            this.roles = response.data;
+          })
+          .catch(err => console.error('Error al cargar roles:', err));
       },
+      obtenerUsuarioPorId(id) {
+        return apiService.get(`/api/auth/users/${id}`)
+          .then(response => {
+            const u = response.data;
+            return {
+              id: u.usuario_id,
+              usuario: u.usuario,
+              rol_id: u.rol_id,
+              nombre: u.nombre,
+              apellido: u.apellido,
+              email: u.email,
+              telefono: u.telefono,
+              direccion: u.direccion,
+              // Convertimos la fecha ISO a “YYYY-MM-DD” para que funcione en el <input type="date">
+              fecha_nacimiento: u.fecha_nacimiento.split('T')[0],
+              activo: u.activo
+            };
+          });
+        },
+
       cerrarModalCrearUsuario() {
         const modalElement = document.getElementById('crearUsuarioModal');
         const bsModal = Modal.getInstance(modalElement);
@@ -203,9 +310,16 @@
         this.$router.push({ name: 'Roles' });
       },
       getUsuarios() {
-        apiService.get('/users')
+        apiService.get('/api/auth/users')
           .then(response => {
-            this.usuarios = response.data;
+            // Mapear cada objeto recibido al formato que espera la interfaz
+            this.usuarios = response.data.map(u => ({
+              id: u.usuario_id,
+              nombre: u.nombre,
+              rol: u.nombre_rol,
+              status: u.activo ? 'active' : 'inactive'
+              // (si más adelante necesitas teléfono, lo agregas con u.telefono)
+            }));
           })
           .catch(error => {
             console.error('Error al cargar usuarios:', error);
@@ -223,11 +337,18 @@
         this.filtroEstado = estado;
         this.filtroRol = 'all'; // Resetear filtro de rol al seleccionar estado
       },
-      abrirModalEditarUsuario(usuario) {
-        this.usuarioActual = { ...usuario };
-        const modalElement = document.getElementById('editarUsuarioModal');
-        const bsModal = new Modal(modalElement, {});
-        bsModal.show();
+      abrirModalEditarUsuario(usuarioListado) {
+        this.obtenerUsuarioPorId(usuarioListado.id)
+          .then(usuarioCompleto => {
+            this.usuarioActual = usuarioCompleto;
+            const modalEl = document.getElementById('editarUsuarioModal');
+            const bsModal = new Modal(modalEl, {});
+            bsModal.show();
+          })
+          .catch(err => {
+            console.error('Error al cargar datos del usuario:', err);
+            // Opcional: mostrar un mensaje de error al usuario
+          });
       },
       cerrarModalEditarUsuario() {
         const modalElement = document.getElementById('editarUsuarioModal');
@@ -236,23 +357,54 @@
       },
 
       crearUsuario() {
-        apiService.post('/users', this.nuevoUsuario)
-         .then(response => {
-           this.usuarios.push(response.data);
-           this.nuevoUsuario = { nombre: '', telefono: '', rol: '', status: '' };
-           this.cerrarModalCrearUsuario();
-         })
-         .catch(error => {
-           console.error('Error al crear usuario:', error);
-         });
+        const payload = {
+          usuario: this.nuevoUsuario.usuario,
+          password: this.nuevoUsuario.password,
+          rol_id: this.nuevoUsuario.rol_id,
+          nombre: this.nuevoUsuario.nombre,
+          apellido: this.nuevoUsuario.apellido,
+          email: this.nuevoUsuario.email,
+          telefono: this.nuevoUsuario.telefono,
+          direccion: this.nuevoUsuario.direccion,
+          fecha_nacimiento: this.nuevoUsuario.fecha_nacimiento
+        };
+        apiService.post('/api/auth/register', payload)
+          .then(() => {
+            this.getUsuarios();   // recargamos la lista
+            this.cerrarModalCrearUsuario();
+            // resetear el modelo
+            this.nuevoUsuario = {
+              usuario: '',
+              password: '',
+              rol_id: null,
+              nombre: '',
+              apellido: '',
+              email: '',
+              telefono: '',
+              direccion: '',
+              fecha_nacimiento: ''
+            };
+          })
+          .catch(error => {
+            console.error('Error al crear usuario:', error);
+          });
       },
       editarUsuario() {
-        apiService.put(`/users/${this.usuarioActual.id}`, this.usuarioActual)
-          .then(response => {
-            const index = this.usuarios.findIndex(user => user.id === this.usuarioActual.id);
-            if (index !== -1) {
-              this.usuarios.splice(index, 1, response.data);
-            }
+        const payload = {
+          usuario: this.usuarioActual.usuario,
+          // si permites cambiar password, inclúyelo aquí; de lo contrario elimínalo:
+          password: this.usuarioActual.password,
+          rol_id: this.usuarioActual.rol_id,
+          nombre: this.usuarioActual.nombre,
+          apellido: this.usuarioActual.apellido,
+          email: this.usuarioActual.email,
+          telefono: this.usuarioActual.telefono,
+          direccion: this.usuarioActual.direccion,
+          fecha_nacimiento: this.usuarioActual.fecha_nacimiento
+        };
+        apiService.put(`/api/auth/users/${this.usuarioActual.id}`, payload)
+          .then(() => {
+            this.getUsuarios();       // recargamos la lista completa
             this.cerrarModalEditarUsuario();
           })
           .catch(error => {
@@ -260,27 +412,21 @@
           });
       },
       eliminarUsuario(id) {
-        if (confirm('¿Estás seguro de eliminar este usuario?')) {
-         apiService.delete(`/users/${id}`)
-           .then(() => {
-             this.usuarios = this.usuarios.filter(user => user.id !== id);
-           })
-           .catch(error => {
-             console.error('Error al eliminar usuario:', error);
-           });
-       }
+        if (confirm('¿Estás seguro de cambiar el estado de este usuario a inactivo?')) {
+          apiService.put('/api/auth/desactivate', { id })
+            .then(() => {
+              this.getUsuarios();  // recargamos la lista actualizada
+            })
+            .catch(error => {
+              console.error('Error al desactivar usuario:', error);
+            });
+        }
       }
 
     },
     mounted() {
-      // Simulación de carga de usuarios (cargar desde API real si es necesario)
-      this.usuarios = [
-        { id: 1, nombre: 'John Doe', telefono: '123-456-7890', rol: 'Admin', status: 'active' },
-        { id: 2, nombre: 'Jane Smith', telefono: '098-765-4321', rol: 'User', status: 'inactive' },
-        { id: 3, nombre: 'kAPE Smith', telefono: '098-765-4321', rol: 'Manager', status: 'inactive' },
-      ];
-
-      //this.getUsuarios();
+      this.getRoles();
+      this.getUsuarios();
     }
   };
 </script>
