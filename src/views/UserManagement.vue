@@ -25,25 +25,27 @@
           <td>
             <span :class="['status', usuario.status]">{{ usuario.status }}</span>
           </td>
-          <td>
+          <td style="display: flex; align-items: center; gap: 0.5rem;">
             <button  @click="abrirModalEditarUsuario(usuario)">✏️</button>
             <button  @click="eliminarUsuario(usuario.id)">🗑️</button>
+            <button  @click="abrirModalResetPassword(usuario)">🔒 Reset</button>
           </td>
         </tr>
       </AppTable>
 
       <AppPagination :currentPage="currentPage" :totalPages="totalPages" @page-changed="changePage" />
 
-      <!-- Modal Crear Usuario (fragmento modificado) -->
+      <!-- Modal Crear Usuario -->
       <div class="modal fade" id="crearUsuarioModal" tabindex="-1" aria-labelledby="crearUsuarioModalLabel">
-        <div class="modal-dialog modal-lg"> <!-- Se añadió modal-lg para ensanchar -->
+        <div class="modal-dialog modal-lg">
           <div class="modal-content">
             <div class="modal-header">
               <h5 class="modal-title" id="crearUsuarioModalLabel">Crear Usuario</h5>
-              <button type="button" class="btn-close" @click="cerrarModalCrearUsuario" aria-label="Close"></button>
+              <button type="button" class="btn-close" @click="cerrarModalCrearUsuario"></button>
             </div>
             <div class="modal-body">
               <form @submit.prevent="crearUsuario">
+                <!-- Row 1: Usuario + Password -->
                 <div class="row">
                   <div class="col-md-6 mb-3">
                     <label for="usuario" class="form-label">Usuario</label>
@@ -55,6 +57,31 @@
                   </div>
                 </div>
 
+                <!-- Row 2: Nombre + Apellido -->
+                <div class="row">
+                  <div class="col-md-6 mb-3">
+                    <label for="nombre" class="form-label">Nombre</label>
+                    <input type="text" id="nombre" v-model="nuevoUsuario.nombre" class="form-control" required>
+                  </div>
+                  <div class="col-md-6 mb-3">
+                    <label for="apellido" class="form-label">Apellido</label>
+                    <input type="text" id="apellido" v-model="nuevoUsuario.apellido" class="form-control" required>
+                  </div>
+                </div>
+
+                <!-- Row 3: Email + Teléfono -->
+                <div class="row">
+                  <div class="col-md-6 mb-3">
+                    <label for="email" class="form-label">Email</label>
+                    <input type="email" id="email" v-model="nuevoUsuario.email" class="form-control" required>
+                  </div>
+                  <div class="col-md-6 mb-3">
+                    <label for="telefono" class="form-label">Teléfono</label>
+                    <input type="text" id="telefono" v-model="nuevoUsuario.telefono" class="form-control" placeholder="(opcional)">
+                  </div>
+                </div>
+
+                <!-- Row 4: Rol + Dirección -->
                 <div class="row">
                   <div class="col-md-6 mb-3">
                     <label for="rolId" class="form-label">Rol</label>
@@ -66,28 +93,14 @@
                     </select>
                   </div>
                   <div class="col-md-6 mb-3">
-                    <label for="nombre" class="form-label">Nombre</label>
-                    <input type="text" id="nombre" v-model="nuevoUsuario.nombre" class="form-control" required>
-                  </div>
-                </div>
-
-                <div class="row">
-                  <div class="col-md-6 mb-3">
-                    <label for="apellido" class="form-label">Apellido</label>
-                    <input type="text" id="apellido" v-model="nuevoUsuario.apellido" class="form-control" required>
-                  </div>
-                  <div class="col-md-6 mb-3">
-                    <label for="email" class="form-label">Email</label>
-                    <input type="email" id="email" v-model="nuevoUsuario.email" class="form-control" required>
-                  </div>
-                </div>
-
-                <div class="row">
-                  <div class="col-md-6 mb-3">
                     <label for="direccion" class="form-label">Dirección</label>
                     <input type="text" id="direccion" v-model="nuevoUsuario.direccion" class="form-control">
                   </div>
-                  <div class="col-md-6 mb-3">
+                </div>
+
+                <!-- Row 5: Fecha de Nacimiento -->
+                <div class="row">
+                  <div class="col-12 mb-3">
                     <label for="fechaNacimiento" class="form-label">Fecha de Nacimiento</label>
                     <input type="date" id="fechaNacimiento" v-model="nuevoUsuario.fecha_nacimiento" class="form-control">
                   </div>
@@ -101,27 +114,22 @@
       </div>
 
 
-      <!-- Modal Editar Usuario (fragmento modificado) -->
+      <!-- Modal Editar Usuario -->
       <div class="modal fade" id="editarUsuarioModal" tabindex="-1" aria-labelledby="editarUsuarioModalLabel">
         <div class="modal-dialog modal-lg">
           <div class="modal-content">
             <div class="modal-header">
               <h5 class="modal-title" id="editarUsuarioModalLabel">Editar Usuario</h5>
-              <button type="button" class="btn-close" @click="cerrarModalEditarUsuario" aria-label="Close"></button>
+              <button type="button" class="btn-close" @click="cerrarModalEditarUsuario"></button>
             </div>
             <div class="modal-body">
               <form @submit.prevent="editarUsuario">
+                <!-- Row 1: Usuario + Rol -->
                 <div class="row">
                   <div class="col-md-6 mb-3">
                     <label for="usuarioEdit" class="form-label">Usuario</label>
                     <input type="text" id="usuarioEdit" v-model="usuarioActual.usuario" class="form-control" required>
                   </div>
-                  
-                  <div class="col-md-6 mb-3">
-                    <label for="passwordEdit" class="form-label">Password</label>
-                    <input type="password" id="passwordEdit" v-model="usuarioActual.password" class="form-control">
-                  </div>
-                  
                   <div class="col-md-6 mb-3">
                     <label for="rolIdEdit" class="form-label">Rol</label>
                     <select id="rolIdEdit" v-model="usuarioActual.rol_id" class="form-select" required>
@@ -133,6 +141,7 @@
                   </div>
                 </div>
 
+                <!-- Row 2: Nombre + Apellido -->
                 <div class="row">
                   <div class="col-md-6 mb-3">
                     <label for="nombreEdit" class="form-label">Nombre</label>
@@ -144,18 +153,24 @@
                   </div>
                 </div>
 
+                <!-- Row 3: Email + Teléfono -->
                 <div class="row">
                   <div class="col-md-6 mb-3">
                     <label for="emailEdit" class="form-label">Email</label>
                     <input type="email" id="emailEdit" v-model="usuarioActual.email" class="form-control" required>
                   </div>
                   <div class="col-md-6 mb-3">
-                    <label for="direccionEdit" class="form-label">Dirección</label>
-                    <input type="text" id="direccionEdit" v-model="usuarioActual.direccion" class="form-control">
+                    <label for="telefonoEdit" class="form-label">Teléfono</label>
+                    <input type="text" id="telefonoEdit" v-model="usuarioActual.telefono" class="form-control" placeholder="(opcional)">
                   </div>
                 </div>
 
+                <!-- Row 4: Dirección + Fecha de Nacimiento -->
                 <div class="row">
+                  <div class="col-md-6 mb-3">
+                    <label for="direccionEdit" class="form-label">Dirección</label>
+                    <input type="text" id="direccionEdit" v-model="usuarioActual.direccion" class="form-control">
+                  </div>
                   <div class="col-md-6 mb-3">
                     <label for="fechaNacimientoEdit" class="form-label">Fecha de Nacimiento</label>
                     <input type="date" id="fechaNacimientoEdit" v-model="usuarioActual.fecha_nacimiento" class="form-control">
@@ -168,6 +183,35 @@
           </div>
         </div>
       </div>
+
+
+      <!-- Modal Reset Password -->
+      <div class="modal fade" id="resetPasswordModal" tabindex="-1" aria-labelledby="resetPasswordModalLabel">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="resetPasswordModalLabel">Reset Password</h5>
+              <button type="button" class="btn-close" @click="cerrarModalResetPassword" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <form @submit.prevent="resetPasswordAPI">
+                <div class="mb-3">
+                  <label for="newPassword" class="form-label">New Password</label>
+                  <input 
+                    type="password" 
+                    id="newPassword" 
+                    v-model="resetPassword.newPassword" 
+                    class="form-control" 
+                    required 
+                  />
+                </div>
+                <button type="submit" class="btn btn-primary">Reset</button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+
 
 
 
@@ -227,6 +271,10 @@
           fecha_nacimiento: '',
           activo: true           // para saber el estado actual del usuario
         },
+        resetPassword: {
+          userId: null,
+          newPassword: ''
+        }
       };
     },
     computed: {
@@ -323,6 +371,32 @@
           })
           .catch(error => {
             console.error('Error al cargar usuarios:', error);
+          });
+      },
+      abrirModalResetPassword(usuario) {
+        this.resetPassword.userId = usuario.id;
+        this.resetPassword.newPassword = '';
+        const modalEl = document.getElementById('resetPasswordModal');
+        new Modal(modalEl).show();
+      },
+
+       cerrarModalResetPassword() {
+        const modalEl = document.getElementById('resetPasswordModal');
+        Modal.getInstance(modalEl).hide();
+      },
+
+      resetPasswordAPI() {
+        apiService
+          .put(`/api/auth/${this.resetPassword.userId}/resetPassword`, {
+            password: this.resetPassword.newPassword
+          })
+          .then(() => {
+            this.cerrarModalResetPassword();
+            // Opcional: notificar éxito al usuario
+          })
+          .catch(error => {
+            console.error('Error al resetear contraseña:', error);
+            // Opcional: mostrar alerta de error
           });
       },
 
