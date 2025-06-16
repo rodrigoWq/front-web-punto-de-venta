@@ -26,11 +26,11 @@ apiService.interceptors.response.use(
   response => response,
   error => {
     console.error('Error en la respuesta del API:', error);
-    if (error.response && (error.response.status === 401 || error.response.status === 403)) {
+    if (error.response.status === 401 || error.response.status === 403) {
         // Por ejemplo, redirigir a login o notificar al usuario que no tiene permisos
         // Aquí podrías limpiar el token y redirigir:
-        localStorage.removeItem('authToken');
-        //window.location.href = '/';
+        window.alert('ERROR.'+ error.response.status);
+        window.location.href = '/';
       }
     return Promise.reject(error);
   }
