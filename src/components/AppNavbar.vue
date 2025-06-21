@@ -41,6 +41,11 @@
                 <i class="bi bi-file-text"></i> Notas de Remisión
               </router-link>
             </li>
+            <li class="nav-item">
+              <router-link class="nav-link" to="/caja">
+                <i class="bi bi-cash"></i> Caja
+              </router-link>
+            </li>
             <li class="nav-item admin-only">
               <router-link class="nav-link" to="/user-management">
                 <i class="bi bi-person-gear"></i> User Management

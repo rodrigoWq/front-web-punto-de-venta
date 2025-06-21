@@ -20,5 +20,9 @@ npm run build
 npm run lint
 ```
 
+## Módulo de Caja
+
+Una vez ejecutada la aplicación (`npm run serve`), ingresa a la ruta `/caja` desde el navegador o usa el enlace **Caja** del menú principal para administrar la apertura, cierre y movimientos de caja.
+
 ### Customize configuration
 See [Configuration Reference](https://cli.vuejs.org/config/).
