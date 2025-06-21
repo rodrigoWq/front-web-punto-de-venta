@@ -6,6 +6,7 @@ import FacturaView from '../components/Factura.vue'; // Importa la pantalla de F
 import NotaDeRemision from '../components/NotaDeRemision.vue'; // Importa la pantalla de NotaDeRemision
 import ListarComprobantes from '../components/ListarComprobantes.vue'; // Importa la pantalla de ListarComprobantes
 import UserManagement from '../components/UserManagement.vue'; // Importa UserManagement
+import CajaView from '../components/CajaView.vue';
 
 const routes = [
   {
@@ -39,6 +40,11 @@ const routes = [
     path: '/listar-comprobantes',
     name: 'ListarComprobantes',
     component: ListarComprobantes
+  },
+  {
+    path: '/caja',
+    name: 'Caja',
+    component: CajaView
   },
   {
     path: '/user-management',
