@@ -13,6 +13,7 @@ import ProveedoresView from '@/views/ProveedoresView.vue';
 import PermisosView from '@/views/PermisosView.vue';
 import ListarComprobantesNT from '@/views/ListarComprobantesNT.vue';
 import RolesView from '@/views/RolesView.vue';
+import CajaView from '@/views/CajaView.vue';
 
 const routes = [
   {
@@ -105,6 +106,11 @@ const routes = [
     path: '/listar-proveedores',
     name: 'ListarProveedores',
     component: ProveedoresView
+  },
+  {
+    path: '/caja',
+    name: 'Caja',
+    component: CajaView
   }
 ];
 
