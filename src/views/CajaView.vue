@@ -3,84 +3,78 @@
   <div class="container mt-5">
     <AppHeader title="Control de Caja">
       <template #buttons>
-        <button v-if="caja.estado === 'cerrada'" class="btn btn-primary" @click="mostrarAbrirModal">Abrir Caja</button>
-        <button v-else class="btn btn-danger" @click="mostrarCerrarModal">Cerrar Caja</button>
+        <AppButton v-if="caja.estado === 'cerrada'" @click="showOpenModal = true">Abrir Caja</AppButton>
+        <AppButton v-else variant="danger" @click="showCloseModal = true">Cerrar Caja</AppButton>
       </template>
     </AppHeader>
 
-    <div v-if="caja.estado === 'abierta'">
-      <p><strong>Fecha de Apertura:</strong> {{ caja.fechaApertura }}</p>
-      <p><strong>Monto Apertura:</strong> {{ caja.montoApertura }}</p>
-      <h3 class="mt-4">Movimientos</h3>
-      <ul class="list-group mb-3">
-        <li v-for="(m, index) in caja.movimientos" :key="index" class="list-group-item">
-          {{ m.fecha }} - {{ m.tipo }} - {{ m.monto }} - {{ m.descripcion }}
-        </li>
-      </ul>
-      <div class="mb-3">
-        <input v-model="nuevoMovimiento.descripcion" placeholder="Descripción" class="form-control mb-2" />
-        <input v-model.number="nuevoMovimiento.monto" type="number" placeholder="Monto" class="form-control mb-2" />
-        <select v-model="nuevoMovimiento.tipo" class="form-select mb-2">
-          <option value="ingreso">Ingreso</option>
-          <option value="egreso">Egreso</option>
-        </select>
-        <button class="btn btn-success" @click="registrarMovimiento">Agregar Movimiento</button>
-      </div>
+    <div class="mb-4">
+      <p><strong>Estado:</strong> {{ caja.estado }}</p>
+      <p v-if="caja.fechaApertura"><strong>Fecha de Apertura:</strong> {{ formatDate(caja.fechaApertura) }}</p>
+      <p v-if="caja.montoApertura"><strong>Monto Apertura:</strong> {{ caja.montoApertura }}</p>
     </div>
 
-    <div class="modal fade" id="abrirModal" tabindex="-1">
-      <div class="modal-dialog">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title">Abrir Caja</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-          </div>
-          <div class="modal-body">
-            <input v-model.number="montoApertura" type="number" class="form-control" placeholder="Monto de apertura" />
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-            <button type="button" class="btn btn-primary" @click="abrirCaja">Abrir</button>
-          </div>
+    <div v-if="caja.estado === 'abierta'" class="mb-4">
+      <h4>Registrar Movimiento</h4>
+      <div class="row g-2 align-items-end">
+        <div class="col-md-3">
+          <select v-model="nuevoMovimiento.tipo" class="form-select">
+            <option value="ingreso">Ingreso</option>
+            <option value="egreso">Egreso</option>
+          </select>
+        </div>
+        <div class="col-md-3">
+          <input v-model.number="nuevoMovimiento.monto" type="number" class="form-control" placeholder="Monto" />
+        </div>
+        <div class="col-md-4">
+          <input v-model="nuevoMovimiento.descripcion" class="form-control" placeholder="Descripción" />
+        </div>
+        <div class="col-md-2">
+          <AppButton variant="success" class="w-100" @click="registrarMovimiento">Agregar</AppButton>
         </div>
       </div>
     </div>
 
-    <div class="modal fade" id="cerrarModal" tabindex="-1">
-      <div class="modal-dialog">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title">Cerrar Caja</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-          </div>
-          <div class="modal-body">
-            <input v-model.number="montoCierre" type="number" class="form-control" placeholder="Monto de cierre" />
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-            <button type="button" class="btn btn-danger" @click="cerrarCaja">Cerrar</button>
-          </div>
-        </div>
-      </div>
-    </div>
+    <h3 class="mt-4">Movimientos</h3>
+    <AppTable :headers="['Fecha', 'Tipo', 'Monto', 'Descripción']">
+      <tr v-for="(m, index) in caja.movimientos" :key="index">
+        <td>{{ formatDate(m.fecha) }}</td>
+        <td>{{ m.tipo }}</td>
+        <td>{{ m.monto }}</td>
+        <td>{{ m.descripcion }}</td>
+      </tr>
+    </AppTable>
+
+    <OpenCajaModal v-model:showModal="showOpenModal" @open="abrirCaja" />
+    <CloseCajaModal v-model:showModal="showCloseModal" @close="cerrarCaja" />
   </div>
 </template>
 
 <script>
-import { Modal } from 'bootstrap';
 import AppNavbar from '@/components/AppNavbar.vue';
 import AppHeader from '@/components/AppHeader.vue';
+import AppButton from '@/components/AppButton.vue';
+import AppTable from '@/components/AppTable.vue';
+import OpenCajaModal from '@/components/OpenCajaModal.vue';
+import CloseCajaModal from '@/components/CloseCajaModal.vue';
 import CajaService from '@/services/CajaService';
 
 export default {
   name: 'CajaView',
-  components: { AppNavbar, AppHeader },
+  components: {
+    AppNavbar,
+    AppHeader,
+    AppButton,
+    AppTable,
+    OpenCajaModal,
+    CloseCajaModal
+  },
   data() {
     return {
       caja: { estado: 'cerrada', movimientos: [] },
-      montoApertura: 0,
-      montoCierre: 0,
-      nuevoMovimiento: { tipo: 'ingreso', monto: 0, descripcion: '' }
+      nuevoMovimiento: { tipo: 'ingreso', monto: 0, descripcion: '' },
+      showOpenModal: false,
+      showCloseModal: false
     };
   },
   methods: {
@@ -92,28 +86,21 @@ export default {
         console.error('Error obteniendo caja actual', err);
       }
     },
-    mostrarAbrirModal() {
-      const modal = new Modal(document.getElementById('abrirModal'));
-      modal.show();
+    formatDate(date) {
+      return date ? new Date(date).toLocaleString() : '';
     },
-    mostrarCerrarModal() {
-      const modal = new Modal(document.getElementById('cerrarModal'));
-      modal.show();
-    },
-    async abrirCaja() {
+    async abrirCaja(monto) {
       try {
-        await CajaService.abrirCaja({ monto_apertura: this.montoApertura });
+        await CajaService.abrirCaja({ monto_apertura: monto });
         this.cargarCajaActual();
-        Modal.getInstance(document.getElementById('abrirModal')).hide();
       } catch (err) {
         console.error('Error abriendo caja', err);
       }
     },
-    async cerrarCaja() {
+    async cerrarCaja(monto) {
       try {
-        await CajaService.cerrarCaja(this.caja.id, { monto_cierre: this.montoCierre });
+        await CajaService.cerrarCaja(this.caja.id, { monto_cierre: monto });
         this.cargarCajaActual();
-        Modal.getInstance(document.getElementById('cerrarModal')).hide();
       } catch (err) {
         console.error('Error cerrando caja', err);
       }
