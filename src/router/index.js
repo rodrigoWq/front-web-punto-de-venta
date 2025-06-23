@@ -13,6 +13,8 @@ import ProveedoresView from '@/views/ProveedoresView.vue';
 import PermisosView from '@/views/PermisosView.vue';
 import ListarComprobantesNT from '@/views/ListarComprobantesNT.vue';
 import RolesView from '@/views/RolesView.vue';
+import CajaView from '@/views/CajaView.vue'; // Importa la pantalla de Caja
+import CerrarCajaView from '@/views/CerrarCajaView.vue'
 
 const routes = [
   {
@@ -95,6 +97,16 @@ const routes = [
     path: '/listar-notas-remision',
     name: 'ListarNotasDeRemision',
     component: ListarComprobantesNT
+  },
+  {
+    path: '/caja',
+    name: 'Caja', 
+    component: CajaView
+  },
+  {
+    path: '/cerrar-caja',
+    name: 'CerrarCaja',
+    component: CerrarCajaView
   },
   {
     path: '/user-management',
