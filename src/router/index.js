@@ -15,6 +15,7 @@ import ListarComprobantesNT from '@/views/ListarComprobantesNT.vue';
 import RolesView from '@/views/RolesView.vue';
 import CajaView from '@/views/CajaView.vue'; // Importa la pantalla de Caja
 import CerrarCajaView from '@/views/CerrarCajaView.vue'
+import CobroFacturaVentaView from '@/views/CobroFacturaVentaView.vue';
 
 const routes = [
   {
@@ -58,6 +59,12 @@ const routes = [
     path: '/pantalla-inicio',
     name: 'Inicio',
     component: PantallaInicio
+  },
+  {
+    path: '/cobro-factura-venta',
+    name: 'CobroFacturaVenta',
+    component: CobroFacturaVentaView
+
   },
   {
     path: '/clientes',

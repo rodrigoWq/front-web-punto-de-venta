@@ -16,7 +16,10 @@
           <ul class="dropdown-menu" :class="{ show: isOpen }">
             <li>
               <a class="dropdown-item" href="#">
-                <i class="bi bi-graph-up text-success me-2"></i>Cobro de Factura de Venta
+                <router-link class="nav-link" to="/cobro-factura-venta">
+                  <i class="bi bi-graph-up text-success me-2"></i>Cobro de Factura de Venta
+                </router-link>
+                
               </a>
             </li>
             <li>
