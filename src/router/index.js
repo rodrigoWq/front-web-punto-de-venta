@@ -16,6 +16,7 @@ import RolesView from '@/views/RolesView.vue';
 import CajaView from '@/views/CajaView.vue'; // Importa la pantalla de Caja
 import CerrarCajaView from '@/views/CerrarCajaView.vue'
 import CobroFacturaVentaView from '@/views/CobroFacturaVentaView.vue';
+import IngresoVariosView from '@/views/IngresoVariosView.vue';
 
 const routes = [
   {
@@ -37,6 +38,11 @@ const routes = [
     path: '/roles',
     name: 'Roles',
     component: RolesView
+  },
+  {
+    path: '/ingreso-varios',
+    name: 'IngresoVarios',  
+    component: IngresoVariosView
   },
   {
     path: '/proveedores/editar/:id',

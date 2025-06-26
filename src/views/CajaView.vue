@@ -29,7 +29,9 @@
             </li>
             <li>
               <a class="dropdown-item" href="#">
-                <i class="bi bi-plus-lg text-primary me-2"></i>Ingreso Varios
+                <router-link class="nav-link" to="/ingreso-varios">
+                  <i class="bi bi-plus-lg text-primary me-2"></i>Ingreso Varios
+                </router-link>               
               </a>
             </li>
             <li>
