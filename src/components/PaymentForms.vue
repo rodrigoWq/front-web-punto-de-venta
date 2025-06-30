@@ -3,7 +3,7 @@
     <h5><i class="bi bi-credit-card-2-front me-2"></i>Formas de Pago</h5>
     <p class="text-muted">Configure cómo se realizará el cobro</p>
 
-    <div class="bg-success bg-opacity-10 p-3 rounded mb-3">
+    <div :class="`${bgVariant} p-3 rounded mb-3`">
       <div class="d-flex justify-content-between">
         <div>Monto Total:</div>
         <div class="fw-bold">{{ formatCurrency(total) }}</div>
@@ -13,9 +13,9 @@
         <div class="fw-bold">{{ formatCurrency(assigned) }}</div>
       </div>
       <div class="d-flex justify-content-between">
-        <div>Restante:</div>
+        <div>{{ labelRemaining }}:</div>
         <div :class="remaining > 0 ? 'text-danger fw-bold' : 'text-success fw-bold'">
-          {{ formatCurrency(remaining) }}
+          {{ formatCurrency(remainingAbsolute) }}
         </div>
       </div>
     </div>
@@ -51,7 +51,12 @@
         class="list-group-item d-flex justify-content-between align-items-center"
       >
         <div>{{ p.type }}</div>
-        <div>{{ formatCurrency(p.amount) }}</div>
+        <div class="d-flex align-items-center">
+          <div class="me-3">{{ formatCurrency(p.amount) }}</div>
+          <button class="btn btn-outline-danger btn-sm" @click="removePayment(i)">
+            <i class="bi bi-trash-fill"></i>
+          </button>
+        </div>
       </li>
     </ul>
   </div>
@@ -72,6 +77,10 @@ export default {
     payments: {
       type: Array,
       default: () => []
+    },
+    variant: {
+      type: String,
+      default: 'income'    // 'income' o 'expense'
     }
   },
   emits: ['update:payments'],
@@ -82,12 +91,24 @@ export default {
     assigned() {
       return this.payments.reduce((sum, p) => sum + p.amount, 0)
     },
+    bgVariant() {
+     return this.variant === 'expense'
+       ? 'bg-danger bg-opacity-10'
+       : 'bg-success bg-opacity-10'
+    },
     remaining() {
       return this.total - this.assigned
     },
     canAdd() {
-      return this.type && this.amount > 0 && this.amount <= this.remaining
-    }
+      return this.type && this.amount > 0 
+    },
+    labelRemaining() {
+      return this.remaining >= 0 ? 'Restante' : 'Vuelto'
+    },
+       
+    remainingAbsolute() {
+      return Math.abs(this.remaining)
+    },
   },
   methods: {
     add() {
@@ -101,7 +122,13 @@ export default {
         style: 'currency',
         currency: 'PYG'
       }).format(val)
-    }
+    },
+    /** Elimina el pago en la posición indicada */
+    removePayment(index) {
+      const nuevo = [...this.payments]
+      nuevo.splice(index, 1)
+      this.$emit('update:payments', nuevo)
+    },
   }
 }
 </script>

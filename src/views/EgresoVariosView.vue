@@ -2,8 +2,8 @@
   <AppNavbar />
   <div class="container mt-4">
     <AppHeader
-      title="Ingreso Varios"
-      subtitle="Registrar ingresos diversos no relacionados a ventas"
+      title="Egreso Varios"
+      subtitle="Registrar gastos diversos o pagos varios"
     >
       <template #buttons>
         <router-link class="btn btn-outline-secondary" :to="{ name: 'Caja' }">
@@ -13,11 +13,11 @@
     </AppHeader>
 
     <div class="row mt-4">
-      <!-- Columna izquierda: Información del Ingreso -->
+      <!-- Columna izquierda: Información del Egreso -->
       <div class="col-12 col-md-7">
         <div class="card p-4 mb-4 h-100">
-          <h5><i class="bi bi-graph-up me-2"></i>Información del Ingreso</h5>
-          <p class="text-muted">Datos del ingreso varios</p>
+          <h5><i class="bi bi-graph-down me-2"></i>Información del Egreso</h5>
+          <p class="text-muted">Datos del gasto o egreso varios</p>
           <div class="row g-3 mt-3">
             <div class="col-md-4">
               <select v-model="form.category" class="form-select">
@@ -35,12 +35,20 @@
                 placeholder="0"
               />
             </div>
+            <div class="col-md-4">
+              <input
+                type="text"
+                v-model="form.beneficiary"
+                class="form-control"
+                placeholder="Beneficiario"
+              />
+            </div>
             <div class="col-12">
               <input
                 type="text"
                 v-model="form.reference"
                 class="form-control"
-                placeholder="Número de documento, referencia, etc."
+                placeholder="Referencia/Documento"
               />
             </div>
             <div class="col-12">
@@ -48,26 +56,30 @@
                 v-model="form.description"
                 class="form-control"
                 rows="6"
-                placeholder="Descripción detallada del ingreso..."
+                placeholder="Descripción detallada del egreso..."
               ></textarea>
             </div>
           </div>
         </div>
       </div>
-            <!-- Columna derecha: Formas de Pago -->
+
+      <!-- Columna derecha: Formas de Pago -->
       <div class="col-12 col-md-5">
         <div class="card p-3 mb-4 h-100">
           <PaymentForms
             :total="form.amount"
             :types="paymentTypes"
+            variant="expense"
             v-model:payments="payments"
           />
-          <button class="btn btn-dark w-100 mt-3" @click="submitIngreso">
-            <i class="bi bi-save me-1"></i>Registrar Ingreso
+          <button 
+            class="btn btn-dark w-100 mt-3"
+            @click="submitEgreso"
+          >
+            <i class="bi bi-save me-1"></i>Registrar Egreso
           </button>
         </div>
       </div>
-
     </div>
   </div>
 </template>
@@ -75,28 +87,38 @@
 
 <script setup>
 import { reactive, ref } from 'vue'
-//import { useRouter } from 'vue-router'
 import AppNavbar from '@/components/AppNavbar.vue'
 import AppHeader from '@/components/AppHeader.vue'
 import PaymentForms from '@/components/PaymentForms.vue'
 
-//const router = useRouter()
-const categories = ['Ventas Varios', 'Donaciones', 'Devoluciones','Otros Ingresos']
+const categories = [
+  'Gastos Operativos',
+  'Pago a Proveedores',
+  'Otros Egresos'
+]
 const paymentTypes = ['Efectivo', 'Tarjeta', 'Cheque', 'Transferencia']
 
 const form = reactive({
   category: '',
   amount: 0,
+  beneficiary: '',
   reference: '',
   description: ''
 })
 
 const payments = ref([])
 
-function submitIngreso() {
-  console.log('Enviar ingreso form:', form)
-  console.log('Pagos:', payments.value)
-  // Aquí la llamada APIconsole.log('Pagos:', payments.value)
-  //router.push({ name: 'Caja' })
+function submitEgreso() {
+  const payload = {
+    egreso: {
+      ...form,
+      amount: -Math.abs(form.amount) // si tu API espera monto negativo
+    },
+    pagos: payments.value
+  }
+
+  console.log('Enviar egreso al backend:', payload)
+  // Aquí harías:
+  // await api.post('/egresos-varios', payload)
 }
 </script>

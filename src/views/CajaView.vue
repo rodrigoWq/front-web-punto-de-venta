@@ -36,12 +36,16 @@
             </li>
             <li>
               <a class="dropdown-item" href="#">
-                <i class="bi bi-dash-lg text-warning me-2"></i>Egreso Varios
+                <router-link class="nav-link" to="/egreso-varios">
+                  <i class="bi bi-dash-lg text-warning me-2"></i>Egreso Varios
+                </router-link>
               </a>
             </li>
             <li>
               <a class="dropdown-item" href="#">
-                <i class="bi bi-credit-card text-purple me-2"></i>Cobro a Cliente Crédito
+                <router-link class="nav-link" to="/cobro-cliente-credito">
+                  <i class="bi bi-credit-card text-purple me-2"></i>Cobro a Cliente Crédito
+                </router-link>
               </a>
             </li>
             <li>

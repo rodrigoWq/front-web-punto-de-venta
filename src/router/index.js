@@ -17,6 +17,8 @@ import CajaView from '@/views/CajaView.vue'; // Importa la pantalla de Caja
 import CerrarCajaView from '@/views/CerrarCajaView.vue'
 import CobroFacturaVentaView from '@/views/CobroFacturaVentaView.vue';
 import IngresoVariosView from '@/views/IngresoVariosView.vue';
+import EgresoVariosView from '@/views/EgresoVariosView.vue';
+import CobroClienteCredito from '@/views/CobroClienteCredito.vue';
 
 const routes = [
   {
@@ -40,9 +42,19 @@ const routes = [
     component: RolesView
   },
   {
+    path: '/cobro-cliente-credito',
+    name: 'CobroClienteCredito',
+    component: CobroClienteCredito
+  },
+  {
     path: '/ingreso-varios',
     name: 'IngresoVarios',  
     component: IngresoVariosView
+  },
+  {
+    path: '/egreso-varios',
+    name: 'EgresoVarios',
+    component: EgresoVariosView
   },
   {
     path: '/proveedores/editar/:id',
