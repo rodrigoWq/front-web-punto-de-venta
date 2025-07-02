@@ -50,7 +50,7 @@
               </div>
               <button
                 class="btn btn-dark w-100 mt-2"
-                :disabled="isInvoiceSelected(inv)"
+                :disabled="isInvoiceSelected(inv) || hasSelection"
                 @click="addInvoice(inv)"
               >
                 {{ isInvoiceSelected(inv) ? 'Agregada' : 'Agregar' }}
@@ -135,6 +135,9 @@ const invoices = reactive([
   { id: 8, number: '001-001-0000130', client: 'Lucía Díaz', date: '24/1/2024', total: 170000, status: 'Pendiente' }
 ])
 const selectedInvoices = reactive([])
+
+//  ➕ Esto indica si ya hay al menos 1 factura seleccionada
+const hasSelection = computed(() => selectedInvoices.length > 0)
 
 // Formas de pago
 const payments = ref([])

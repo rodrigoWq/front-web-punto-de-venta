@@ -24,7 +24,9 @@
             </li>
             <li>
               <a class="dropdown-item" href="#">
-                <i class="bi bi-graph-down text-danger me-2"></i>Pago de Factura
+                <router-link class="nav-link" to="/pago-factura">
+                  <i class="bi bi-graph-down text-danger me-2"></i>Pago de Factura
+                </router-link>
               </a>
             </li>
             <li>
@@ -46,11 +48,6 @@
                 <router-link class="nav-link" to="/cobro-cliente-credito">
                   <i class="bi bi-credit-card text-purple me-2"></i>Cobro a Cliente Crédito
                 </router-link>
-              </a>
-            </li>
-            <li>
-              <a class="dropdown-item" href="#">
-                <i class="bi bi-briefcase text-secondary me-2"></i>Pago a Proveedor
               </a>
             </li>
           </ul>

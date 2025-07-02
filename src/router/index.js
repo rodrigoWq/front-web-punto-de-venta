@@ -19,6 +19,7 @@ import CobroFacturaVentaView from '@/views/CobroFacturaVentaView.vue';
 import IngresoVariosView from '@/views/IngresoVariosView.vue';
 import EgresoVariosView from '@/views/EgresoVariosView.vue';
 import CobroClienteCredito from '@/views/CobroClienteCredito.vue';
+import PagoFactura from '@/views/PagoFactura.vue';
 
 const routes = [
   {
@@ -45,6 +46,11 @@ const routes = [
     path: '/cobro-cliente-credito',
     name: 'CobroClienteCredito',
     component: CobroClienteCredito
+  },
+  {
+    path: '/pago-factura',
+    name: 'PagoFactura',
+    component: PagoFactura
   },
   {
     path: '/ingreso-varios',
