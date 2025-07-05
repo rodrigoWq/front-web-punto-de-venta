@@ -9,6 +9,7 @@
       </template>
     </AppHeader>
 
+    <form @submit.prevent="cerrarCaja"></form>
     <div class="card p-4 mb-4">
       <h5><i class="bi bi-clock me-2"></i>Resumen de la Sesión</h5>
       <p class="text-muted">Movimientos registrados durante la sesión actual</p>
@@ -18,7 +19,7 @@
           <div class="card p-3 text-center bg-primary bg-opacity-10">
             <div><i class="bi bi-currency-dollar fs-3 text-primary"></i></div>
             <div class="mt-2">Monto Inicial</div>
-            <h5 class="text-primary mt-1">{{ formatCurrency(resumen.initial) }}</h5>
+            <h5 class="text-primary mt-1">{{ formatCurrency(initialMonto) }}</h5>
           </div>
         </div>
         <div class="col-md-3 mb-3">
@@ -133,24 +134,25 @@
         </div>
     </div>
     </div>
-
-    <!-- Template: sección de Observaciones + botones -->
-    <div class="card p-3 mb-4">
-        <h5>Observaciones</h5>
-        <p class="text-muted">Comentarios adicionales sobre el cierre de caja</p>
-        <textarea
-            v-model="observaciones"
-            class="form-control"
-            rows="3"
-            placeholder="Ingrese cualquier observación sobre el cierre de caja..."
-        ></textarea>
-    </div>
-    <div class="d-flex justify-content-end gap-2 mb-4">
-        <button class="btn btn-outline-secondary" @click="goBack">Cancelar</button>
-        <button class="btn btn-dark" @click="submitCerrarCaja">
-            <i class="bi bi-save me-1"></i>Cerrar Caja
-        </button>
-    </div>
+    <form @submit.prevent="cerrarCaja">
+      <!-- Template: sección de Observaciones + botones -->
+      <div class="card p-3 mb-4">
+          <h5>Observaciones</h5>
+          <p class="text-muted">Comentarios adicionales sobre el cierre de caja</p>
+          <textarea
+              v-model="closeForm.observacion"
+              class="form-control"
+              rows="3"
+              placeholder="Ingrese cualquier observación sobre el cierre de caja..."
+          ></textarea>
+      </div>
+      <div class="d-flex justify-content-end gap-2 mb-4">
+          <button class="btn btn-outline-secondary" @click="goBack">Cancelar</button>
+          <button class="btn btn-dark" type="submit">
+              <i class="bi bi-save me-1"></i>Cerrar Caja
+          </button>
+      </div>
+    </form>
 
 
 
@@ -158,24 +160,64 @@
 </template>
 
 <script setup>
-import { reactive, computed, ref } from 'vue'
+import { reactive, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import AppNavbar from '@/components/AppNavbar.vue'
 import AppHeader from '@/components/AppHeader.vue'
+import { useCashboxStore } from '@/stores/cashbox'
+import apiService from '@/services/apiService'
 
-const observaciones = ref('')
-
+const cashboxStore = useCashboxStore()
 const router = useRouter()
+
+
+const initialMonto = computed(() => cashboxStore.montoInicial)
+
 function goBack() {
   router.push({ name: 'Caja' })
 }
 
-function submitCerrarCaja() {
-  // Ejemplo: enviar { resumen, totalContado, observaciones: observaciones.value } a la API
-  console.log('Cerrar caja con observaciones:', observaciones.value)
-  // luego redirigir o mostrar confirmación...
-}
+const closeForm = reactive({
+  montoContado      : null,
+  montoEfectivo     : null,
+  montoCheque       : 0,
+  montoTransferencia: 0,
+  montoPos          : 0,
+  observacion       : ''
+})
 
+
+async function cerrarCaja () {
+  try {
+    closeForm.montoContado   = initialMonto.value
+    closeForm.montoEfectivo  = totalContado.value
+    // 1️⃣ Prepara y loguea el payload
+    const payload = {
+      monto_contado      : closeForm.montoContado || 0,
+      monto_efectivo     : closeForm.montoEfectivo || 0,
+      monto_cheque       : closeForm.montoCheque || 0,
+      monto_transferencia: closeForm.montoTransferencia || 0,
+      monto_pos          : closeForm.montoPos || 0,  
+      observacion        : closeForm.observacion || 'Cierre de caja sin observaciones'
+    }
+    console.log('Cerrar Caja payload:', payload)
+    console.log('Apertura ID:', cashboxStore.aperturaId)
+
+    // 2️⃣ Envía al backend
+    await apiService.put(
+      `/api/cashbox/close/${cashboxStore.aperturaId}`,
+      payload
+    )
+
+    alert('Caja cerrada correctamente')
+    router.push({ name: 'Caja' })
+
+    // …resto de tu lógica…
+  } catch (err) {
+    console.error(err)
+    alert('Error al cerrar caja')
+  }
+}
 
 
 const difference = computed(() => totalContado.value - expected.value)
