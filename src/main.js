@@ -2,7 +2,7 @@ import { createApp } from 'vue';
 import { createPinia } from 'pinia'
 import App from './App.vue';
 import router from './router'; // Importa el router
-import { useCashboxStore } from '@/stores/cashbox'
+//import { useCashboxStore } from '@/stores/cashbox'
 
 // Importa Bootstrap CSS y JS aquí
 import 'bootstrap/dist/css/bootstrap.min.css';
@@ -18,8 +18,8 @@ app.use(pinia);
 app.use(router);
 
 
-const cashboxStore = useCashboxStore()
-await cashboxStore.fetchCurrentOpen()
+//const cashboxStore = useCashboxStore()
+//await cashboxStore.fetchCurrentOpen()
 
 
 
