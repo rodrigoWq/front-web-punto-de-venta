@@ -20,6 +20,8 @@ import IngresoVariosView from '@/views/IngresoVariosView.vue';
 import EgresoVariosView from '@/views/EgresoVariosView.vue';
 import CobroClienteCredito from '@/views/CobroClienteCredito.vue';
 import PagoFactura from '@/views/PagoFactura.vue';
+import InventoryLayout from '@/views/InventoryLayout.vue';
+import DashboardView   from '@/views/Inventario/DashboardView.vue'
 
 const routes = [
   {
@@ -36,6 +38,13 @@ const routes = [
     path: '/permisos',
     name: 'Permisos',
     component: PermisosView,
+  },
+  {
+    path: '/inventario',
+    component: InventoryLayout,
+    children: [
+      {path: '',             name: 'InvDashboard',    component: DashboardView }
+    ]
   },
   {
     path: '/roles',

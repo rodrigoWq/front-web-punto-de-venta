@@ -23,12 +23,12 @@
             </li>
             <li class="nav-item" v-if="$route.path === '/pantalla-inicio'">
               <a class="nav-link" href="#" data-bs-toggle="modal" data-bs-target="#onHoldSalesModal" @click="obtenerVentasEnEspera">
-                <i class="bi bi-hourglass-split"></i> Ventas en espera
+                <i class="bi bi-hourglass-split"></i> Pedidos
               </a>
             </li>
             <li class="nav-item admin-only">
-              <router-link class="nav-link" to="/Productos">
-                <i class="bi bi-box-seam"></i> Productos
+              <router-link class="nav-link" to="/inventario">
+                <i class="bi bi-box-seam"></i> Inventario
               </router-link>
             </li>
             <li class="nav-item">
