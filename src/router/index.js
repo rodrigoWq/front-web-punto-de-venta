@@ -8,7 +8,7 @@ import ListarComprobantes from '../views/ListarComprobantes.vue'; // Importa la 
 import UserManagement from '../views/UserManagement.vue'; // Importa UserManagement
 import RegistrarProveedor from '@/components/RegistrarProveedorModal.vue';
 import RegistrarProductoModal from '@/components/RegistrarProductoModal.vue';
-import ProductosView from '@/views/ProductosView.vue'; // Importa la pantalla de Productos
+import ProductosPrecioView from '@/views/ProductosPrecioView.vue'; // Importa la pantalla de Productos
 import ProveedoresView from '@/views/ProveedoresView.vue';
 import PermisosView from '@/views/PermisosView.vue';
 import ListarComprobantesNT from '@/views/ListarComprobantesNT.vue';
@@ -22,6 +22,7 @@ import CobroClienteCredito from '@/views/CobroClienteCredito.vue';
 import PagoFactura from '@/views/PagoFactura.vue';
 import InventoryLayout from '@/views/InventoryLayout.vue';
 import DashboardView   from '@/views/Inventario/DashboardView.vue'
+import ProductosView from '@/views/Inventario/ProductosView.vue';
 
 const routes = [
   {
@@ -43,7 +44,8 @@ const routes = [
     path: '/inventario',
     component: InventoryLayout,
     children: [
-      {path: '',             name: 'InvDashboard',    component: DashboardView }
+      {path: '',             name: 'InvDashboard',    component: DashboardView },
+      {path: 'productos',    name: 'InvProductos',    component: ProductosView },
     ]
   },
   {
@@ -80,7 +82,7 @@ const routes = [
   {
     path: '/productos',
     name: 'Productos',
-    component: ProductosView
+    component: ProductosPrecioView
   },
   {
     path: '/registrar-producto',

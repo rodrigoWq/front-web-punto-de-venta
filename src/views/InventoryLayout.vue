@@ -1,8 +1,8 @@
 <!-- src/views/Inventario/InventoryLayout.vue -->
 <template>
   <AppNavbar/>
-  <div class="inventory-layout d-flex flex-column">	
-    <AppHeader title="Sistema de Inventario" class="px-4 mb-0 border-bottom" >
+  <div class="d-flex flex-column">	
+    <AppHeader title="Sistema de Inventario" class="header-compact px-4 border-bottom">
       <template #buttons>
         <button class="btn btn-outline-secondary me-2">
           <i class="bi bi-bell"></i> Alertas (3)
@@ -20,7 +20,7 @@
             <router-link
               class="nav-link"
               :to="item.to"
-              active-class="active"
+              exact-active-class="active"
             >
               <i :class="item.icon"></i> {{ item.label }}
             </router-link>
@@ -48,6 +48,7 @@
       return {
         menu: [
           { name: 'dashboard',   label: 'Dashboard',    to: { name: 'InvDashboard' },    icon: 'bi bi-speedometer2' },
+          { name: 'productos',   label: 'Productos',    to: { name: 'InvProductos' },    icon: 'bi bi-box-seam' },
         ]
       }
     }
@@ -66,6 +67,16 @@
    flex-grow: 1;
  }
 
+.header-compact  {
+  padding-top: .5rem;
+  padding-bottom: .5rem;
+}
+
+.header-compact h1 {
+  margin: 0;
+  font-size: 5rem;    /* opcional */
+  font-weight: 600;
+}
 
 .sidebar {
   width: 240px;
