@@ -5,8 +5,8 @@
       <div class="col-12">
         <div class="d-flex justify-content-between align-items-center mb-4 mt-2">
           <h2 class="fw-bold mb-0">Gestión Precios de Productos</h2>
-          <button class="btn btn-primary d-flex align-items-center" @click="openProductModal()">
-            <i class="bi bi-plus-lg me-2"></i> Nuevo
+          <button class="btn btn-dark d-flex align-items-center" @click="openProductModal()">
+            <i class="bi bi-plus-lg me-2"></i> Nuevo Producto
           </button>
         </div>
       </div>
@@ -102,16 +102,59 @@
       />
     </div>
 
-    <!-- Modal Registrar / Editar producto (ya existente) -->
     <RegistrarProducto
-      v-if="showProductModal"
-      :product="editingProduct"
-      @saved="handleProductSaved"
-      @close="closeProductModal"
+      v-model:showModal="showProductModal"     
+      :title="editingProduct ? 'Editar producto' : 'Registrar producto'"
+      :initial-code="editingProduct?.codigo_barras ?? ''"
+      :product="editingProduct"               
+      @product-registered="handleProductSaved" 
     />
 
-    <!-- Modal actualización de precio (ya existente en tu código) -->
-    <!-- mantiene el id=\"updatePriceModal\" y se controla con openPriceModal / closePriceModal -->
+    <div class="modal fade" id="updatePriceModal" tabindex="-1">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Actualizar Precio</h5>
+            <button type="button" class="btn-close" @click="closePriceModal"/>
+          </div>
+          <div class="modal-body">
+            <form @submit.prevent="updatePrice">
+              <div class="container-fluid">
+                <div class="row mb-3">
+                  <div class="col-md-6">
+                    <label for="newPrice" class="form-label">Nuevo Precio</label>
+                    <input
+                      type="number"
+                      id="newPrice"
+                      class="form-control"
+                      v-model.number="modalData.nuevoPrecio"
+                      required
+                    />
+                  </div>
+                  <div class="col-md-6">
+                    <label for="vigencia" class="form-label">Fecha de Vigencia</label>
+                    <input
+                      type="date"
+                      id="vigencia"
+                      class="form-control"
+                      v-model="modalData.fechaVigencia"
+                      required
+                    />
+                  </div>
+                </div>
+                <div class="row">
+                  <div class="col text-end">
+                    <button type="submit" class="btn btn-success">
+                      Guardar Cambios
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
