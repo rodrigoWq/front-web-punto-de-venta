@@ -8,7 +8,7 @@ import ListarComprobantes from '../views/ListarComprobantes.vue'; // Importa la 
 import UserManagement from '../views/UserManagement.vue'; // Importa UserManagement
 import RegistrarProveedor from '@/components/RegistrarProveedorModal.vue';
 import RegistrarProductoModal from '@/components/RegistrarProductoModal.vue';
-import ProductosPrecioView from '@/views/ProductosPrecioView.vue'; // Importa la pantalla de Productos
+import ProductosPrecioView from '@/views/Inventario/ProductosPrecioView.vue'; // Importa la pantalla de Productos
 import ProveedoresView from '@/views/ProveedoresView.vue';
 import PermisosView from '@/views/PermisosView.vue';
 import ListarComprobantesNT from '@/views/ListarComprobantesNT.vue';
@@ -23,6 +23,10 @@ import PagoFactura from '@/views/PagoFactura.vue';
 import InventoryLayout from '@/views/InventoryLayout.vue';
 import DashboardView   from '@/views/Inventario/DashboardView.vue'
 import ProductosView from '@/views/Inventario/ProductosView.vue';
+import MovimientosView from '@/views/Inventario/MovimientosView.vue';
+import LotesView from '@/views/Inventario/LotesView.vue';
+import ControlInventarioView from '@/views/Inventario/ControlInventarioView.vue';
+import DepositosView from '@/views/Inventario/DepositosView.vue';
 
 const routes = [
   {
@@ -46,6 +50,11 @@ const routes = [
     children: [
       {path: '',             name: 'InvDashboard',    component: DashboardView },
       {path: 'productos',    name: 'InvProductos',    component: ProductosView },
+      {path: 'movimientos',  name: 'InvMovimientos',  component: MovimientosView },
+      {path: 'lotes',        name: 'InvLotes',        component: LotesView },
+      {path: 'control',      name: 'InvControl',      component: ControlInventarioView },
+      {path: 'depositos',    name: 'InvDepositos',    component: DepositosView },
+      {path: 'productos-precio', name: 'ProductosPrecio', component: ProductosPrecioView }
     ]
   },
   {

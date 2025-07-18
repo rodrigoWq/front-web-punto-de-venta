@@ -22,7 +22,7 @@
               :to="item.to"
               exact-active-class="active"
             >
-              <i :class="item.icon"></i> {{ item.label }}
+              <i :class="item.icon + ' me-2'"></i> {{ item.label }}
             </router-link>
           </li>
         </ul>
@@ -49,6 +49,11 @@
         menu: [
           { name: 'dashboard',   label: 'Dashboard',    to: { name: 'InvDashboard' },    icon: 'bi bi-speedometer2' },
           { name: 'productos',   label: 'Productos',    to: { name: 'InvProductos' },    icon: 'bi bi-box-seam' },
+          { name: 'movimientos', label: 'Movimientos',  to: { name: 'InvMovimientos' },  icon: 'bi bi-arrow-left-right' },
+          { name: 'lotes',       label: 'Lotes',        to: { name: 'InvLotes' },        icon: 'bi bi-box2' },
+          { name: 'control',     label: 'Control',      to: { name: 'InvControl' },      icon: 'bi bi-clipboard-check' },
+          { name: 'depositos',   label: 'Depósitos',    to: { name: 'InvDepositos' },    icon: 'bi bi-building' },
+          { name: 'productos-precio', label: 'Precios', to: { name: 'ProductosPrecio' }, icon: 'bi bi-tag' }
         ]
       }
     }
@@ -83,9 +88,22 @@
   background: #fff;
   border-right: 1px solid #e5e5e5;
 }
+
+.sidebar .nav-link {
+  color: #000;                 /* texto negro por defecto   */
+  border-radius: .25rem;       /* bordes suaves             */
+  padding: .5rem 1rem;         /* más respiración           */
+}
+
+.sidebar .nav-link:hover {
+  background: #f2f2f2;         /* gris claro en hover       */
+  color: #000;
+}
+
 .sidebar .nav-link.active {
-  background-color: #f0f0f0;
-  font-weight: 500;
+  background: #0d0d0d;         /* negro para el activo      */
+  color: #fff;                 /* texto blanco              */
+  font-weight: 500;            /* el mismo énfasis original */
 }
 main { background: #f9f9f9; overflow-y: auto; }
 </style>

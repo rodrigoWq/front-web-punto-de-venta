@@ -108,27 +108,6 @@
         </div>
       </div>
     </div>
-
-    <ul class="nav nav-tabs">
-      <li class="nav-item">
-        <a class="nav-link active" href="#">Movimientos</a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link" href="#">Recibos</a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link" href="#">Reportes</a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link" href="#">Configuración</a>
-      </li>
-    </ul>
-
-    <div class="mt-3">
-      <!-- Aquí luego agregaremos la tabla de movimientos -->
-      <p class="text-muted">Seleccione una pestaña para visualizar el contenido.</p>
-    </div>
-
     <!-- Modal de Apertura de Caja -->
     <div class="modal fade"
         :class="{ show: modalOpen }"

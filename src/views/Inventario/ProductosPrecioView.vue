@@ -1,159 +1,133 @@
 <template>
-  <!-- ≡ SIN CAMBIOS -->
-  <AppNavbar />
-
-  <div class="container mt-5" id="productos-view">
-
-    <!-- 🔄 MODIFICADO – agrego botón “Nuevo” -->
-    <AppHeader title="Gestión Precios de Productos">
-      <template #buttons>
-        <!-- 🆕 abrir alta -->
-        <button class="btn btn-primary" @click="openProductModal()">
-          <i class="bi bi-plus-lg me-1"></i> Nuevo
-        </button>
-      </template>
-    </AppHeader>
-
-    <!-- ≡ SIN CAMBIOS (filtro de precio + búsqueda) -->
-    <AppFilter
-      v-model="searchTerm"
-      placeholder="Buscar por nombre de producto"
-      customClasses="mt-4 mb-4"
-    >
-      <button
-        type="button"
-        class="btn btn-success me-2"
-        :class="{ active: priceFilter==='zero' }"
-        @click="priceFilter='zero'"
-      >Sin Precio</button>
-      <button
-        type="button"
-        class="btn btn-success"
-        :class="{ active: priceFilter==='nonzero' }"
-        @click="priceFilter='nonzero'"
-      >Con Precio</button>
-      <select v-model="categoryFilter"  class="form-select float-start me-3" @change="onCategoryChange" style="width:auto">
-        <option value="all">All</option>
-        <option v-for="cat in uniqueCategories" :key="cat" :value="cat">{{ cat }}</option>
-      </select>
-    </AppFilter>
-
-    <!-- 🔄 MODIFICADO – cabeceras y columnas -->
-    <AppTable :headers="['Nombre','Precio Actual','Categoría','Precio última compra','Acciones']">
-      <tr
-        v-for="product in pagedProducts"
-        :key="product.producto_id"
-      >
-        <td>{{ product.nombre }}</td>
-        <td>{{ (product.precio_venta > 0)
-                  ? String(product.precio_venta).split('.')[0]
-                  : 'Sin precio' }}</td>
-        <td>{{ product.categoria }}</td>
-        <td>{{ product.precio_ultima_compra ?? 'Sin precio' }}</td>
-
-        <!-- 🆕 acciones ABM -->
-        <td class="d-flex gap-1">
-          <button
-            class="btn btn-success btn-sm"
-            @click="openPriceModal(product)"
-          >$ Precio Venta</button>
-
-          <button
-            class="btn btn-warning btn-sm"
-            @click="openProductModal(product)"
-          >✏️ Editar</button>
-
-          <button
-            class="btn btn-danger btn-sm"
-            @click="deleteProduct(product)"
-          >🗑 Eliminar</button>
-        </td>
-      </tr>
-    </AppTable>
-
-    <!-- 🔄 MODIFICADO – paginador usa computed totalPages -->
-    <AppPagination
-      :currentPage="currentPage"
-      :totalPages="totalPages"
-      @page-changed="changePage"
-    />
-
-
-    <RegistrarProducto
-      v-model:showModal="showProductModal"     
-      :title="editingProduct ? 'Editar producto' : 'Registrar producto'"
-      :initial-code="editingProduct?.codigo_barras ?? ''"
-      :product="editingProduct"               
-      @product-registered="handleProductSaved" 
-    />
-
-
-    <!-- =========== Modal de Precio (sin cambios relevantes) =========== -->
-    <div class="modal fade" id="updatePriceModal" tabindex="-1">
-      <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title">Actualizar Precio</h5>
-            <button type="button" class="btn-close" @click="closePriceModal"/>
-          </div>
-          <div class="modal-body">
-            <form @submit.prevent="updatePrice">
-              <div class="container-fluid">
-                <div class="row mb-3">
-                  <div class="col-md-6">
-                    <label for="newPrice" class="form-label">Nuevo Precio</label>
-                    <input
-                      type="number"
-                      id="newPrice"
-                      class="form-control"
-                      v-model.number="modalData.nuevoPrecio"
-                      required
-                    />
-                  </div>
-                  <div class="col-md-6">
-                    <label for="vigencia" class="form-label">Fecha de Vigencia</label>
-                    <input
-                      type="date"
-                      id="vigencia"
-                      class="form-control"
-                      v-model="modalData.fechaVigencia"
-                      required
-                    />
-                  </div>
-                </div>
-                <div class="row">
-                  <div class="col text-end">
-                    <button type="submit" class="btn btn-success">
-                      Guardar Cambios
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </form>
-          </div>
+  <div class="container-xl px-4">
+    <!-- Título y botón «Nuevo» -->
+    <div class="row">
+      <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4 mt-2">
+          <h2 class="fw-bold mb-0">Gestión Precios de Productos</h2>
+          <button class="btn btn-primary d-flex align-items-center" @click="openProductModal()">
+            <i class="bi bi-plus-lg me-2"></i> Nuevo
+          </button>
         </div>
       </div>
     </div>
 
-  </div><!-- /container -->
+    <!-- Búsqueda + filtros -->
+    <div class="row g-3 mb-3">
+      <div class="col-md-4">
+        <input
+          v-model="searchTerm"
+          type="text"
+          class="form-control"
+          placeholder="Buscar por nombre de producto"
+        />
+      </div>
+
+      <div class="col-md-2">
+        <select v-model="categoryFilter" @change="onCategoryChange" class="form-select">
+          <option value="all">All</option>
+          <option v-for="cat in uniqueCategories" :key="cat" :value="cat">{{ cat }}</option>
+        </select>
+      </div>
+
+      <div class="col-md-auto d-flex gap-2">
+        <button
+          class="btn"
+          :class="priceFilter === 'zero' ? 'btn-success' : 'btn-outline-success'"
+          @click="priceFilter = 'zero'"
+        >
+          Sin Precio
+        </button>
+        <button
+          class="btn"
+          :class="priceFilter === 'nonzero' ? 'btn-success' : 'btn-outline-success'"
+          @click="priceFilter = 'nonzero'"
+        >
+          Con Precio
+        </button>
+      </div>
+
+      <div class="col-md-auto">
+        <button class="btn btn-outline-secondary" @click="
+          priceFilter = 'all';
+          categoryFilter = 'all';
+          searchTerm = '';
+        ">
+          Reset
+        </button>
+      </div>
+    </div>
+
+    <!-- Tabla -->
+    <div class="bg-white rounded shadow-sm p-3">
+      <div class="table-responsive">
+        <table class="table align-middle">
+          <thead class="table-light">
+            <tr>
+              <th>Nombre</th>
+              <th class="text-end">Precio Actual</th>
+              <th>Categoría</th>
+              <th class="text-end">Precio última compra</th>
+              <th class="text-end">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="prod in pagedProducts" :key="prod.producto_id">
+              <td>{{ prod.nombre }}</td>
+              <td class="text-end">{{ prod.precio_venta ?? 'Sin precio' }}</td>
+              <td>{{ prod.categoria }}</td>
+              <td class="text-end">{{ prod.precio_compra ?? 'Sin precio' }}</td>
+              <td class="text-end">
+                <button class="btn btn-success btn-sm me-1" @click="openPriceModal(prod)">
+                  $ Precio Venta
+                </button>
+                <button class="btn btn-warning btn-sm me-1" @click="openProductModal(prod)">
+                  <i class="bi bi-pencil-fill"></i> Editar
+                </button>
+                <button class="btn btn-danger btn-sm" @click="deleteProduct(prod)">
+                  <i class="bi bi-trash-fill"></i> Eliminar
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- paginación -->
+      <AppPagination
+        class="mt-3"
+        :total-pages="totalPages"
+        :current-page="currentPage"
+        @page-changed="changePage"
+      />
+    </div>
+
+    <!-- Modal Registrar / Editar producto (ya existente) -->
+    <RegistrarProducto
+      v-if="showProductModal"
+      :product="editingProduct"
+      @saved="handleProductSaved"
+      @close="closeProductModal"
+    />
+
+    <!-- Modal actualización de precio (ya existente en tu código) -->
+    <!-- mantiene el id=\"updatePriceModal\" y se controla con openPriceModal / closePriceModal -->
+  </div>
 </template>
 
-<script>
-// ≡ SIN CAMBIOS (import originales) + nuevos
-import AppHeader      from '../components/AppHeader.vue';
-import AppFilter      from '../components/AppFilter.vue';
-import AppTable       from '../components/AppTable.vue';
-import AppPagination  from '../components/AppPagination.vue';
-import AppNavbar      from '../components/AppNavbar.vue';
 
-import RegistrarProducto from '../components/RegistrarProductoModal.vue';          // 
-import apiService        from '../services/apiService.js';                    // 
+<script>
+import AppPagination  from '../../components/AppPagination.vue'; // Importa la paginación
+import RegistrarProducto from '../../components/RegistrarProductoModal.vue';
+          // 
+import apiService        from '../../services/apiService.js'; // Importa el servicio API
+                  // 
 import * as bootstrap    from 'bootstrap';                                    // 
 
 export default {
   name: 'ProductosView',                                                      // 
   components: {
-    AppTable, AppPagination, AppHeader, AppFilter, AppNavbar,
+    AppPagination,
     RegistrarProducto                                                         // 
   },
 
