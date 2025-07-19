@@ -1,0 +1,9 @@
+version: "3.9"
+
+services:
+  frontend:
+    build: .  # Usa el Dockerfile para construir
+    ports:
+      - "8080:8080"  # Expone puerto para el navegador
+    environment:
+      - NODE_ENV=production
