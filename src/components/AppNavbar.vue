@@ -22,7 +22,7 @@
               </router-link>
             </li>
             <li class="nav-item" v-if="$route.path === '/pantalla-inicio'">
-              <a class="nav-link" href="#" data-bs-toggle="modal" data-bs-target="#onHoldSalesModal" @click="obtenerVentasEnEspera">
+              <a class="nav-link" href="#" data-bs-toggle="modal" data-bs-target="#onHoldSalesModal" @click.prevent="onShowOnHoldSales">
                 <i class="bi bi-hourglass-split"></i> Pedidos
               </a>
             </li>
@@ -159,6 +159,7 @@ export default {
         productNameSearch: '',
         searchResult: '',
         showMenu: false,
+        onHoldLoaded: false,
         ventasEnEspera: []
       };
     },
@@ -203,6 +204,13 @@ export default {
           console.error("Error al obtener el producto:", e);
           this.searchResult = '<div class="alert alert-danger">Error al buscar el producto.</div>';
         }
+      },
+      async onShowOnHoldSales() {
+        if (!this.onHoldLoaded) {
+          await this.obtenerVentasEnEspera();
+          this.onHoldLoaded = true;
+        }
+        // El modal se abre automáticamente por data-bs-toggle
       },
       toggleMenu() {
         this.showMenu = !this.showMenu;
@@ -277,10 +285,6 @@ export default {
         this.$router.push("/"); // O la ruta que desees al cerrar sesión
       }
     },
-    // Added mounted hook:
-    mounted() {
-      this.obtenerVentasEnEspera();
-    }
   };
 
 </script>

@@ -1,5 +1,5 @@
 <template>
-    <div class="d-flex justify-content-center mt-3">
+    <div v-if="totalPages > 1" class="d-flex justify-content-center mt-3">
       <button class="btn btn-secondary me-2" @click="goToPage(currentPage - 1)" :disabled="currentPage === 1">Anterior</button>
       <button v-for="page in pages" :key="page" class="btn btn-outline-secondary me-2" @click="goToPage(page)" :disabled="page === currentPage">{{ page }}</button>
       <button class="btn btn-secondary" @click="goToPage(currentPage + 1)" :disabled="currentPage === totalPages">Siguiente</button>

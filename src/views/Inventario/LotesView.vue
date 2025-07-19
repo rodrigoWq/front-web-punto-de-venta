@@ -29,7 +29,7 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="lot in lots" :key="lot.id">
+            <tr v-for="lot in pagedLots" :key="lot.id">
               <td>{{ lot.code }}</td>
               <td>{{ lot.product }}</td>
               <td>{{ lot.productionDate }}</td>
@@ -51,12 +51,19 @@
           </tbody>
         </table>
       </div>
+      <AppPagination
+        class="mt-3"
+        :current-page="currentPage"
+        :total-pages="totalPages"
+        @page-changed="changePage"
+      />
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref } from 'vue'
+ import { ref, computed, watch } from 'vue'
+ import AppPagination           from '@/components/AppPagination.vue'
 
 const lots = ref([
   {
@@ -88,6 +95,27 @@ const lots = ref([
     stock: 75,
     deposit: 'Almacén Central',
     status: 'Vigente',
-  },
-])
+  }
+]);
+
+   // ─── paginación ───
+ const currentPage  = ref(1)
+ const itemsPerPage = ref(5)  // filas por página
+
+ const totalPages = computed(() =>
+   Math.ceil(lots.value.length / itemsPerPage.value)
+ )
+
+ const pagedLots = computed(() => {
+   const start = (currentPage.value - 1) * itemsPerPage.value
+   return lots.value.slice(start, start + itemsPerPage.value)
+ })
+
+ watch(lots, () => { currentPage.value = 1 })
+
+ function changePage(page) {
+   if (page < 1 || page > totalPages.value) return
+   currentPage.value = page
+ }
+
 </script>

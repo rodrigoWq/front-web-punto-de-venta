@@ -1,6 +1,6 @@
 <template>
   <div class="container-xl px-4">
-    <!-- Título + botón -->
+    <!-- Título  botón -->
     <div class="row">
       <div class="col-12">
         <div class="d-flex justify-content-between align-items-center mb-4 mt-2">
@@ -47,7 +47,7 @@
                 </tr>
               </thead>
               <tbody>
-                <tr v-for="ctl in controls" :key="ctl.id">
+                <tr v-for="ctl in pagedControls" :key="ctl.id">
                   <td>{{ ctl.id }}</td>
                   <td>{{ ctl.deposit }}</td>
                   <td>{{ ctl.date }}</td>
@@ -69,7 +69,12 @@
               </tbody>
             </table>
           </div>
-
+        <AppPagination
+          class="mt-3"
+          :current-page="currentPage"
+          :total-pages="totalPages"
+          @page-changed="changePage"
+        />
         </div>
       </div>
     </div>
@@ -77,7 +82,8 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+ import { ref, computed, watch } from 'vue'
+ import AppPagination from '@/components/AppPagination.vue'
 
 const cards = [
   { title: 'Controles Pendientes', value: 3, subtitle: 'Esperando conteo físico', color: 'text-warning' },
@@ -115,6 +121,29 @@ const controls = ref([
     statusClass: 'bg-light text-dark',
     progress: 100,
     action: 'Ver Reporte',
-  },
+  }
 ])
+
+ // ─── paginación ───
+const currentPage = ref(1)
+const itemsPerPage = ref(3)  // filas por página
+
+const totalPages = computed(() =>
+   Math.ceil(controls.value.length / itemsPerPage.value)
+)
+
+const pagedControls = computed(() => {
+  const start = (currentPage.value - 1) * itemsPerPage.value
+  return controls.value.slice(start, start + itemsPerPage.value)
+})
+
+// cuando cambien controls (o filtros), resetea la página
+watch(controls, () => {
+  currentPage.value = 1
+})
+
+function changePage(page) {
+  if (page < 1 || page > totalPages.value) return
+  currentPage.value = page
+}
 </script>

@@ -38,7 +38,7 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="mov in filteredMovements" :key="mov.id">
+            <tr v-for="mov in pagedMovements" :key="mov.id">
               <td>{{ mov.date }}</td>
               <td>
                 <span
@@ -66,19 +66,49 @@
           </tbody>
         </table>
       </div>
+      <AppPagination
+        class="mt-3"
+        :current-page="currentPage"
+        :total-pages="totalPages"
+        @page-changed="changePage"
+      />
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
+import AppPagination from '@/components/AppPagination.vue'
+
+
 
 const movements = ref([
   { id: 1, date: '2024-01-15 10:30', type: 'ENTRADA', product: 'Laptop Dell XPS 13', lot: 'LOTO001', qty: 10, deposit: 'Almacén Central', user: 'Juan Pérez', reason: 'Compra #001' },
   { id: 2, date: '2024-01-15 14:15', type: 'SALIDA',  product: 'Mouse Logitech MX',   lot: 'LOTO002', qty: -5, deposit: 'Sucursal Norte',  user: 'María García', reason: 'Venta #045' },
   { id: 3, date: '2024-01-14 16:45', type: 'AJUSTE',  product: 'Teclado Mecánico',   lot: 'LOTO003', qty: 2, deposit: 'Almacén Central', user: 'Carlos López', reason: 'Diferencia inventario' },
-])
 
+])
 // Por ahora mostramos todos, sin filtro por tipo
 const filteredMovements = computed(() => movements.value)
+
+// ─── paginación ───
+const currentPage     = ref(1)
+const itemsPerPage    = ref(5)  // filas por página
+const totalPages      = computed(() =>
+  Math.ceil(filteredMovements.value.length / itemsPerPage.value)
+)
+const pagedMovements  = computed(() => {
+  const start = (currentPage.value - 1) * itemsPerPage.value
+  return filteredMovements.value.slice(start, start + itemsPerPage.value)
+})
+
+// si en el futuro añades filtros, resetea la página:
+watch(filteredMovements, () => { currentPage.value = 1 })
+
+function changePage(page) {
+  if (page < 1 || page > totalPages.value) return
+  currentPage.value = page
+}
+
+
 </script>
