@@ -15,13 +15,13 @@ actions: {
   async fetchCurrentOpen() {
     try {
       const res = await apiService.get('/api/cashbox/open/current/')
-      if (res.data.success && res.data.data.estado === 'ABIERTO') {
+      if (res.data.success) {
         const d = res.data.data
         this.isOpen        = true
         this.aperturaId    = d.apertura_id
-        this.fechaApertura = d.fecha_apertura
+        this.fechaApertura = d.apertura
         this.montoInicial  = parseFloat(d.monto_inicial)
-        this.nombreUsuario = d.nombre_usuario
+        this.nombreUsuario = d.usuario
       } else {
         this.isOpen = false
       }
