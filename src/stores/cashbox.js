@@ -9,7 +9,11 @@ state: () => ({
   aperturaId    : null,
   fechaApertura : null,
   montoInicial  : null,
-  nombreUsuario : ''       // ← nuevo
+  nombreUsuario : '',
+  igresos_dia   : 0,
+  egresos_dia   : 0,
+  saldo_en_caja : 0,
+  facturas_pendientes : 0
 }),
 actions: {
   async fetchCurrentOpen() {
@@ -22,6 +26,10 @@ actions: {
         this.fechaApertura = d.apertura
         this.montoInicial  = parseFloat(d.monto_inicial)
         this.nombreUsuario = d.usuario
+        this.igresos_dia   = parseFloat(d.ingresos_dia)
+        this.egresos_dia   = parseFloat(d.egresos_dia)
+        this.saldo_en_caja = parseFloat(d.saldo_en_caja)
+        this.facturas_pendientes = d.facturas_pendientes
       } else {
         this.isOpen = false
       }

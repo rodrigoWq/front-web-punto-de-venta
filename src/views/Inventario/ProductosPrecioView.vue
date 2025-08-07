@@ -252,7 +252,7 @@ export default {
 
     /* ---------- CRUD Productos ---------- */
     fetchProducts() {                                                         
-      apiService.get(this.api('/api/sales/price'))
+      apiService.get(this.api('/api/prices'))
         .then(({ data }) => { this.products = data; })
         .catch(err   => { console.error('Error fetching products:', err); });
     },
@@ -304,7 +304,7 @@ export default {
     updatePrice() {                                                           
         const { productId, nuevoPrecio, fechaVigencia } = this.modalData;
         apiService.post(
-          this.api(`/api/sales/price/${productId}`),
+          this.api(`/api/prices/${productId}`),
           {
             precio_venta: nuevoPrecio,
             vigencia_desde: fechaVigencia

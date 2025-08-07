@@ -86,25 +86,25 @@
       <div class="col-md-3">
         <div class="card text-center p-3">
           <div class="text-success">Ingresos del Día</div>
-          <h5 class="text-success">Gs. 150.000</h5>
+          <h5 class="text-success">{{ formateaNumero(cajaData.ingresos_dia) }}</h5>
         </div>
       </div>
       <div class="col-md-3">
         <div class="card text-center p-3">
           <div class="text-danger">Egresos del Día</div>
-          <h5 class="text-danger">Gs. 75.000</h5>
+          <h5 class="text-danger">{{ formateaNumero(cajaData.egresos_dia) }}</h5>
         </div>
       </div>
       <div class="col-md-3">
         <div class="card text-center p-3">
           <div class="text-primary">Saldo en Caja</div>
-          <h5 class="text-primary">Gs. 575.000</h5>
+          <h5 class="text-primary">{{ formateaNumero(cajaData.saldo_en_caja) }}</h5>
         </div>
       </div>
       <div class="col-md-3">
         <div class="card text-center p-3">
           <div class="text-warning">Facturas Pendientes</div>
-          <h5 class="text-warning">5</h5>
+          <h5 class="text-warning">{{ cajaData.facturas_pendientes }}</h5>
         </div>
       </div>
     </div>
@@ -186,7 +186,11 @@ const cajaAbierta = computed(() => cashboxStore.isOpen)
 const cajaData    = computed(() => ({
   user        : cashboxStore.nombreUsuario,
   apertura    : cashboxStore.fechaApertura,
-  montoInicial: cashboxStore.montoInicial
+  montoInicial: cashboxStore.montoInicial,
+  ingresos_dia: cashboxStore.igresos_dia,
+  egresos_dia : cashboxStore.egresos_dia,
+  saldo_en_caja: cashboxStore.saldo_en_caja,
+  facturas_pendientes: cashboxStore.facturas_pendientes
 }))
 onMounted(() => {
   cashboxStore.fetchCurrentOpen()
