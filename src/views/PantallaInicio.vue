@@ -15,7 +15,7 @@
           </div>
           <div class="col">
             <label for="productQuantity" class="form-label">Cantidad</label>
-            <input type="number" class="form-control" v-model="productQuantity" value="1" />
+            <input type="number" class="form-control" v-model="productQuantity" value="1" @keyup.enter.prevent="agregarProducto" />
           </div>
           <div class="col">
             <label for="rucCliente" class="form-label">RUC / CI</label>
@@ -59,8 +59,8 @@
       <!-- Sección de Total y Acciones (justo por encima del footer real) -->
     <div class="total-footer-section">
       <h4>
-        Total: <span class="ms-1">{{ totalAmount }}</span>
-      </h4> 
+        Total: <span class="ms-1">{{ formateaNumero(totalAmount) + '  ₲' }}</span>
+      </h4>
       <!-- Reemplazo en la sección de Total y Acciones -->
       <div class="button-container">
         <button type="button" class="btn btn-warning" @click="openPendingModal">Poner Venta en Espera</button>
@@ -332,7 +332,11 @@ export default {
       this.clienteNombre = nombre;
       this.productos     = productos;
       this.paginaActual  = 1;
-    }
+    },
+    formateaNumero (n) {
+      if (n === null || n === undefined) return ''
+      return Number(n).toLocaleString('es-PY', { minimumFractionDigits: 0 })
+    },
   },
   mounted() {
     this.userName = localStorage.getItem("user_name") || '';
