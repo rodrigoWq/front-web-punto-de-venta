@@ -57,7 +57,7 @@
         </div>
       </div>
 
-      <div class="d-grid gap-2 mb-3">
+      <div class="d-grid gap-2 mb-3" v-if="!readOnly">
          <button type="button" class="btn btn-secondary" @click="agregarProducto" :disabled="readOnly">
             Agregar Producto
           </button>
@@ -92,7 +92,7 @@
       </AppTable>
 
       <div class="d-grid gap-2 mt-4">
-        <button type="submit" class="btn btn-success" :disabled="readOnly" >Guardar Nota de Remisión </button>
+        <button type="submit" class="btn btn-success" :disabled="readOnly" v-if="!readOnly">Guardar Nota de Remisión </button>
       </div>
     </form>
 

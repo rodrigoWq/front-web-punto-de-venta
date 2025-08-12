@@ -26,12 +26,18 @@ apiService.interceptors.response.use(
   response => response,
   error => {
     console.error('Error en la respuesta del API:', error);
-    if (error.response.status === 401 || error.response.status === 403) {
-        // Por ejemplo, redirigir a login o notificar al usuario que no tiene permisos
-        // Aquí podrías limpiar el token y redirigir:
-        window.alert('ERROR.'+ error.response.status);
-        window.location.href = '/';
+    // Mostrar mensaje del backend: prioriza 'error', luego 'message'
+    if (error.response && error.response.data) {
+      const backendError = error.response.data.error || error.response.data.message;
+      if (backendError) {
+        window.alert(backendError);
       }
+    }
+    if (error.response && (error.response.status === 401 || error.response.status === 403)) {
+      // Por ejemplo, redirigir a login o notificar al usuario que no tiene permisos
+      // Aquí podrías limpiar el token y redirigir:
+      window.location.href = '/';
+    }
     return Promise.reject(error);
   }
 );
