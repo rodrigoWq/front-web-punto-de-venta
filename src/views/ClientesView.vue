@@ -4,7 +4,7 @@
     <div class="container mt-5">
       <AppHeader title="Gestión de Clientes">
         <template #buttons>
-          <button class="btn btn-success" @click="abrirModal">Registrar Cliente</button>
+          <button class="btn btn-success" @click="abrirModalCrear">Registrar Cliente</button>
         </template>
       </AppHeader>
 
@@ -13,7 +13,7 @@
       <AppFilter v-model="searchInput" placeholder="Buscar por nombre..." customClasses="mt-4 mb-4">
         <AppButton variant="outline-secondary" customClass="me-2" :class="{ active: filtroTipo === 'all' }" @click="setFiltro('all')">Todos los Tipos</AppButton>
         <AppButton variant="outline-secondary" customClass="me-2" :class="{ active: filtroTipo === 'Contado' }" @click="setFiltro('Contado')">Contado</AppButton>
-        <AppButton variant="outline-secondary" customClass="me-2" :class="{ active: filtroTipo === 'credito' }" @click="setFiltro('credito')">Crédito</AppButton>
+        <AppButton variant="outline-secondary" customClass="me-2" :class="{ active: filtroTipo === 'Crédito' }" @click="setFiltro('Crédito')">Crédito</AppButton>
       </AppFilter>
 
   
@@ -36,25 +36,21 @@
       <AppPagination :currentPage="paginaActual" :totalPages="totalPaginas" @page-changed="cambiarPagina" />
 
 
-      <!-- Modal para Registrar / Editar Cliente -->
-      <div class="modal fade" id="clienteModal" tabindex="-1">
+      <!-- Modal para Registrar Cliente -->
+      <div class="modal fade" id="crearClienteModal" tabindex="-1">
         <div class="modal-dialog modal-lg">
           <div class="modal-content">
             <div class="modal-header">
-              <h5 class="modal-title">{{ modalTitle }}</h5>
-              <button type="button" class="btn-close" @click="cerrarModal"></button>
+              <h5 class="modal-title">Registrar Cliente</h5>
+              <button type="button" class="btn-close" @click="cerrarModal('crearClienteModal')"></button>
             </div>
             <div class="modal-body">
               <form @submit.prevent="guardarCliente">
                 <div class="container-fluid">
                   <div class="row mb-3">
-                    <div class="col-md-6">
+                    <div class="col-md-12">
                       <label for="nombreCompleto" class="form-label">Nombre Completo</label>
                       <input type="text" id="nombreCompleto" v-model="cliente.nombre_completo" class="form-control" required />
-                    </div>
-                    <div class="col-md-6">
-                      <label for="cedula" class="form-label">Cédula</label>
-                      <input type="text" id="cedula" v-model="cliente.cedula" class="form-control" required />
                     </div>
                   </div>
                   <div class="row mb-3">
@@ -99,6 +95,75 @@
                   <div class="row">
                     <div class="col text-end">
                       <button type="submit" class="btn btn-primary">Guardar Cliente</button>
+                    </div>
+                  </div>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+
+
+      <!-- Modal para Editar Cliente -->
+      <div class="modal fade" id="editarClienteModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title">Editar Cliente</h5>
+              <button type="button" class="btn-close" @click="cerrarModal('editarClienteModal')"></button>
+            </div>
+            <div class="modal-body">
+              <form @submit.prevent="editarClienteSubmit">
+                <div class="container-fluid">
+                  <div class="row mb-3">
+                    <div class="col-md-12">
+                      <label for="nombreCompletoEditar" class="form-label">Nombre Completo</label>
+                      <input type="text" id="nombreCompletoEditar" v-model="cliente.nombre_completo" class="form-control" required />
+                    </div>
+                  </div>
+                  <div class="row mb-3">
+                    <div class="col-md-6">
+                      <label for="nroDocumentoEditar" class="form-label">Nro. Documento</label>
+                      <input type="text" id="nroDocumentoEditar" v-model="cliente.nro_documento" class="form-control" required />
+                    </div>
+                    <div class="col-md-6">
+                      <label for="rucEditar" class="form-label">RUC</label>
+                      <input type="text" id="rucEditar" v-model="cliente.ruc" class="form-control" required />
+                    </div>
+                  </div>
+                  <div class="row mb-3">
+                    <div class="col-md-6">
+                      <label for="direccionEditar" class="form-label">Dirección</label>
+                      <input type="text" id="direccionEditar" v-model="cliente.direccion" class="form-control" />
+                    </div>
+                    <div class="col-md-6">
+                      <label for="telefonoEditar" class="form-label">Teléfono</label>
+                      <input type="tel" id="telefonoEditar" v-model="cliente.telefono" class="form-control" />
+                    </div>
+                  </div>
+                  <div class="row mb-3">
+                    <div class="col-md-6">
+                      <label for="emailEditar" class="form-label">Email</label>
+                      <input type="email" id="emailEditar" v-model="cliente.email" class="form-control" />
+                    </div>
+                    <div class="col-md-6">
+                      <label for="nombreFantasiaEditar" class="form-label">Nombre Fantasía</label>
+                      <input type="text" id="nombreFantasiaEditar" v-model="cliente.nombre_fantasia" class="form-control" />
+                    </div>
+                  </div>
+                  <div class="row mb-3">
+                    <div class="col-md-6">
+                      <label for="condicionesPagoEditar" class="form-label">Condiciones de Pago</label>
+                      <select id="condicionesPagoEditar" v-model="cliente.condiciones_pago" class="form-select">
+                        <option value="Contado">Contado</option>
+                        <option value="Crédito">Crédito</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div class="row">
+                    <div class="col text-end">
+                      <button type="submit" class="btn btn-primary">Actualizar Cliente</button>
                     </div>
                   </div>
                 </div>
@@ -157,7 +222,6 @@ export default {
       clientes: [], // Lista de clientes
       cliente: {
         nombre_completo: '',
-        cedula: '',
         nro_documento: '',
         ruc: '',
         direccion: '',
@@ -167,7 +231,6 @@ export default {
         condiciones_pago: 'Contado'
       },
       clienteActual: null,
-      modalTitle: 'Registrar Cliente',
       searchInput: '',
       filtroTipo: 'all',
       paginaActual: 1,
@@ -181,8 +244,15 @@ export default {
         const search = this.searchInput.toLowerCase();
         const nombre = (cliente.nombre_completo || '').toLowerCase();
         const ruc = (cliente.ruc || '').toLowerCase();
-        // Si quieres seguir filtrando por un campo de tipo, asegúrate de usar la propiedad actual, por ejemplo, "condiciones_pago"
-        const filtroCoincide = this.filtroTipo === 'all' || (cliente.condiciones_pago || '').toLowerCase() === this.filtroTipo.toLowerCase();
+        
+        // Normalizar strings para comparación (eliminar tildes)
+        const normalizeStr = (str) => str.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+        
+        const condicionesPago = (cliente.condiciones_pago || '');
+        const filtroTipoNormalizado = normalizeStr(this.filtroTipo.toLowerCase());
+        const condicionesPagoNormalizado = normalizeStr(condicionesPago.toLowerCase());
+        
+        const filtroCoincide = this.filtroTipo === 'all' || condicionesPagoNormalizado === filtroTipoNormalizado;
         return filtroCoincide && (nombre.includes(search) || ruc.includes(search));
       });
     },
@@ -204,11 +274,10 @@ export default {
         console.error('Error al cargar los clientes:', error);
       }
     },
-    abrirModal() {
-      this.modalTitle = this.clienteActual ? 'Editar Cliente' : 'Registrar Cliente';
-      this.cliente = this.clienteActual ? Object.assign({}, this.clienteActual) : {
+    abrirModalCrear() {
+      this.clienteActual = null;
+      this.cliente = {
         nombre_completo: '',
-        cedula: '',
         nro_documento: '',
         ruc: '',
         direccion: '',
@@ -217,56 +286,75 @@ export default {
         nombre_fantasia: '',
         condiciones_pago: 'Contado'
       };
-      const modalInstance = new Modal(document.getElementById('clienteModal'));
+      const modalInstance = new Modal(document.getElementById('crearClienteModal'));
       modalInstance.show();
+    },
+    abrirModalEditar(cliente) {
+      this.clienteActual = cliente;
+      this.cliente = { ...cliente };
+      const modalInstance = new Modal(document.getElementById('editarClienteModal'));
+      modalInstance.show();
+    },
+    cerrarModal(modalId) {
+      const modalInstance = Modal.getInstance(document.getElementById(modalId));
+      if (modalInstance) {
+        modalInstance.hide();
+      }
+      // Reset cliente data
+      this.cliente = {
+        nombre_completo: '',
+        nro_documento: '',
+        ruc: '',
+        direccion: '',
+        telefono: '',
+        email: '',
+        nombre_fantasia: '',
+        condiciones_pago: 'Contado'
+      };
+      this.clienteActual = null;
     },
     cambiarPagina(page) {
       this.paginaActual = page;
     },
     editarCliente(cliente) {
-      this.clienteActual = cliente; // Almacena la referencia del cliente actual
-      this.cliente = { ...cliente }; // Crea una copia para edición sin afectar el original
-      this.modalTitle = 'Editar Cliente';
-      this.abrirModal();
-    },
-    cerrarModal() {
-      const modalInstance = Modal.getInstance(document.getElementById('clienteModal'));
-      if (modalInstance) {
-        modalInstance.hide();
-      }
-      this.cliente = {
-        nombre_completo: '',
-        cedula: '',
-        nro_documento: '',
-        ruc: '',
-        direccion: '',
-        telefono: '',
-        email: '',
-        nombre_fantasia: '',
-        condiciones_pago: 'Contado'
-      };
-      this.clienteActual = null; // Reiniciar clienteActual al cerrar
-    },
-    setFiltro(tipo) {
-      this.filtroTipo = tipo;
+      // Instead of editing directly, open the edit modal
+      this.abrirModalEditar(cliente);
     },
     async guardarCliente() {
       try {
-        if (this.clienteActual && this.clienteActual.id) {
-          // Actualizar cliente existente
-          Object.assign(this.clienteActual, this.cliente);
-          await apiService.put(`${process.env.VUE_APP_API_BASE_URL}/api/clients`, this.clienteActual);
-          console.log('Cliente actualizado:', this.clienteActual);
-        } else {
-          // Crear un nuevo cliente
-          console.log('Cliente a registrar:', this.cliente);
-          const response = await apiService.post(`${process.env.VUE_APP_API_BASE_URL}/api/clients`, this.cliente);
-          this.clientes.push(response.data);
-        }
+        // Crear un nuevo cliente
+        const response = await apiService.post(`${process.env.VUE_APP_API_BASE_URL}/api/clients`, this.cliente);
+        this.clientes.push(response.data);
         this.cargarClientes();
-        this.cerrarModal();
+        this.cerrarModal('crearClienteModal');
       } catch (error) {
         console.error('Error al guardar el cliente:', error);
+      }
+    },
+    async editarClienteSubmit() {
+      try {
+        // Crear un nuevo objeto solo con los campos necesarios
+        const clienteActualizado = {
+          nombre_completo: this.cliente.nombre_completo,
+          nro_documento: this.cliente.nro_documento,
+          ruc: this.cliente.ruc,
+          direccion: this.cliente.direccion,
+          telefono: this.cliente.telefono,
+          email: this.cliente.email,
+          nombre_fantasia: this.cliente.nombre_fantasia,
+          condiciones_pago: this.cliente.condiciones_pago
+        };
+        
+        console.log('Payload a enviar:', clienteActualizado);
+        
+        // Se usa el endpoint con el valor de cliente_id
+        await apiService.put(`${process.env.VUE_APP_API_BASE_URL}/api/clients/${this.clienteActual.cliente_id}`, clienteActualizado);
+        
+        console.log('Cliente actualizado correctamente');
+        await this.cargarClientes();
+        this.cerrarModal('editarClienteModal');
+      } catch (error) {
+        console.error('Error al actualizar el cliente:', error);
       }
     },
     async eliminarCliente(clienteId) {
@@ -281,6 +369,11 @@ export default {
         this.cargarClientes();
       }
     },
+    setFiltro(tipo) {
+      this.filtroTipo = tipo;
+      this.paginaActual = 1; // Reset a la primera página cuando se cambia el filtro
+    },
+    
     aplicarFiltros() {
       // Método para aplicar los filtros en el input y botones
     },
