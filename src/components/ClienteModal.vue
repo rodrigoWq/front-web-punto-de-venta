@@ -48,8 +48,8 @@
                   <div class="col-md-6 mb-3">
                     <label for="condicionesPago" class="form-label">Condiciones de Pago</label>
                     <select v-model="cliente.condiciones_pago" id="condicionesPago" class="form-select" required>
-                      <option value="Contado">Contado</option>
-                      <option value="Crédito">Crédito</option>
+                      <option value="CONTADO">Contado</option>
+                      <option value="CREDITO">Crédito</option>
                     </select>
                   </div>
                 </div>

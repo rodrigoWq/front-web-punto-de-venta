@@ -12,8 +12,8 @@
       <!-- Barra de Filtros -->
       <AppFilter v-model="searchInput" placeholder="Buscar por nombre..." customClasses="mt-4 mb-4">
         <AppButton variant="outline-secondary" customClass="me-2" :class="{ active: filtroTipo === 'all' }" @click="setFiltro('all')">Todos los Tipos</AppButton>
-        <AppButton variant="outline-secondary" customClass="me-2" :class="{ active: filtroTipo === 'Contado' }" @click="setFiltro('Contado')">Contado</AppButton>
-        <AppButton variant="outline-secondary" customClass="me-2" :class="{ active: filtroTipo === 'Crédito' }" @click="setFiltro('Crédito')">Crédito</AppButton>
+        <AppButton variant="outline-secondary" customClass="me-2" :class="{ active: filtroTipo === 'CONTADO' }" @click="setFiltro('CONTADO')">Contado</AppButton>
+        <AppButton variant="outline-secondary" customClass="me-2" :class="{ active: filtroTipo === 'CREDITO' }" @click="setFiltro('CREDITO')">Crédito</AppButton>
       </AppFilter>
 
   
@@ -87,8 +87,8 @@
                     <div class="col-md-6">
                       <label for="condicionesPago" class="form-label">Condiciones de Pago</label>
                       <select id="condicionesPago" v-model="cliente.condiciones_pago" class="form-select">
-                        <option value="Contado">Contado</option>
-                        <option value="Crédito">Crédito</option>
+                        <option value="CONTADO">Contado</option>
+                        <option value="CREDITO">Crédito</option>
                       </select>
                     </div>
                   </div>
@@ -156,8 +156,8 @@
                     <div class="col-md-6">
                       <label for="condicionesPagoEditar" class="form-label">Condiciones de Pago</label>
                       <select id="condicionesPagoEditar" v-model="cliente.condiciones_pago" class="form-select">
-                        <option value="Contado">Contado</option>
-                        <option value="Crédito">Crédito</option>
+                        <option value="CONTADO">Contado</option>
+                        <option value="CREDITO">Crédito</option>
                       </select>
                     </div>
                   </div>

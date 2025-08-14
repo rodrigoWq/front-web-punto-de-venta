@@ -35,8 +35,8 @@
               <div class="col-md-6">
                   <label for="condicion_venta" class="form-label">Condición de Venta</label>
                   <select v-model="factura.condicionVenta" class="form-control" :readonly="readOnly">
-                      <option value="contado">Contado</option>
-                      <option value="credito">Crédito</option>
+                      <option value="CONTADO">Contado</option>
+                      <option value="CREDITO">Crédito</option>
                   </select>
               </div>
           </div>
@@ -442,7 +442,7 @@ export default {
               timbrado: this.factura.timbrado.toString(),
               fecha_emision: this.factura.fechaEmision ? new Date(this.factura.fechaEmision).toISOString() : null,
               tipo_moneda: this.factura.tipo_moneda || 'USD',
-              credito_contado: this.factura.condicionVenta === 'contado' ? 'Contado' : 'Crédito',
+              credito_contado: this.factura.condicionVenta === 'contado' ? 'CONTADO' : 'CREDITO',
               tipo_documento: 'RUC',
               nro_documento: this.selectedProviderInput,
               nombre_razon_social: this.factura.razonSocial,
