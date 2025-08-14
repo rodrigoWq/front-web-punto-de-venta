@@ -95,6 +95,7 @@
           if (response.data) {
             alert("Cliente guardado correctamente.");
             this.$emit("close");
+            this.$emit("verificarRUC");
           } else {
             alert("Error al guardar el cliente.");
           }

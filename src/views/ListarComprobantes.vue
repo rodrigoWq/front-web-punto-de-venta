@@ -69,8 +69,7 @@ export default {
       comprobantes: [],
       searchInput: '',
       paginaActual: 1,
-      itemsPorPagina: 5,
-      totalPaginas: 1
+      itemsPorPagina: 5
     };
   },
   computed: {
@@ -80,46 +79,35 @@ export default {
         const ruc = (comprobante.nro_documento || '').toLowerCase();
         return numero.includes(this.searchInput.toLowerCase()) || ruc.includes(this.searchInput.toLowerCase());
       });
-      
     },
     comprobantesFiltradosPaginados() {
       const start = (this.paginaActual - 1) * this.itemsPorPagina;
       const end = start + this.itemsPorPagina;
       return this.comprobantesFiltrados.slice(start, end);
+    },
+    totalPaginas() {
+      return Math.ceil(this.comprobantesFiltrados.length / this.itemsPorPagina);
     }
   },
   methods: {
-    async cargarComprobantes(page = 1) {
+    async cargarComprobantes() {
       try {
-        const response = await ApiServices.get(`${process.env.VUE_APP_API_BASE_URL}/api/purchases/invoices`, {
-          params: { page }
-        });
-        
-        // Extraemos las facturas y asignamos el tipo
+        const response = await ApiServices.get(`${process.env.VUE_APP_API_BASE_URL}/api/purchases/invoices`);
         const facturas = response.data.data || [];
         facturas.forEach(factura => {
           factura.tipo = 'factura';
         });
         this.comprobantes = facturas;
-        
-        // Extraemos la metadata de paginación
-        const pagination = response.data.pagination || {};
-        this.totalItems = pagination.total || 0;
-        this.paginaActual = pagination.page || 1;
-        this.itemsPorPagina = 5;
-        this.totalPaginas = pagination.totalPages || 1;
       } catch (error) {
         console.error('Error al cargar facturas:', error);
       }
     },
-
-
     setFiltroTipo(tipo) {
       this.filtroTipo = tipo;
       this.paginaActual = 1;
     },
     cambiarPagina(page) {
-      this.cargarComprobantes(page);
+      this.paginaActual = page;
     },
     formatearMonto(monto) {
       if (monto === undefined || monto === null) return "0,00";
@@ -141,7 +129,7 @@ export default {
         );
         comprobante.estado = 'anulado';
         alert('Comprobante anulado correctamente.');
-        await this.cargarComprobantes(this.paginaActual);
+        await this.cargarComprobantes();
       } catch (error) {
         console.error('Error al anular comprobante:', error);
         alert('No se pudo anular el comprobante. Por favor, intente de nuevo.');

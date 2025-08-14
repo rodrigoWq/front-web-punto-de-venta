@@ -132,7 +132,8 @@ export default {
       if (this.isEditMode) {
         const url = `${process.env.VUE_APP_API_BASE_URL}/api/providers/${this.id}`;
         apiService.put(url, this.providerData)
-          .then(() => {
+          .then((response) => {
+            this.$emit('provider-registered', response.data);
             this.$emit('update:showModal', false);
           })
           .catch(error => {

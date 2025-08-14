@@ -80,7 +80,7 @@
       </button>
     </div>
 
-    <ModalCliente v-if="showClienteModal" @close="showClienteModal = false" />
+  <ModalCliente v-if="showClienteModal" @close="showClienteModal = false" @verificarRUC="verificarRUC" />
 
 
 
