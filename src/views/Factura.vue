@@ -187,15 +187,17 @@ import apiService from '@/services/apiService.js';
 import ProviderSelect from '@/components/ProviderSelect.vue';
 import RegistrarProveedorModal    from '@/components/RegistrarProveedorModal.vue'
 import RegisterProductModal from '@/components/RegistrarProductoModal.vue';
+import AppNavbar from '@/components/AppNavbar.vue';
 
 export default {
   name: 'FacturaView',
   components: {
-    AppTable,
-    SimpleRegisterModal,
-    ProviderSelect,
-    RegistrarProveedorModal,
-    RegisterProductModal
+  AppNavbar,
+  AppTable,
+  SimpleRegisterModal,
+  ProviderSelect,
+  RegistrarProveedorModal,
+  RegisterProductModal
   },
   props: {
     datosParaFactura: {

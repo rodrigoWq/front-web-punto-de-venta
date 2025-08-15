@@ -114,6 +114,7 @@
   
 <script>
 
+import AppNavbar from '@/components/AppNavbar.vue';
 import AppTable from '@/components/AppTable.vue';
 import apiService from '@/services/apiService.js';
 import SimpleRegisterModal from '@/components/SimpleRegisterModal.vue';
@@ -124,6 +125,7 @@ import RegisterProductModal from '@/components/RegistrarProductoModal.vue';
 export default {
   name: 'NotaDeRemision',
   components: {
+  AppNavbar,
     AppTable,
     SimpleRegisterModal,
     ProviderSelect,
