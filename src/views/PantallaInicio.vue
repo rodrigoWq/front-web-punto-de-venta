@@ -163,6 +163,20 @@ export default {
         const response = await apiService.get(url);
         const product = response.data;
         if (product) {
+          // Si el producto no tiene precio de venta actual o es 0, ofrecemos redirigir al usuario
+          const precioActual = Number(product.precio_venta_actual ?? 0);
+          if (!precioActual || precioActual <= 0) {
+            const msg = `El producto "${product.nombre}" no tiene un precio de venta asignado.\n\n¿Deseas ir a la pantalla de Gestión de Precios para asignarlo ahora?`;
+            const irGestionPrecios = window.confirm(msg);
+            if (irGestionPrecios) {
+              // Navegar a la vista de gestión de precios (ruta definida en router)
+              // Usamos el nombre de ruta 'ProductosPrecio' definido en router/index.js
+              this.$router.push({ name: 'ProductosPrecio' });
+            }
+            // No permitimos agregar el producto si no tiene precio
+            return;
+          }
+
           // Mapeamos solo los campos que usaremos en el front
           const productoNuevo = {
             codigo: product.producto_id,
@@ -170,8 +184,8 @@ export default {
             cantidad: this.productQuantity,
             // Como el backend envía 'unidad_medida_nombre', lo usamos para mostrar la unidad
             unidad_medida: product.unidad_medida_nombre,
-            // Si el precio no viene en la respuesta, se asigna 0 (o el valor que se considere adecuado)
-            precio: product.precio_venta_actual || 0
+            // Precio seguro (ya validado arriba)
+            precio: precioActual
           };
           this.productos.push(productoNuevo);
         } else {
