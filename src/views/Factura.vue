@@ -47,7 +47,7 @@
         <div class="row g-3 mb-3">
         <div class="col-md-2">
           <label class="form-label">Código</label>
-          <input type="text" v-model="productoData.codigo_producto" class="form-control" placeholder="Código" @blur="autocompletarProducto" @keydown.enter.prevent :readonly="readOnly"/>
+          <input type="text" v-model="productoData.codigo_producto" class="form-control" placeholder="Código" @blur="autocompletarProducto" @keydown.enter.prevent="autocompletarProducto" :readonly="readOnly"/>
         </div>
         <div class="col-md-3">
           <label class="form-label">Descripción</label>
