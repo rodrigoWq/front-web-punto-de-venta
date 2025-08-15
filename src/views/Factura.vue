@@ -1,4 +1,5 @@
 <template>
+  <AppNavbar />
   <div class="container mt-5">
       <h1 class="text-center">Formulario de Carga de Factura</h1>
       <form @submit.prevent="guardarFactura">
@@ -469,16 +470,16 @@ export default {
           alert('Factura guardada correctamente');
 
 
-          // Si la factura se generó desde una nota de remisión, eliminar la nota
-          if (this.fromDeliveryNote && this.fromDeliveryNoteID) {
-            await apiService.delete(`${process.env.VUE_APP_API_BASE_URL}/api/purchases/delivery-notes/${this.fromDeliveryNoteID}`);
-            console.log("Nota de remisión eliminada exitosamente.");
-          }
+          // Si la factura se generó desde una nota de remisión, actualizar su estado
+          //if (this.fromDeliveryNote && this.fromDeliveryNoteID) {
+            //await apiService.patch(`${process.env.VUE_APP_API_BASE_URL}/api/purchases/delivery-notes/${this.fromDeliveryNoteID}`, { estado: 'Facturado' });
+            //console.log("El estado de la nota de remisión se ha actualizado a 'Facturado'.");
+          //}
 
 
 
           this.factura = new Factura(); // Reiniciar la factura después de guardarla
-          this.$router.back();
+          this.$router.push({ name: 'ListarComprobantes' });
         } catch (error) {
           console.error('Error al guardar la factura:', error);
         }

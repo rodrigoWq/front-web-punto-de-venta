@@ -39,9 +39,10 @@
             <button class="btn btn-danger btn-sm me-1" :disabled="comprobante.estado === 'anulado'" @click="anularComprobante(comprobante)">
               Anular
             </button>
-            <!-- Se muestra el botón solo si la nota no tiene factura -->
+            <!-- Se muestra el botón solo si la nota no está facturada o anulada -->
             <button 
               class="btn btn-info btn-sm" 
+              :disabled="comprobante.estado === 'Facturado' || comprobante.estado === 'anulado'"
               @click="generarFacturaDesdeNotaRemision(comprobante)">
               Generar Factura
             </button>

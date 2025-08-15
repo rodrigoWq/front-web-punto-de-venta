@@ -1,4 +1,5 @@
 <template>
+  <AppNavbar />
   <div class="container mt-5">
     <h1 class="text-center">Nota de Remisión</h1>
     <form @submit.prevent="guardarNotaRemision">
@@ -45,11 +46,11 @@
         </div>
         <div class="col-md-2">
           <label class="form-label">Unidad de Medida</label>
-          <input type="text" v-model="productoData.unidad_medida" class="form-control" placeholder="Unidad de medida" :readonly="readOnly">
+          <input type="text" v-model="productoData.unidad_medida" class="form-control" placeholder="Unidad de medida" readonly>
         </div>
         <div class="col-md-4">
           <label class="form-label">Descripción</label>
-          <input type="text" v-model="productoData.descripcion" class="form-control" placeholder="Descripción de la mercadería" :readonly="readOnly">
+          <input type="text" v-model="productoData.descripcion" class="form-control" placeholder="Descripción de la mercadería" readonly>
         </div>
         <div class="col-md-2">
           <label class="form-label">Fecha de Vencimiento</label>
