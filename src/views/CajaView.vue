@@ -112,7 +112,7 @@
     <div v-if="cajaAbierta" class="mb-4">
       <div class="d-flex justify-content-between align-items-center mb-2">
         <h5 class="fw-bold mb-0">Movimientos Recientes</h5>
-        <router-link class="btn btn-dark" :to="{ name: 'InvMovimientos' }">Ver Todos</router-link>
+        <router-link class="btn btn-dark" :to="{ name: 'MovimientosCaja' }">Ver Todos</router-link>
       </div>
       <div v-for="mov in movimientosRecientes" :key="mov.id" class="recent-mov-card mb-2 p-3 d-flex align-items-center justify-content-between rounded border">
         <div class="d-flex align-items-center">

@@ -18,6 +18,7 @@ import CerrarCajaView from '@/views/CerrarCajaView.vue'
 import CobroFacturaVentaView from '@/views/CobroFacturaVentaView.vue';
 import IngresoVariosView from '@/views/IngresoVariosView.vue';
 import EgresoVariosView from '@/views/EgresoVariosView.vue';
+import MovimientosCajaView from '@/views/MovimientosCajaView.vue';
 import CobroClienteCredito from '@/views/CobroClienteCredito.vue';
 import PagoFactura from '@/views/PagoFactura.vue';
 import InventoryLayout from '@/views/InventoryLayout.vue';
@@ -153,6 +154,11 @@ const routes = [
     path: '/caja',
     name: 'Caja', 
     component: CajaView
+  },
+  {
+    path: '/movimientos-caja',
+    name: 'MovimientosCaja',
+    component: MovimientosCajaView
   },
   {
     path: '/cerrar-caja',
