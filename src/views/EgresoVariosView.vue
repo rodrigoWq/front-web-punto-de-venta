@@ -90,6 +90,7 @@ import { reactive, ref } from 'vue'
 import AppNavbar from '@/components/AppNavbar.vue'
 import AppHeader from '@/components/AppHeader.vue'
 import PaymentForms from '@/components/PaymentForms.vue'
+import apiService from '@/services/apiService.js'
 
 const categories = [
   'Gastos Operativos',
@@ -109,16 +110,35 @@ const form = reactive({
 const payments = ref([])
 
 function submitEgreso() {
+  // Construir payload compatible con /api/cashbox/register-vario-expense
   const payload = {
-    egreso: {
-      ...form,
-      amount: -Math.abs(form.amount) // si tu API espera monto negativo
-    },
-    pagos: payments.value
+    concepto: form.category || 'Otros Egresos',
+    detalle: form.description || form.reference || '',
+    pagos: (payments.value || []).map(p => ({
+      metodo_pago: (p.type || p.metodo || '').toString().toUpperCase(),
+      monto: Number(p.amount || 0),
+      referencia_externa: p.reference ?? null
+    }))
   }
 
-  console.log('Enviar egreso al backend:', payload)
-  // Aquí harías:
-  // await api.post('/egresos-varios', payload)
+  console.log('Payload registro egreso varios:', payload)
+
+  ;(async () => {
+    try {
+      const res = await apiService.post('/api/cashbox/register-vario-expense', payload)
+      console.log('Respuesta register-vario-expense:', res.data)
+      alert('Egreso registrado correctamente')
+      // limpiar formulario y pagos
+      form.category = ''
+      form.amount = 0
+      form.beneficiary = ''
+      form.reference = ''
+      form.description = ''
+      payments.value = []
+    } catch (err) {
+      console.error('Error registrando egreso varios:', err)
+      alert('Error al registrar el egreso. Revisa la consola para más detalles.')
+    }
+  })()
 }
 </script>
