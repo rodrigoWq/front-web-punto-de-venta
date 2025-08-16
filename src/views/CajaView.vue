@@ -108,7 +108,33 @@
         </div>
       </div>
     </div>
-    <!-- Modal de Apertura de Caja -->
+    <!-- Movimientos Recientes -->
+    <div v-if="cajaAbierta" class="mb-4">
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <h5 class="fw-bold mb-0">Movimientos Recientes</h5>
+        <router-link class="btn btn-dark" :to="{ name: 'InvMovimientos' }">Ver Todos</router-link>
+      </div>
+      <div v-for="mov in movimientosRecientes" :key="mov.id" class="recent-mov-card mb-2 p-3 d-flex align-items-center justify-content-between rounded border">
+        <div class="d-flex align-items-center">
+            <span v-if="isPositive(mov)" class="me-2 text-success fs-4"><i class="bi bi-graph-up"></i></span>
+            <span v-else class="me-2 text-danger fs-4"><i class="bi bi-graph-down"></i></span>
+          <div>
+              <span class="fw-bold" :class="isPositive(mov) ? 'text-success' : 'text-danger'">
+                {{ movLabel(mov) }}
+                <span v-if="mov.comprobante">#{{ mov.comprobante }}</span>
+              </span>
+            <span v-if="mov.comprobante" class="badge bg-light text-dark ms-2">Recibo: {{ mov.comprobante }}</span>
+            <div class="text-muted small">{{ mov.descripcion }}</div>
+          </div>
+        </div>
+        <div class="text-end">
+          <div :class="isPositive(mov) ? 'text-success fw-bold' : 'text-danger fw-bold'">
+            {{ isPositive(mov) ? '+' : '-' }}Gs. {{ formateaNumero(mov.monto) }}
+          </div>
+          <div class="text-muted small">{{ formatFechaHora(mov.fecha) }}</div>
+        </div>
+      </div>
+    </div>
     <div class="modal fade"
         :class="{ show: modalOpen }"
         :style="{ display: modalOpen ? 'block' : 'none' }"
@@ -178,6 +204,24 @@ import apiService from '@/services/apiService'
 import { onMounted, computed } from 'vue'
 import { useCashboxStore } from '@/stores/cashbox'
 
+// Movimientos recientes
+const movimientosRecientes = ref([])
+
+async function fetchMovimientosRecientes() {
+  try {
+    const res = await apiService.get('/api/cashbox/user-operations?page=1&limit=5')
+    if (res.data && res.data.success && Array.isArray(res.data.data)) {
+      movimientosRecientes.value = res.data.data.map(mov => ({
+        ...mov,
+        monto: Number(mov.monto),
+        fecha: mov.fecha
+      }))
+    }
+  } catch (err) {
+    console.error('Error al obtener movimientos recientes:', err)
+  }
+}
+
 
 
 
@@ -194,6 +238,7 @@ const cajaData    = computed(() => ({
 }))
 onMounted(() => {
   cashboxStore.fetchCurrentOpen()
+  fetchMovimientosRecientes()
 })
 
 const modalOpen   = ref(false)
@@ -264,8 +309,40 @@ function formateaNumero (n) {
   return Number(n).toLocaleString('es-PY', { minimumFractionDigits: 0 })
 }
 
+function formatFechaHora(val) {
+  if (!val) return ''
+  const d = new Date(val)
+  return d.toLocaleString('es-PY')
+}
+
+// helpers for movement display
+function isPositive(mov) {
+  // COBRO and INGRESO_VARIO are considered positive (green)
+  return mov.tipo_movimiento === 'COBRO' || mov.tipo_movimiento === 'INGRESO_VARIO'
+}
+
+function movLabel(mov) {
+  if (mov.tipo_movimiento === 'COBRO') return mov.tipo_operacion === 'VENTA' ? 'Cobro Factura' : 'Cobro'
+  if (mov.tipo_movimiento === 'INGRESO_VARIO') return 'Ingreso Varios'
+  if (mov.tipo_movimiento === 'PAGO') return 'Pago a proveedor'
+  if (mov.tipo_movimiento === 'EGRESO_VARIO') return 'Egreso Varios'
+  return mov.tipo_movimiento
+}
+
 
 </script>
+
+<style scoped>
+.recent-mov-card {
+  background: #fff;
+  border: 1px solid #e5e5e5;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+  transition: box-shadow 0.2s;
+}
+.recent-mov-card:hover {
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+</style>
 
 <style scoped>
 #caja-view .card {
