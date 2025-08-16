@@ -76,10 +76,84 @@
         </div>
 
         <div class="list-group-item d-flex justify-content-between fw-bold">
-        <div>TOTAL CONTADO</div>
-        <div>{{ formatCurrency(totalContado) }}</div>
+          <div>TOTAL CONTADO (Efectivo)</div>
+          <div>{{ formatCurrency(totalContadoEfectivo) }}</div>
         </div>
     </div>
+    </div>
+
+    <!-- Pagos no en efectivo: sección separada y entradas apiladas verticalmente -->
+    <div class="card p-3 mb-4">
+      <h5><i class="bi bi-credit-card me-2"></i>Pagos no en efectivo</h5>
+      <p class="text-muted">Registre montos recibidos por transferencias, tarjetas o cheques</p>
+
+      <div class="list-group mt-3">
+        <!-- Transferencias -->
+        <div class="list-group-item d-flex align-items-center">
+          <div class="flex-shrink-0" style="width: 450px">
+            <div class="fw-bold">Transferencias</div>
+          </div>
+          <div class="flex-shrink-0 mx-5 ps-4">
+            <input
+              type="number"
+              class="form-control"
+              v-model.number="closeForm.montoTransferencia"
+              min="0"
+              placeholder="0"
+              style="width: 180px;"
+            />
+          </div>
+          <div class="flex-grow-1 text-end">
+            <div class="fw-bold">{{ formatCurrency(closeForm.montoTransferencia || 0) }}</div>
+          </div>
+        </div>
+        
+        <!-- Tarjetas -->
+        <div class="list-group-item d-flex align-items-center">
+          <div class="flex-shrink-0" style="width: 450px">
+            <div class="fw-bold">Tarjetas (POS)</div>
+          </div>
+          <div class="flex-shrink-0 mx-5 ps-4">
+            <input
+              type="number"
+              class="form-control"
+              v-model.number="closeForm.montoPos"
+              min="0"
+              placeholder="0"
+              style="width: 180px;"
+            />
+          </div>
+          <div class="flex-grow-1 text-end">
+            <div class="fw-bold">{{ formatCurrency(closeForm.montoPos || 0) }}</div>
+          </div>
+        </div>
+        
+        <!-- Cheques -->
+        <div class="list-group-item d-flex align-items-center">
+          <div class="flex-shrink-0" style="width: 450px">
+            <div class="fw-bold">Cheques</div>
+          </div>
+          <div class="flex-shrink-0 mx-5 ps-4">
+            <input
+              type="number"
+              class="form-control"
+              v-model.number="closeForm.montoCheque"
+              min="0"
+              placeholder="0"
+              style="width: 180px;"
+            />
+          </div>
+          <div class="flex-grow-1 text-end">
+            <div class="fw-bold">{{ formatCurrency(closeForm.montoCheque || 0) }}</div>
+          </div>
+        </div>
+        
+        <!-- Total no efectivo -->
+        <div class="list-group-item d-flex justify-content-between fw-bold">
+          <div>TOTAL NO EFECTIVO</div>
+          <div>{{ formatCurrency(totalNoEfectivo) }}</div>
+        </div>
+      </div>
     </div>
 
     <!-- Comparación de Saldos -->
@@ -254,10 +328,21 @@ denominaciones.forEach(den => {
   })
 })
 
-// Cálculo del total contado
-const totalContado = computed(() =>
+// Totales separados: efectivo y no efectivo
+const totalContadoEfectivo = computed(() =>
   denominaciones.reduce((sum, den) => sum + den.subtotal, 0)
 )
+
+const totalNoEfectivo = computed(() => {
+  return (
+    Number(closeForm.montoTransferencia || 0) +
+    Number(closeForm.montoPos || 0) +
+    Number(closeForm.montoCheque || 0)
+  )
+})
+
+// Total combinado
+const totalContado = computed(() => totalContadoEfectivo.value + totalNoEfectivo.value)
 
 // Formateo de moneda
 function formatCurrency(value) {
@@ -298,4 +383,6 @@ const expected = computed(() => resumen.initial + resumen.ingresos - resumen.egr
 .mb-4 {
   margin-bottom: 1.5rem;
 }
+
+
 </style>
