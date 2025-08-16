@@ -279,7 +279,7 @@ export default {
             unidad_medida: detalle.unidad_medida,
             codigo_producto: detalle.codigo_producto,
             codigo_barras: detalle.codigo_barras,
-            descripcion: detalle.descripcion,
+            descripcion: detalle.nombre_producto,
             iva: detalle.iva,
             fechaVencimiento: detalle.fecha_vencimiento
           }));
