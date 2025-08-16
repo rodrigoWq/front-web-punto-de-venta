@@ -245,7 +245,7 @@ export default {
         const response = await apiService.get(url);
         const producto = response.data;
         if (producto) {
-          this.productoData.descripcion = producto.descripcion;
+          this.productoData.descripcion = producto.nombre;
           this.productoData.precio_unitario_neto = producto.valorUnitario || 0;
           this.productoData.tipo_iva_id = producto.tipo_iva;
           this.productoData.producto_id = producto.producto_id || null; 

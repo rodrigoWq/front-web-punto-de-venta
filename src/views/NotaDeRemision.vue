@@ -187,7 +187,7 @@ export default {
         const response = await apiService.get(url);
         const producto = response.data;
         if (producto) {
-          this.productoData.descripcion = producto.descripcion;
+          this.productoData.descripcion = producto.nombre;
           this.productoData.unidad_medida = producto.unidad_medida_nombre;
           this.productoData.fechaVencimiento = producto.fecha_vencimiento;
           this.productoData.id = producto.producto_id || null; 
