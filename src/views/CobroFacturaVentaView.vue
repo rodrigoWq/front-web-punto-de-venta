@@ -116,24 +116,16 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed } from 'vue'
+import { ref, reactive, computed, onMounted } from 'vue'
 import AppNavbar from '@/components/AppNavbar.vue'
 import AppHeader from '@/components/AppHeader.vue'
 import PaymentForms from '@/components/PaymentForms.vue'
+import apiService from '@/services/apiService.js'
 
 
-// Facturas dummy
+// Search term and invoices (populated from backend)
 const searchTerm = ref('')
-const invoices = reactive([
-  { id: 1, number: '001-001-0000123', client: 'Juan Pérez', date: '9/1/2024', total: 150000, status: 'Pendiente' },
-  { id: 2, number: '001-001-0000124', client: 'María González', date: '11/1/2024', total: 100000, status: 'Parcial' },
-  { id: 3, number: '001-001-0000125', client: 'Carlos López', date: '14/1/2024', total: 300000, status: 'Pendiente' },
-  { id: 4, number: '001-001-0000126', client: 'Ana Torres', date: '16/1/2024', total: 200000, status: 'Pendiente' },
-  { id: 5, number: '001-001-0000127', client: 'Luis Fernández', date: '18/1/2024', total: 250000, status: 'Pendiente' },
-  { id: 6, number: '001-001-0000128', client: 'Sofía Martínez', date: '20/1/2024', total: 180000, status: 'Pendiente' },
-  { id: 7, number: '001-001-0000129', client: 'Pedro Ramírez', date: '22/1/2024', total: 220000, status: 'Pendiente' },
-  { id: 8, number: '001-001-0000130', client: 'Lucía Díaz', date: '24/1/2024', total: 170000, status: 'Pendiente' }
-])
+const invoices = reactive([])
 const selectedInvoices = reactive([])
 
 //  ➕ Esto indica si ya hay al menos 1 factura seleccionada
@@ -145,8 +137,8 @@ const payments = ref([])
 // Filtrado de facturas
 const filteredInvoices = computed(() =>
   invoices.filter(inv => {
-    const term = searchTerm.value.toLowerCase()
-    return inv.number.includes(term) || inv.client.toLowerCase().includes(term)
+    const term = (searchTerm.value || '').toLowerCase()
+    return (inv.number || '').toLowerCase().includes(term) || (inv.client || '').toLowerCase().includes(term)
   })
 )
 
@@ -179,9 +171,79 @@ const canAddPayment = computed(() =>
 )
 
 function submitCobro() {
-  // TODO: llamar a tu API con los datos de selectedInvoices y payments
-  console.log('Registrar cobro:', selectedInvoices, payments)
+  if (selectedInvoices.length === 0) {
+    alert('Selecciona una factura para cobrar.');
+    return;
+  }
+
+  // Para esta pantalla siempre es CONTADO
+  const formaOperacion = 'CONTADO'
+
+  // Usamos la primera factura seleccionada (UI restringe a 1)
+  const movimientoId = selectedInvoices[0].id
+
+  // Mapear pagos desde el componente PaymentForms a la forma requerida por la API
+  const pagos = (payments.value || []).map(p => {
+    // soportar varias formas de nombrar campos según el componente
+    const metodo = (p.metodo_pago || p.metodo || p.type || p.name || '').toString().toUpperCase()
+    const monto = Number(p.monto ?? p.amount ?? p.value ?? 0)
+    const referencia = p.referencia_externa ?? p.referencia ?? p.reference ?? p.ref ?? null
+    return {
+      metodo_pago: metodo,
+      monto: monto,
+      referencia_externa: referencia === undefined ? null : referencia
+    }
+  })
+
+  const payload = {
+    movimiento_id: movimientoId,
+    forma_operacion: formaOperacion,
+    pagos: pagos
+  }
+
+  // Loguear payload antes de enviar (como pidió)
+  console.log('Payload -> /api/cashbox/collect-sale', payload)
+
+  // Enviar al backend
+  apiService.post('/api/cashbox/collect-sale', payload)
+    .then(resp => {
+      console.log('Respuesta collect-sale:', resp && resp.data)
+      alert('Cobro registrado correctamente.')
+      // limpiar estado: quitar factura seleccionada y pagos
+      selectedInvoices.splice(0, selectedInvoices.length)
+      payments.value = []
+    })
+    .catch(err => {
+      console.error('Error enviando collect-sale:', err)
+      alert('Error al registrar el cobro. Revisa la consola para más detalles.')
+    })
 }
+
+// Fetch pending collections from backend and populate invoices
+async function fetchPendingCollections() {
+  try {
+    const res = await apiService.get('/api/cashbox/pending-collections')
+    const payload = res.data
+    if (payload && payload.success && Array.isArray(payload.data)) {
+      const mapped = payload.data.map(item => ({
+        id: item.movimiento_id,
+        number: item.nro_comprobante_origen,
+        client: item.nombre_razon_social,
+        date: new Date(item.fecha_movimiento).toLocaleString(),
+        total: Number(item.monto_total)
+        // note: status removed because backend doesn't provide it
+      }))
+      // replace contents of reactive array
+      invoices.splice(0, invoices.length, ...mapped)
+    } else {
+      console.warn('Unexpected response from pending-collections', payload)
+    }
+  } catch (err) {
+    console.error('Error fetching pending collections:', err)
+  }
+}
+
+onMounted(() => { fetchPendingCollections() })
 
 // Formateo de moneda
 function formatCurrency(value) {

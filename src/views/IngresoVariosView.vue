@@ -79,6 +79,7 @@ import { reactive, ref } from 'vue'
 import AppNavbar from '@/components/AppNavbar.vue'
 import AppHeader from '@/components/AppHeader.vue'
 import PaymentForms from '@/components/PaymentForms.vue'
+import apiService from '@/services/apiService.js'
 
 //const router = useRouter()
 const categories = ['Ventas Varios', 'Donaciones', 'Devoluciones','Otros Ingresos']
@@ -94,9 +95,37 @@ const form = reactive({
 const payments = ref([])
 
 function submitIngreso() {
-  console.log('Enviar ingreso form:', form)
-  console.log('Pagos:', payments.value)
-  // Aquí la llamada APIconsole.log('Pagos:', payments.value)
-  //router.push({ name: 'Caja' })
+  // Construir payload para el backend
+  const payload = {
+    concepto: form.category || 'Otros Ingresos',
+    detalle: form.description || form.reference || '',
+    pagos: (payments.value || []).map(p => ({
+      metodo_pago: (p.type || p.metodo || '').toString().toUpperCase(),
+      monto: Number(p.amount || 0),
+      referencia_externa: p.reference ?? null
+    }))
+  }
+
+  console.log('Payload registro ingreso varios:', payload)
+
+  // Enviar al backend
+  ;(async () => {
+    try {
+      const res = await apiService.post('/api/cashbox/register-vario-income', payload)
+      console.log('Respuesta register-vario-income:', res.data)
+      alert('Ingreso registrado correctamente')
+      // limpiar formulario y pagos
+      form.category = ''
+      form.amount = 0
+      form.reference = ''
+      form.description = ''
+      payments.value = []
+      // opcional: navegar a caja
+      // router.push({ name: 'Caja' })
+    } catch (err) {
+      console.error('Error registrando ingreso varios:', err)
+      alert('Error al registrar el ingreso. Revisa la consola para más detalles.')
+    }
+  })()
 }
 </script>
