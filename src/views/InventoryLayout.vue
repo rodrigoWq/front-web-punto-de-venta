@@ -54,7 +54,9 @@
           { name: 'control',     label: 'Control',      to: { name: 'InvControl' },      icon: 'bi bi-clipboard-check' },
           { name: 'depositos',   label: 'Depósitos',    to: { name: 'InvDepositos' },    icon: 'bi bi-building' },
           { name: 'productos-precio', label: 'Precios', to: { name: 'ProductosPrecio' }, icon: 'bi bi-tag' },
-           { name: 'categorias',  label: 'Categorías',   to: { name: 'InvCategorias' },   icon: 'bi bi-box' },
+          { name: 'categorias',  label: 'Categorías',   to: { name: 'InvCategorias' },   icon: 'bi bi-box' },
+          { name: 'unidades',    label: 'Unidades de Medida', to: { name: 'InvUnidadesMedida' }, icon: 'bi bi-box' },
+          
         ]
       }
     }
