@@ -28,6 +28,7 @@ import MovimientosView from '@/views/Inventario/MovimientosView.vue';
 import LotesView from '@/views/Inventario/LotesView.vue';
 import ControlInventarioView from '@/views/Inventario/ControlInventarioView.vue';
 import DepositosView from '@/views/Inventario/DepositosView.vue';
+import CategoriaView from '@/views/Inventario/CategoriaView.vue';
 
 const routes = [
   {
@@ -55,7 +56,8 @@ const routes = [
       {path: 'lotes',        name: 'InvLotes',        component: LotesView },
       {path: 'control',      name: 'InvControl',      component: ControlInventarioView },
       {path: 'depositos',    name: 'InvDepositos',    component: DepositosView },
-      {path: 'productos-precio', name: 'ProductosPrecio', component: ProductosPrecioView }
+  {path: 'productos-precio', name: 'ProductosPrecio', component: ProductosPrecioView },
+  {path: 'categorias',   name: 'InvCategorias',   component: CategoriaView }
     ]
   },
   {

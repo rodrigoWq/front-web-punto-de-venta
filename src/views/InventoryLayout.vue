@@ -53,7 +53,8 @@
           { name: 'lotes',       label: 'Lotes',        to: { name: 'InvLotes' },        icon: 'bi bi-box2' },
           { name: 'control',     label: 'Control',      to: { name: 'InvControl' },      icon: 'bi bi-clipboard-check' },
           { name: 'depositos',   label: 'Depósitos',    to: { name: 'InvDepositos' },    icon: 'bi bi-building' },
-          { name: 'productos-precio', label: 'Precios', to: { name: 'ProductosPrecio' }, icon: 'bi bi-tag' }
+          { name: 'productos-precio', label: 'Precios', to: { name: 'ProductosPrecio' }, icon: 'bi bi-tag' },
+           { name: 'categorias',  label: 'Categorías',   to: { name: 'InvCategorias' },   icon: 'bi bi-box' },
         ]
       }
     }
@@ -79,7 +80,7 @@
 
 .header-compact h1 {
   margin: 0;
-  font-size: 5rem;    /* opcional */
+  font-size: 1.5rem;    /* tamaño más razonable en layout compacto */
   font-weight: 600;
 }
 
