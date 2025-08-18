@@ -78,13 +78,16 @@
           comprobantes: [],
           searchInput: '',
           paginaActual: 1,
-          itemsPorPagina: 10,
+          itemsPorPagina: 5,
           totalItems: 0,
           totalPaginas: 0
         };
       },
       computed: {
         comprobantesFiltrados() {
+          if (!this.searchInput) {
+            return this.comprobantes;
+          }
           return this.comprobantes.filter(comprobante => {
             const numero = (comprobante.nro_nota_remision || '').toLowerCase();
             const ruc = (comprobante.nro_documento || '').toLowerCase();
@@ -92,49 +95,37 @@
           });
         },
         comprobantesFiltradosPaginados() {
-          const start = (this.paginaActual - 1) * this.itemsPorPagina;
-          const end = start + this.itemsPorPagina;
-          return this.comprobantesFiltrados.slice(start, end);
+          // La paginación ahora es manejada por el backend, 
+          // así que simplemente devolvemos los comprobantes filtrados.
+          // El filtrado se aplica a la página actual de datos.
+          return this.comprobantesFiltrados;
         }
       },
       methods: {
         async cargarComprobantes(page = 1) {
           try {
-            const response = await ApiServices.get(
-              `${process.env.VUE_APP_API_BASE_URL}/api/purchases/delivery-notes`,
-              { params: { page } }
-            );
+            const url = `${process.env.VUE_APP_API_BASE_URL}/api/purchases/delivery-notes?page=${page}&limit=${this.itemsPorPagina}`;
+            const response = await ApiServices.get(url);
             
-            // Si la respuesta es un arreglo, úsalo directamente; de lo contrario, intenta extraer "data"
-            const notas = Array.isArray(response.data) 
-              ? response.data 
-              : response.data.data || [];
+            const notas = response.data.data || [];
             
-            // Asigna el tipo a cada nota
             notas.forEach(nota => {
               nota.tipo = 'nota_remision';
             });
             this.comprobantes = notas;
             
-            // Si la respuesta no trae metadata de paginación, la configuramos localmente
-            if (Array.isArray(response.data)) {
-              this.totalItems = notas.length;
-              this.paginaActual = 1;
-              this.itemsPorPagina = 10;
-              this.totalPaginas = Math.ceil(notas.length / this.itemsPorPagina);
-            } else {
-              const pagination = response.data.pagination || {};
-              this.totalItems = pagination.total || 0;
-              this.paginaActual = pagination.page || 1;
-              this.itemsPorPagina = pagination.limit || 10;
-              this.totalPaginas = pagination.totalPages || 1;
-            }
+            const pagination = response.data.pagination || {};
+            this.totalItems = pagination.total || 0;
+            this.paginaActual = pagination.page || 1;
+            this.itemsPorPagina = pagination.limit || 5;
+            this.totalPaginas = pagination.totalPages || 1;
+
           } catch (error) {
             console.error('Error al cargar notas de remisión:', error);
           }
         },
         cambiarPagina(page) {
-          this.paginaActual = page;
+          this.cargarComprobantes(page);
         },
         formatearMonto(monto) {
           if (monto === undefined || monto === null) return "0,00";
