@@ -438,11 +438,13 @@ export default {
       },
       async guardarFactura() {
         try {
+          const nroNotaRemision = (this.fromDeliveryNote && this.fromDeliveryNoteID) ? this.fromDeliveryNoteID : null;
           // Construir el cuerpo de la petición según el formato requerido
           const requestBody = {
             cabecera: {
               nro_comprobante: this.factura.nroFactura.toString(),
               timbrado: this.factura.timbrado.toString(),
+              nro_nota_remision: nroNotaRemision,
               fecha_emision: this.factura.fechaEmision ? new Date(this.factura.fechaEmision).toISOString() : null,
               tipo_moneda: this.factura.tipo_moneda || 'USD',
               credito_contado: this.factura.condicionVenta === 'contado' ? 'CONTADO' : 'CREDITO',
