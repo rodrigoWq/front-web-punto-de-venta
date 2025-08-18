@@ -42,7 +42,7 @@
             <!-- Se muestra el botón solo si la nota no está facturada o anulada -->
             <button 
               class="btn btn-info btn-sm" 
-              :disabled="comprobante.estado === 'Facturado' || comprobante.estado === 'anulado'"
+              :disabled="!comprobante.pendiente || comprobante.estado === 'anulado'"
               @click="generarFacturaDesdeNotaRemision(comprobante)">
               Generar Factura
             </button>
