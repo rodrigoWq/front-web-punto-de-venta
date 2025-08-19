@@ -188,6 +188,9 @@ export default {
             precio: precioActual
           };
           this.productos.push(productoNuevo);
+          // Reiniciar la cantidad a 1 después de agregar el producto
+          this.productQuantity = 1;
+          
         } else {
           alert("Producto no encontrado");
         }
@@ -203,19 +206,27 @@ export default {
           `${process.env.VUE_APP_API_BASE_URL}/api/clients/search/${this.rucCliente}`
         );
 
-        // 2) Armar la cabecera con lo que ya tenés en cliente + lo que pusiste en cabecera
+        // 2) Determinar tipo_documento y nro_documento según reglas
+        const tieneRuc = !!(cliente && cliente.ruc);
+        const tieneCi  = !!(cliente && cliente.ci);
+        const tipo_documento = tieneRuc ? 'RUC' : (tieneCi ? 'CI' : 'RUC');
+        const nro_documento  = tieneRuc
+          ? cliente.ruc
+          : (tieneCi ? cliente.ci : (cliente?.nro_documento || this.rucCliente));
+
+        // 3) Determinar credito_contado desde condiciones_pago
+        const condiciones = (cliente?.condiciones_pago || 'Contado').toString().trim().toLowerCase();
+        const credito_contado = ['credito', 'crédito'].includes(condiciones) ? 'CREDITO' : 'CONTADO';
+
+        // 4) Cabecera para venta
         const cab = {
-          nombre_cliente: cliente.nombre_completo,
-          nro_documento:   cliente.nro_documento,
-          telefono:        cliente.telefono,
-          direccion:       cliente.direccion,
-          email:           cliente.email,
-          referencia:      this.cabecera.referencia,
-          observaciones:   this.cabecera.observaciones,
-          tipo_entrega:    this.cabecera.tipo_entrega
+          nro_documento,
+          tipo_documento,
+          credito_contado,
+          tipo_moneda: 'PYG'
         };
 
-        // 3) Payload final
+        // 5) Payload final (detalles se mantiene igual)
         const payload = {
           cabecera: cab,
           detalles: this.productos.map(p => ({
@@ -224,13 +235,12 @@ export default {
           }))
         };
 
-        // 4) Envío
+        // 6) Envío a /api/sales
+        console.log('Payload venta:', payload);
+        await apiService.post(`${process.env.VUE_APP_API_BASE_URL}/api/sales`, payload);
+        alert('Venta registrada correctamente');
 
-        console.log('Payload:', payload);
-        await apiService.post(`${process.env.VUE_APP_API_BASE_URL}/api/orders/pending`, payload);
-        alert('Pedido registrado correctamente');
-
-        // 5) Limpio todo
+        // 7) Limpio todo
         this.productos = [];
         this.paginaActual = 1;
         this.cabecera.referencia = '';
@@ -242,7 +252,7 @@ export default {
         this.clienteNombre   = '';
       } catch (error) {
         console.error('Error al confirmar venta:', error);
-        alert('Error al registrar el pedido');
+        alert('Error al registrar la venta');
       }
     },
     eliminarProducto(index) {
