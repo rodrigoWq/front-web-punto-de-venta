@@ -20,7 +20,7 @@
           <div class="col">
             <label for="rucCliente" class="form-label">RUC / CI</label>
             <div class="input-group">
-              <input type="text" class="form-control" v-model="rucCliente" placeholder="Ingresa el RUC/CI del cliente"  @blur="verificarRUC"  />
+              <input type="text" class="form-control" v-model="rucCliente" placeholder="Ingresa el RUC/CI del cliente"  @blur="verificarRUC" @keyup.enter.prevent="verificarRUC" />
             </div>
           </div>
           <div class="col">
@@ -52,7 +52,7 @@
             </td>
           </tr>
         </AppTable>
-        <AppPagination :currentPage="paginaActual" :totalPages="totalPaginas" @page-changed="cambiarPagina" />
+  <AppPagination v-if="totalPaginas > 1" :currentPage="paginaActual" :totalPages="totalPaginas" @page-changed="cambiarPagina" />
       </div>
     </div>
 
@@ -259,6 +259,22 @@ export default {
       if (confirm("¿Estás seguro de que deseas eliminar este producto?")) {
         this.productos.splice(index, 1);
       }
+    },
+    cancelarVenta() {
+      const confirmado = window.confirm('¿Seguro que deseas cancelar la venta y limpiar todos los campos?');
+    if (!confirmado) return;
+    // Limpia todos los inputs y estados locales de la pantalla
+    this.productos = [];
+    this.paginaActual = 1;
+    this.cabecera.referencia = '';
+    this.cabecera.observaciones = '';
+    this.cabecera.tipo_entrega = 'domicilio';
+    this.productCode = '';
+    this.productQuantity = 1;
+    this.rucCliente = '';
+    this.clienteNombre = '';
+    this.showPendingModal = false;
+    this.showClienteModal = false;
     },
     cambiarPagina(page) {
       this.paginaActual = page;
