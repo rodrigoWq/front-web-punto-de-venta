@@ -16,6 +16,7 @@ import RolesView from '@/views/RolesView.vue';
 import CajaView from '@/views/CajaView.vue'; // Importa la pantalla de Caja
 import CerrarCajaView from '@/views/CerrarCajaView.vue'
 import CobroFacturaVentaView from '@/views/CobroFacturaVentaView.vue';
+import CobroVentaRapidaView from '@/views/CobroVentaRapidaView.vue';
 import IngresoVariosView from '@/views/IngresoVariosView.vue';
 import EgresoVariosView from '@/views/EgresoVariosView.vue';
 import MovimientosCajaView from '@/views/MovimientosCajaView.vue';
@@ -114,6 +115,11 @@ const routes = [
     name: 'CobroFacturaVenta',
     component: CobroFacturaVentaView
 
+  },
+  {
+    path: '/cobro-venta-rapida',
+    name: 'CobroVentaRapida',
+    component: CobroVentaRapidaView
   },
   {
     path: '/clientes',
