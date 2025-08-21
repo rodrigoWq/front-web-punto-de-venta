@@ -24,7 +24,7 @@
 
     <div class="row g-2 align-items-center mb-3">
       <div class="col-md-4">
-        <select v-model="type" class="form-select">
+        <select v-model="type" class="form-select" :disabled="hasCredito">
           <option disabled value="">Tipo</option>
           <option v-for="t in types" :key="t" :value="t">{{ t }}</option>
         </select>
@@ -35,6 +35,7 @@
           type="number"
           class="form-control"
           placeholder="Monto"
+          :disabled="hasCredito"
         />
       </div>
       <div class="col-md-4 d-grid">
@@ -42,6 +43,10 @@
           <i class="bi bi-plus-lg me-1"></i>Agregar
         </button>
       </div>
+    </div>
+
+    <div v-if="hasCredito" class="alert alert-warning">
+      <small><i class="bi bi-info-circle me-1"></i>Modo Crédito: No se pueden agregar otros métodos de pago.</small>
     </div>
 
     <ul class="list-group list-group-flush mt-3">
@@ -99,7 +104,14 @@ export default {
     remaining() {
       return this.total - this.assigned
     },
+    hasCredito() {
+      return this.payments.some(p => (p.type || '').toUpperCase() === 'CREDITO')
+    },
     canAdd() {
+      // Si ya hay Crédito, no se puede agregar nada más
+      if (this.hasCredito) return false
+      // Si se está intentando agregar Crédito, solo se permite si no hay otros pagos
+      if ((this.type || '').toUpperCase() === 'CREDITO' && this.payments.length > 0) return false
       return this.type && this.amount > 0 
     },
     labelRemaining() {

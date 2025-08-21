@@ -41,7 +41,11 @@
 
       <!-- 2) Formas de Pago -->
       <div class="col-12 col-md-6">
-        <PaymentForms :total="totalToCharge" v-model:payments="payments" />
+        <PaymentForms 
+          :total="totalToCharge" 
+          :types="paymentTypes"
+          v-model:payments="payments" 
+        />
         <button 
           class="btn btn-dark w-100 mt-3"
           :disabled="!canAddPayment"
@@ -67,6 +71,7 @@ const route = useRoute()
 // Selected invoice passed from previous screen
 const selectedInvoices = reactive([])
 const payments = ref([])
+const paymentTypes = ['Efectivo', 'Tarjeta', 'Cheque', 'Transferencia', 'Credito']
 
 // Initialize from route query ?invoice=...
 function safeParseInvoice(q) {
@@ -114,6 +119,11 @@ onMounted(() => {
 const totalToCharge = computed(() => selectedInvoices.reduce((sum, inv) => sum + (Number(inv.total) || 0), 0))
 const canAddPayment = computed(() => (payments.value || []).length > 0)
 
+// Verificar si se seleccionó Crédito
+const hasCredito = computed(() =>
+  payments.value.some(p => (p.type || '').toUpperCase() === 'CREDITO')
+)
+
 function submitCobro() {
   if (selectedInvoices.length === 0) {
     alert('No hay factura para cobrar.')
@@ -125,7 +135,11 @@ function submitCobro() {
     return
   }
 
-  const pagos = (payments.value || []).map(p => {
+  // Determinar forma de operación según si hay Crédito seleccionado
+  const formaOperacion = hasCredito.value ? 'CREDITO' : 'CONTADO'
+
+  // Si es crédito, enviar pagos vacío; si no, mapear pagos normalmente
+  const pagos = hasCredito.value ? [] : (payments.value || []).map(p => {
     const metodo = (p.metodo_pago || p.metodo || p.type || p.name || '').toString().toUpperCase()
     const monto = Number(p.monto ?? p.amount ?? p.value ?? 0)
     const referencia = p.referencia_externa ?? p.referencia ?? p.reference ?? p.ref ?? null
@@ -138,7 +152,7 @@ function submitCobro() {
 
   const payload = {
     movimiento_id: movId,
-    forma_operacion: 'CONTADO',
+    forma_operacion: formaOperacion,
     pagos
   }
 

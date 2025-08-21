@@ -133,6 +133,7 @@ const hasSelection = computed(() => selectedInvoices.length > 0)
 
 // Formas de pago
 const payments = ref([])
+const paymentTypes = ['Efectivo', 'Tarjeta', 'Cheque', 'Transferencia', 'Credito']
 
 // Filtrado de facturas
 const filteredInvoices = computed(() =>
@@ -170,20 +171,25 @@ const canAddPayment = computed(() =>
   payments.value.length > 0
 )
 
+// Verificar si se seleccionó Crédito
+const hasCredito = computed(() =>
+  payments.value.some(p => (p.type || '').toUpperCase() === 'CREDITO')
+)
+
 function submitCobro() {
   if (selectedInvoices.length === 0) {
     alert('Selecciona una factura para cobrar.');
     return;
   }
 
-  // Para esta pantalla siempre es CONTADO
-  const formaOperacion = 'CONTADO'
+  // Determinar forma de operación según si hay Crédito seleccionado
+  const formaOperacion = hasCredito.value ? 'CREDITO' : 'CONTADO'
 
   // Usamos la primera factura seleccionada (UI restringe a 1)
   const movimientoId = selectedInvoices[0].id
 
-  // Mapear pagos desde el componente PaymentForms a la forma requerida por la API
-  const pagos = (payments.value || []).map(p => {
+  // Si es crédito, enviar pagos vacío; si no, mapear pagos normalmente
+  const pagos = hasCredito.value ? [] : (payments.value || []).map(p => {
     // soportar varias formas de nombrar campos según el componente
     const metodo = (p.metodo_pago || p.metodo || p.type || p.name || '').toString().toUpperCase()
     const monto = Number(p.monto ?? p.amount ?? p.value ?? 0)
