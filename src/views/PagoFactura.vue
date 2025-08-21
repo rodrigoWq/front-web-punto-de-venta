@@ -17,33 +17,17 @@
       <div class="col-12 col-md-4">
         <div class="card p-3 h-100">
           <h5><i class="bi bi-building me-2"></i>Buscar Proveedor</h5>
-          <p class="text-muted">Seleccione el proveedor para pagar</p>
+          <p class="text-muted">Ingrese el RUC/CI del proveedor y presione Enter</p>
           <input
-            v-model="providerFilter"
+            v-model="providerDoc"
+            @keyup.enter="searchInvoices"
             type="text"
             class="form-control mb-3"
-            placeholder="Buscar por nombre o RUC..."
+            placeholder="Ej: 80012345-7"
           />
-          <div class="list-group" style="max-height:400px; overflow-y:auto">
-            <button
-              v-for="prov in filteredProviders"
-              :key="prov.id"
-              @click="selectProvider(prov)"
-              :class="[
-                'list-group-item list-group-item-action',
-                selectedProvider?.id === prov.id ? 'active' : ''
-              ]"
-            >
-              <div class="d-flex justify-content-between">
-                <div>
-                  <div>{{ prov.name }}</div>
-                  <small class="text-muted">{{ prov.ruc }}</small>
-                </div>
-                <div class="text-danger fw-bold">{{ formatCurrency(prov.debt) }}</div>
-              </div>
-              <small class="badge bg-danger">Deuda Total</small>
-            </button>
-          </div>
+          <button class="btn btn-dark w-100" @click="searchInvoices">
+            <i class="bi bi-search me-1"></i>Buscar
+          </button>
         </div>
       </div>
 
@@ -78,8 +62,7 @@
                 <div>
                   <div>{{ inv.number }}</div>
                   <small class="text-muted">
-                    Emisión: {{ inv.date }}<br />
-                    Venc.: {{ inv.due }}
+                    Emisión: {{ inv.date }}
                   </small>
                 </div>
                 <div class="fw-bold">{{ formatCurrency(inv.total) }}</div>
@@ -118,66 +101,83 @@ import { ref, reactive, computed } from 'vue'
 import AppNavbar from '@/components/AppNavbar.vue'
 import AppHeader from '@/components/AppHeader.vue'
 import PaymentForms from '@/components/PaymentForms.vue'
+import apiService from '@/services/apiService.js'
 
-// 1) Proveedores dummy
-const providers = reactive([
-  { id: 1, name: 'ABC Distribuidora S.A.', ruc: '80012345-7', debt: 750000 },
-  { id: 2, name: 'XYZ Suministros S.R.L.', ruc: '80098765-4', debt: 400000 },
-  { id: 3, name: 'Comercial López',      ruc: '12345678-9', debt: 300000 }
-])
-const providerFilter = ref('')
+// Estado de búsqueda y resultados
+const providerDoc = ref('')
 const selectedProvider = ref(null)
-
-// 2) Facturas dummy por proveedor
-const allInvoices = reactive([
-  { id: 10, providerId: 1, number: '001-001-00001234', total: 500000, date: '9/1/2024', due: '24/1/2024', status: 'Pendiente' },
-  { id: 11, providerId: 1, number: '001-001-00001235', total: 250000, date: '4/1/2024', due: '19/1/2024', status: 'Vencida' },
-  { id: 12, providerId: 2, number: '001-001-00001236', total: 400000, date: '5/2/2024', due: '20/2/2024', status: 'Pendiente' },
-  { id: 13, providerId: 3, number: '001-001-00001237', total: 300000, date: '2/3/2024', due: '17/3/2024', status: 'Pendiente' }
-])
+const allInvoices = reactive([])
 const selectedInvoices = reactive([])
-
-// 3) Pagos
 const payments = ref([])
 
-// Filtrar proveedores
-const filteredProviders = computed(() =>
-  providers.filter(p =>
-    p.name.toLowerCase().includes(providerFilter.value.toLowerCase()) ||
-    p.ruc.includes(providerFilter.value)
-  )
-)
+// Buscar facturas del proveedor por nro de documento
+async function searchInvoices() {
+  const doc = providerDoc.value.trim()
+  if (!doc) return
+  try {
+    const url = `/api/purchases/invoices/proveedor/${encodeURIComponent(doc)}`
+    const resp = await apiService.get(url)
+    const arr = Array.isArray(resp?.data) ? resp.data : (resp?.data?.data || [])
+    if (!arr.length) {
+      selectedProvider.value = null
+      allInvoices.splice(0, allInvoices.length)
+      selectedInvoices.splice(0, selectedInvoices.length)
+      payments.value = []
+      alert('No se encontraron facturas para el proveedor ingresado.')
+      return
+    }
 
-function selectProvider(p) {
-  selectedProvider.value = p
-  selectedInvoices.splice(0, selectedInvoices.length)
-  payments.value = []
+    // Tomar datos del proveedor del primer registro
+    const first = arr[0]
+    selectedProvider.value = {
+      id: first.nro_documento,
+      name: first.nombre_razon_social || 'Proveedor',
+      ruc: first.nro_documento || doc
+    }
+
+    // Mapear facturas
+    const mapped = arr.map(it => ({
+      id: it.id_compra,
+      number: it.nro_factura || it.nro_comprobante || 'Comprobante',
+      date: it.fecha_emision ? new Date(it.fecha_emision).toLocaleDateString() : '',
+      total: Number(it.total_iva_incluido ?? it.total_sin_iva ?? 0),
+      status: it.estado || (it.pendiente ? 'Pendiente' : '')
+    }))
+
+    allInvoices.splice(0, allInvoices.length, ...mapped)
+    selectedInvoices.splice(0, selectedInvoices.length)
+    payments.value = []
+    console.log('[PagoFactura] Facturas recibidas:', mapped)
+  } catch (err) {
+    console.error('Error al buscar facturas del proveedor:', err)
+    alert('Ocurrió un error al consultar las facturas. Revise la consola.')
+  }
 }
 
-// Facturas por proveedor
-const providerInvoices = computed(() =>
-  selectedProvider.value
-    ? allInvoices.filter(i => i.providerId === selectedProvider.value.id)
-    : []
-)
+// Lista de facturas para la columna central
+const providerInvoices = computed(() => selectedProvider.value ? allInvoices : [])
 
 function isInvoiceSelected(inv) {
   return selectedInvoices.some(i => i.id === inv.id)
 }
 
 function toggleInvoice(inv) {
+  // Selección única: si no está seleccionado, reemplaza; si está, deselecciona
   const idx = selectedInvoices.findIndex(i => i.id === inv.id)
-  if (idx === -1) selectedInvoices.push(inv)
-  else selectedInvoices.splice(idx,1)
+  if (idx === -1) {
+    selectedInvoices.splice(0, selectedInvoices.length, inv)
+  } else {
+    selectedInvoices.splice(0, selectedInvoices.length)
+  }
 }
 
 // Totales
 const totalToPay = computed(() =>
-  selectedInvoices.reduce((sum, inv) => sum + inv.total, 0)
+  selectedInvoices.reduce((sum, inv) => sum + Number(inv.total || 0), 0)
 )
 
 const canSubmit = computed(() =>
-  selectedInvoices.length > 0 &&
+  selectedInvoices.length === 1 &&
   payments.value.reduce((sum,p) => sum + p.amount, 0) === totalToPay.value
 )
 
@@ -187,11 +187,10 @@ function formatCurrency(v) {
 
 function submitPago() {
   const payload = {
-    providerId: selectedProvider.value.id,
-    invoices: selectedInvoices.map(i => i.id),
-    payments: payments.value
+    proveedor_documento: selectedProvider.value?.ruc || providerDoc.value,
+    facturas: selectedInvoices.map(i => ({ id_compra: i.id })),
+    pagos: payments.value.map(p => ({ metodo_pago: p.type, monto: p.amount }))
   }
-  console.log('Enviar pago al backend:', payload)
-  // await api.post('/pagos-proveedor', payload)
+  console.log('Enviar pago al backend (pendiente endpoint definitivo):', payload)
 }
 </script>
