@@ -10,34 +10,21 @@
     </AppHeader>
 
     <div class="row g-4 mt-3">
-      <!-- 1) Clientes con Crédito -->
+      <!-- 1) Buscar Cliente Crédito -->
       <div class="col-12 col-md-4">
         <div class="card p-3">
-          <h5><i class="bi bi-person-circle me-2"></i>Clientes con Crédito</h5>
-          <p class="text-muted">Seleccione el cliente para cobrar</p>
+          <h5><i class="bi bi-person-circle me-2"></i>Buscar Cliente</h5>
+          <p class="text-muted">Ingrese el Nro. de Documento y presione Enter</p>
           <input
-            v-model="clientFilter"
+            v-model="clientDoc"
+            @keyup.enter="searchClient"
             type="text"
             class="form-control mb-3"
-            placeholder="Buscar cliente..."
+            placeholder="Ej: 5510"
           />
-          <div class="list-group" style="max-height: 400px; overflow-y: auto;">
-            <button
-              v-for="c in filteredClients"
-              :key="c.id"
-              @click="selectClient(c)"
-              :class="['list-group-item list-group-item-action', selectedClient?.id === c.id ? 'active' : '']"
-            >
-              <div class="d-flex justify-content-between">
-                <div>
-                  <div>{{ c.name }}</div>
-                  <small class="text-muted">{{ c.document }}</small>
-                </div>
-                <div class="text-danger fw-bold">{{ formatCurrency(c.debt) }}</div>
-              </div>
-              <small class="badge bg-danger">Deuda Total</small>
-            </button>
-          </div>
+          <button class="btn btn-dark w-100" @click="searchClient">
+            <i class="bi bi-search me-1"></i>Buscar
+          </button>
         </div>
       </div>
 
@@ -48,7 +35,7 @@
           <p class="text-muted">
             {{ selectedClient
               ? `Cliente: ${selectedClient.name} – ${selectedClient.document}`
-              : 'Seleccione un cliente para ver sus facturas pendientes' }}
+              : 'Busque por documento para ver las facturas pendientes' }}
           </p>
 
           <div
@@ -66,10 +53,7 @@
               <div class="d-flex justify-content-between">
                 <div>
                   <div>{{ inv.number }}</div>
-                  <small class="text-muted">
-                    Emisión: {{ inv.date }}<br />
-                    Venc.: {{ inv.due }}
-                  </small>
+                  <small class="text-muted">Últ. pago: {{ inv.lastPayment || '—' }}</small>
                 </div>
                 <div class="fw-bold">{{ formatCurrency(inv.total) }}</div>
               </div>
@@ -103,59 +87,59 @@ import { ref, reactive, computed } from 'vue'
 import AppNavbar from '@/components/AppNavbar.vue'
 import AppHeader from '@/components/AppHeader.vue'
 import PaymentForms from '@/components/PaymentForms.vue'
+import apiService from '@/services/apiService.js'
 
-// 1) Datos dummy de clientes
-const clients = reactive([
-  { id: 1, name: 'Juan Pérez', document: '12345678-9', debt: 450000 },
-  { id: 2, name: 'María González', document: '98765432-1', debt: 300000 },
-  { id: 3, name: 'Pedro López', document: '12345678-0', debt: 500000 },
-  { id: 4, name: 'Ana Martínez', document: '87654321-2', debt: 150000 },
-  { id: 5, name: 'Luis Fernández', document: '11223344-5', debt: 600000 },
-    { id: 6, name: 'Carla Ramírez', document: '55667788-3', debt: 200000 },
-    { id: 7, name: 'Sofía Torres', document: '99887766-4', debt: 350000 },
-    { id: 8, name: 'Diego Ruiz', document: '44332211-6', debt: 100000 },
-    { id: 9, name: 'Laura Díaz', document: '66778899-7', debt: 400000 },
-    { id: 10, name: 'Andrés Castro', document: '22334455-8', debt: 250000 }
-])
-const clientFilter = ref('')
+// 1) Estado de búsqueda y resultados
+const clientDoc = ref('')
 const selectedClient = ref(null)
-
-// 2) Facturas dummy (ligadas a clientId)
-const allInvoices = reactive([
-  { id: 101, clientId: 1, number: '001-001-0000120', total: 200000, date: '4/1/2024', due: '19/1/2024' },
-  { id: 102, clientId: 1, number: '001-001-0000125', total: 250000, date: '14/1/2024', due: '29/1/2024' },
-  { id: 103, clientId: 1, number: '001-001-0000128', total: 150000, date: '24/1/2024', due: '8/2/2024' },
-  { id: 104, clientId: 2, number: '001-001-0000121', total: 100000, date: '5/1/2024', due: '20/1/2024' },
-  { id: 105, clientId: 2, number: '001-001-0000126', total: 200000, date: '15/1/2024', due: '30/1/2024' },
-  { id: 103, clientId: 2, number: '001-001-0000130', total: 300000, date: '10/1/2024', due: '25/1/2024' },
-  { id: 106, clientId: 3, number: '001-001-0000122', total: 400000, date: '6/1/2024', due: '21/1/2024' },
-  { id: 107, clientId: 3, number: '001-001-0000127', total: 350000, date: '16/1/2024', due: '31/1/2024' },
-  { id: 108, clientId: 4, number: '001-001-0000123', total: 50000, date: '7/1/2024', due: '22/1/2024' },
-  { id: 109, clientId: 5, number: '001-001-0000124', total: 600000, date: '8/1/2024', due: '23/1/2024' }
-])
+const allInvoices = reactive([])
 const selectedInvoices = reactive([])
-
-// 3) Formas de pago
-const paymentTypes = ['Efectivo', 'Tarjeta', 'Cheque', 'Transferencia']
 const payments = ref([])
+const paymentTypes = ['Efectivo', 'Tarjeta', 'Cheque', 'Transferencia']
 
-// Computeds
-const filteredClients = computed(() =>
-  clients.filter(c =>
-    c.name.toLowerCase().includes(clientFilter.value.toLowerCase()) ||
-    c.document.includes(clientFilter.value)
-  )
-)
-function selectClient(c) {
-  selectedClient.value = c
-  selectedInvoices.splice(0, selectedInvoices.length)
-  payments.value = []
+// Buscar facturas crédito por documento
+async function searchClient() {
+  const doc = clientDoc.value.trim()
+  if (!doc) return
+  try {
+    const url = `/api/clients/credit/${encodeURIComponent(doc)}`
+    const resp = await apiService.get(url)
+    const data = resp?.data || {}
+    const facturas = Array.isArray(data.facturas) ? data.facturas : []
+    if (!facturas.length) {
+      selectedClient.value = null
+      allInvoices.splice(0, allInvoices.length)
+      selectedInvoices.splice(0, selectedInvoices.length)
+      payments.value = []
+      alert('No se encontraron facturas a crédito para el documento ingresado.')
+      return
+    }
+
+    selectedClient.value = {
+      id: data.cliente_id || doc,
+      name: facturas[0]?.nombre_entidad || 'Cliente',
+      document: facturas[0]?.documento_entidad || doc
+    }
+
+    const mapped = facturas.map(f => ({
+      id: f.nro_factura || `${f.tipo_factura}-${f.documento_entidad}`,
+      number: f.nro_factura || 'Factura',
+      lastPayment: f.ultima_fecha_pago ? new Date(f.ultima_fecha_pago).toLocaleDateString() : '',
+      total: Number(f.saldo_restante ?? f.monto_total ?? 0)
+    }))
+
+    allInvoices.splice(0, allInvoices.length, ...mapped)
+    selectedInvoices.splice(0, selectedInvoices.length)
+    payments.value = []
+    console.log('[CobroClienteCredito] Facturas recibidas:', mapped)
+  } catch (err) {
+    console.error('Error al buscar facturas a crédito:', err)
+    alert('Ocurrió un error al consultar. Revise la consola.')
+  }
 }
-const clientInvoices = computed(() =>
-  selectedClient.value
-    ? allInvoices.filter(inv => inv.clientId === selectedClient.value.id)
-    : []
-)
+
+// 2) Facturas a mostrar
+const clientInvoices = computed(() => selectedClient.value ? allInvoices : [])
 function isInvoiceSelected(inv) {
   return selectedInvoices.some(i => i.id === inv.id)
 }
@@ -165,23 +149,41 @@ function toggleInvoice(inv) {
   else selectedInvoices.splice(idx, 1)
 }
 const totalToCharge = computed(() =>
-  selectedInvoices.reduce((sum, inv) => sum + inv.total, 0)
+  selectedInvoices.reduce((sum, inv) => sum + Number(inv.total || 0), 0)
 )
-const canSubmit = computed(() =>
-  selectedInvoices.length > 0 && payments.value.reduce((s,p) => s + p.amount, 0) === totalToCharge.value
-)
+const canSubmit = computed(() => {
+  const assigned = payments.value.reduce((s,p) => s + Number(p.amount || 0), 0)
+  return selectedInvoices.length > 0 && assigned > 0 && assigned <= totalToCharge.value
+})
 
 // Métodos
 function formatCurrency(val) {
   return new Intl.NumberFormat('es-PY',{ style:'currency', currency:'PYG' }).format(val)
 }
-function submitCobro() {
+async function submitCobro() {
+  if (!selectedClient.value) return
   const payload = {
-    clientId: selectedClient.value.id,
-    invoices: selectedInvoices.map(i => i.id),
-    payments: payments.value
+    documento: selectedClient.value.document || clientDoc.value,
+    pagos: payments.value.map(p => ({
+      metodo_pago: String(p.type || '').toUpperCase(),
+      monto: Number(p.amount || 0),
+      referencia_externa: null
+    })),
+    observacion: 'Pago de facturas crédito'
   }
-  console.log('Enviar cobro:', payload)
-  // Aquí llamada al backend...
+  console.log('Payload -> /api/cashbox/collect-debt', payload)
+  try {
+    const resp = await apiService.post('/api/cashbox/collect-debt', payload)
+    console.log('Respuesta collect-debt:', resp?.data)
+    alert('Cobro registrado correctamente.')
+  // Reset pagos y deseleccionar facturas (limpiar columna 2)
+  payments.value = []
+  selectedInvoices.splice(0, selectedInvoices.length)
+  // Refrescar facturas del cliente para reflejar saldos/pendientes actualizados
+  await searchClient()
+  } catch (err) {
+    console.error('Error registrando cobro:', err)
+    alert('Error al registrar el cobro. Revise la consola para más detalles.')
+  }
 }
 </script>
