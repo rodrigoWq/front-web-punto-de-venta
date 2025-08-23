@@ -76,7 +76,7 @@
               <td>{{ prod.nombre }}</td>
               <td class="text-end">{{ prod.precio_venta ?? 'Sin precio' }}</td>
               <td>{{ prod.categoria }}</td>
-              <td class="text-end">{{ prod.precio_compra ?? 'Sin precio' }}</td>
+              <td class="text-end">{{ prod.precio_ultima_compra ?? 'Sin precio' }}</td>
               <td class="text-end">
                 <button class="btn btn-success btn-sm me-1" @click="openPriceModal(prod)">
                   $ Precio Venta
@@ -203,9 +203,19 @@ export default {
       let filtered = this.products;
 
       if (this.searchTerm?.trim()) {
-        filtered = filtered.filter(p =>
-          p.nombre?.toLowerCase().includes(this.searchTerm.toLowerCase())
-        );
+        const term = this.searchTerm.toLowerCase();
+        filtered = filtered.filter(p => {
+          const nombre       = (p.nombre || '').toLowerCase();
+          const descripcion  = (p.descripcion || '').toLowerCase();
+          const categoria    = (p.categoria || '').toLowerCase();
+          const unidad       = (p.unidad_medida || '').toLowerCase();
+          return (
+            nombre.includes(term) ||
+            descripcion.includes(term) ||
+            categoria.includes(term) ||
+            unidad.includes(term)
+          );
+        });
       }
 
       if (this.categoryFilter !== 'all') {
@@ -214,7 +224,7 @@ export default {
         );
       }
 
-      if (this.priceFilter === 'zero') {
+  if (this.priceFilter === 'zero') {
         filtered = filtered.filter(p =>
           !p.precio_venta || Number(p.precio_venta) === 0
         );
@@ -233,9 +243,12 @@ export default {
     },
 
     uniqueCategories() {
-      return [...new Set(
-        this.products.map(p => p.categoria).filter(Boolean)
-      )].sort();
+      const set = new Set();
+      this.products.forEach(p => {
+        const cat = p.categoria || p.categoria_nombre;
+        if (cat) set.add(cat);
+      });
+      return Array.from(set).sort();
     },
     
 
@@ -251,14 +264,67 @@ export default {
     api(path) { return `${process.env.VUE_APP_API_BASE_URL}${path}`; },
 
     /* ---------- CRUD Productos ---------- */
-    fetchProducts() {                                                         
-      apiService.get(this.api('/api/prices'))
-        .then(({ data }) => { this.products = data; })
-        .catch(err   => { console.error('Error fetching products:', err); });
+    async fetchProducts() {                                                   
+      try {
+        const { data } = await apiService.get(this.api('/api/prices'));
+        const list = Array.isArray(data) ? data : (data ? [data] : []);
+        // Mapear según el contrato del endpoint /api/prices
+        this.products = list.map(item => ({
+          producto_id: item.producto_id,
+          nombre: item.nombre || '',
+          descripcion: item.descripcion || '',
+          stock_disponible: item.stock_disponible ?? 0,
+          categoria: item.categoria || item.categoria_nombre || '',
+          unidad_medida: item.unidad_medida || item.unidad_medida_nombre || '',
+          precio_venta: item.precio_venta ?? 0,
+          precio_ultima_compra: item.precio_ultima_compra ?? null,
+          vigencia_desde: item.vigencia_desde ?? null,
+          vigencia_hasta: item.vigencia_hasta ?? null
+        }));
+      } catch (err) {
+        console.error('Error fetching products:', err);
+        this.products = [];
+      }
     },
 
-    openProductModal(product = null) {                                        
-      this.editingProduct = product;
+    async openProductModal(product = null) {                                   
+      // Para editar, cargamos los datos completos del producto desde /api/products/:id
+      if (product && product.producto_id) {
+        try {
+          const { data } = await apiService.get(`/api/products/${product.producto_id}`);
+          // Mapear respuesta del backend al formato esperado por RegistrarProductoModal
+          this.editingProduct = {
+            id: data.producto_id ?? data.id ?? product.producto_id,
+            code: data.codigo_barras || '',
+            codigo_barras: data.codigo_barras || '', // usado por initial-code
+            name: data.nombre || product.nombre || '',
+            descripcion: data.descripcion || product.descripcion || '',
+            url_imagen: data.url_imagen || '',
+            categoria_id: data.categoria_id ?? null,
+            unidad_medida_id: data.unidad_medida_id ?? null,
+            activo: (data.activo !== undefined) ? data.activo : true,
+            tipo_iva: data.tipo_iva ?? 1
+          };
+        } catch (err) {
+          console.error('Error cargando producto para edición:', err);
+          // Fallback mínimo para no bloquear la edición
+          this.editingProduct = {
+            id: product.producto_id,
+            code: '',
+            codigo_barras: '',
+            name: product.nombre || '',
+            descripcion: product.descripcion || '',
+            url_imagen: '',
+            categoria_id: null,
+            unidad_medida_id: null,
+            activo: true,
+            tipo_iva: 1
+          };
+        }
+      } else {
+        // Alta
+        this.editingProduct = null;
+      }
       this.showProductModal = true;                                          
     },
     closeProductModal() {                                                     
@@ -269,24 +335,30 @@ export default {
       if (this.categoryFilter === 'all') {
         this.priceFilter = 'all';
       }
+  this.currentPage = 1;
     },
 
-    handleProductSaved(saved) {                                               
-      const idx = this.products.findIndex(p => p.producto_id === saved.producto_id);
-      if (idx !== -1) this.products.splice(idx, 1, saved); // edición
-      else            this.products.unshift(saved);         // alta
+    async handleProductSaved() {                                              
+      // Cerrar modal y refrescar la lista desde el backend para mantener consistencia
       this.closeProductModal();
-      this.fetchProducts();
+      this.editingProduct = null;
+      try {
+        await this.fetchProducts();
+      } catch (err) {
+        console.error('Error refrescando productos tras guardar:', err);
+      }
     },
 
-    deleteProduct(product) {                                                  
+    async deleteProduct(product) {                                             
       if (!confirm(`¿Eliminar “${product.nombre}”?`)) return;
-      apiService.delete(this.api(`/api/products/${product.producto_id}`))
-        .then(() => {
-          this.products = this.products.filter(p => p.producto_id !== product.producto_id);
-        })
-        .catch(err => console.error('Error eliminando', err));
-      //this.fetchProducts();
+      try {
+        await apiService.delete(`/api/products/${product.producto_id}`);
+        // Volver a cargar para asegurar estado consistente (precios, etc.)
+        await this.fetchProducts();
+      } catch (err) {
+        console.error('Error eliminando producto:', err);
+        alert('Error al eliminar el producto. Revise la consola.');
+      }
     },
 
     /* ---------- Precio ---------- */
@@ -328,6 +400,12 @@ export default {
       const dd   = (`0${d.getDate()}`).slice(-2);
       return `${yyyy}-${mm}-${dd}`;
     }
+  },
+
+  watch: {
+    searchTerm() { this.currentPage = 1; },
+    categoryFilter() { this.currentPage = 1; },
+    priceFilter() { this.currentPage = 1; }
   },
 
   mounted() { this.fetchProducts(); }                                         // ≡

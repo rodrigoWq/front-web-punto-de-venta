@@ -110,8 +110,18 @@ export default {
     showModal(val) {
       if (val) {
         if (this.product) {
-          
-          this.productData = { ...this.product };
+          // Mapear campos del producto desde ProductosView al formato del modal
+          this.productData = {
+            producto_id: this.product.id,
+            codigo_barras: this.product.code || '',
+            nombre: this.product.name || '',
+            descripcion: this.product.descripcion || '',
+            url_imagen: this.product.url_imagen || '',
+            categoria_id: this.product.categoria_id || null,
+            unidad_medida_id: this.product.unidad_medida_id || null,
+            activo: this.product.activo !== undefined ? this.product.activo : true,
+            tipo_iva: this.product.tipo_iva || 1
+          };
           console.log('[RegisterProductModal] modo edición, datos cargados:', this.productData);
         } else {
           this.resetForm();
