@@ -234,7 +234,7 @@
 </template>
 
 <script setup>
-import { reactive, computed } from 'vue'
+import { reactive, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import AppNavbar from '@/components/AppNavbar.vue'
 import AppHeader from '@/components/AppHeader.vue'
@@ -244,6 +244,11 @@ import apiService from '@/services/apiService'
 const cashboxStore = useCashboxStore()
 const router = useRouter()
 
+
+// cargar datos de la caja abierta y exponer valores
+onMounted(() => {
+  cashboxStore.fetchCurrentOpen()
+})
 
 const initialMonto = computed(() => cashboxStore.montoInicial)
 
@@ -263,8 +268,11 @@ const closeForm = reactive({
 
 async function cerrarCaja () {
   try {
-    closeForm.montoContado   = initialMonto.value
-    closeForm.montoEfectivo  = totalContado.value
+    // Ajuste de mapeo:
+    // - monto_contado debe ser la suma de todos los montos ingresados (efectivo + no efectivo)
+    // - monto_efectivo es solo el total contado en efectivo
+    closeForm.montoContado   = totalContado.value
+    closeForm.montoEfectivo  = totalContadoEfectivo.value
     // 1️⃣ Prepara y loguea el payload
     const payload = {
       monto_contado      : closeForm.montoContado || 0,
@@ -278,15 +286,82 @@ async function cerrarCaja () {
     console.log('Apertura ID:', cashboxStore.aperturaId)
 
     // 2️⃣ Envía al backend
-    await apiService.put(
+    const res = await apiService.put(
       `/api/cashbox/close/${cashboxStore.aperturaId}`,
       payload
     )
 
-    alert('Caja cerrada correctamente')
-    router.push({ name: 'Caja' })
+    // 3️⃣ Manejo de respuestas (success true/false en body)
+    const body = res?.data || {}
+    if (body.success) {
+      const d = body.data || {}
+      const totalEfe = d?.totales?.EFECTIVO ?? payload.monto_efectivo
+      const totalPos = d?.totales?.TARJETA ?? payload.monto_pos
+      const totalTrans = d?.totales?.TRANSFERENCIA ?? payload.monto_transferencia
+      const totalChq = d?.totales?.CHEQUE ?? payload.monto_cheque
+      window.alert(
+        [`Caja cerrada correctamente`,
+         `Monto final: ${formatCurrency(Number(d?.monto_final ?? payload.monto_contado))}`,
+         `Diferencia: ${formatCurrency(Number(d?.diferencia ?? 0))}`,
+         `Totales → Efectivo: ${formatCurrency(Number(totalEfe))}, POS: ${formatCurrency(Number(totalPos))}, Transf.: ${formatCurrency(Number(totalTrans))}, Cheque: ${formatCurrency(Number(totalChq))}`
+        ].join('\n')
+      )
+      // refrescar estado global y volver a Caja
+      await cashboxStore.fetchCurrentOpen()
+      router.push({ name: 'Caja' })
+      return
+    }
 
-    // …resto de tu lógica…
+    // success === false: mostrar detalle según estructura
+    const msg = body.message || 'No se pudo cerrar la caja'
+    const data = body.data
+
+    // Caso 1: diferencias por medio de pago
+    if (data && data.totales && data.diferencias) {
+      const dif = data.diferencias
+      const lines = [
+        msg,
+        '',
+        `Totales del sistema:`,
+        ` - Efectivo: ${formatCurrency(Number(data.totales.EFECTIVO || 0))}`,
+        ` - Transferencia: ${formatCurrency(Number(data.totales.TRANSFERENCIA || 0))}`,
+        ` - POS/Tarjeta: ${formatCurrency(Number(data.totales.TARJETA || 0))}`,
+        ` - Cheque: ${formatCurrency(Number(data.totales.CHEQUE || 0))}`,
+        '',
+        `Diferencias detectadas:`,
+        ` - efectivo: ${dif.efectivo}`,
+        ` - transferencia: ${dif.transferencia}`,
+        ` - pos: ${dif.pos}`,
+        ` - cheque: ${dif.cheque}`
+      ]
+      window.alert(lines.join('\n'))
+      return
+    }
+
+    // Caso 2: suma de montos no coincide con monto_contado
+    if (data && (data.monto_contado !== undefined) && (data.suma_montos !== undefined)) {
+      window.alert([
+        msg,
+        `Monto contado: ${formatCurrency(Number(data.monto_contado))}`,
+        `Suma de montos ingresados: ${formatCurrency(Number(data.suma_montos))}`
+      ].join('\n'))
+      return
+    }
+
+    // Caso 3: ventas/movimientos pendientes
+    if (Array.isArray(data)) {
+      const count = data.length
+      const preview = data.slice(0, 5).map((m, i) => `${i+1}. ${m.tipo_movimiento} ${m.tipo_operacion || ''} - ${m.descripcion || ''} (${formatCurrency(Number(m.monto_total || 0))})`).join('\n')
+      window.alert([
+        msg,
+        `Pendientes: ${count}`,
+        preview
+      ].join('\n'))
+      return
+    }
+
+    // Caso genérico
+    window.alert(msg)
   } catch (err) {
     console.error(err)
     alert('Error al cerrar caja')
@@ -353,14 +428,14 @@ function formatCurrency(value) {
 }
 
 
-// Datos dummy para el resumen; más tarde vendrán de la API
-const resumen = reactive({
-  initial: 500000,
-  ingresos: 350000,
-  egresos: 125000
-})
+// Resumen dinámico desde el store (alimentado por /api/cashbox/open/current/)
+const resumen = computed(() => ({
+  ingresos: Number(cashboxStore.igresos_dia || 0),
+  egresos : Number(cashboxStore.egresos_dia || 0)
+}))
 
-const expected = computed(() => resumen.initial + resumen.ingresos - resumen.egresos)
+// Saldo esperado reportado/calculado por backend
+const expected = computed(() => Number(cashboxStore.saldo_en_caja || 0))
 
 </script>
 
