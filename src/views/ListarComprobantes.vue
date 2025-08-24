@@ -37,6 +37,8 @@
           <td>Factura</td>
           <td>
             <button class="btn btn-primary btn-sm me-1" @click="verDetalleComprobante(comprobante)">Ver</button>
+            <button class="btn btn-secondary btn-sm me-1" @click="imprimirComprobante(comprobante)">Imprimir</button>
+            <button class="btn btn-outline-secondary btn-sm me-1" @click="imprimirTicket(comprobante)">Ticket</button>
             <button class="btn btn-danger btn-sm me-1" :disabled="comprobante.estado === 'anulado'" @click="anularComprobante(comprobante)">Anular</button>
           </td>
         </tr>
@@ -138,6 +140,19 @@ export default {
     verDetalleComprobante(comprobante) {
       console.log("Tipo: factura");
       this.$router.push({ name: 'Factura', params: { id: comprobante.nro_comprobante } });
+    },
+    imprimirComprobante(comprobante) {
+      // Abre en una nueva pestaña para no perder el contexto del listado
+      const route = this.$router.resolve({ name: 'FacturaPrint', params: { id: comprobante.nro_comprobante } })
+      window.open(route.href, '_blank')
+    },
+    imprimirTicket(comprobante) {
+      const route = this.$router.resolve({
+        name: 'FacturaPrint',
+        params: { id: comprobante.nro_comprobante },
+  query: { mode: 'ticket', size: '58' }
+      })
+      window.open(route.href, '_blank')
     },
   },
   async mounted() {

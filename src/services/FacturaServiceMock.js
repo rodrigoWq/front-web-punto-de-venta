@@ -1,17 +1,18 @@
 // src/services/FacturaServiceMock.js
 import Factura from '@/models/Factura';
-import Producto from '@/models/Producto';
+//import Producto from '@/models/Producto';
 
 class FacturaServiceMock {
     constructor() {
       // Datos de prueba: Crear facturas con productos de ejemplo
-      const factura1 = new Factura('12345678-9', 'Proveedor S.A.', '2024-11-10', '001-12345', 'F001-000001', 'contado');
-      factura1.id = 1; // Asigna un id único a la factura
-      factura1.agregarProducto(new Producto({ codigo: 'P001', descripcion: 'Producto A', cantidad: 2, valorUnitario: 50000, tipoImpuesto: 'iva10' }));
+  const factura1 = new Factura('12345678-9', 'Proveedor S.A.', '2024-11-10', '001-12345', 'F001-000001', 'contado');
+  factura1.id = 1; // Asigna un id único a la factura
+  // Agrega productos usando las claves esperadas por Producto.js
+  factura1.agregarProducto({ codigo_producto: 'P001', descripcion: 'Producto A', cantidad: 2, precio_unitario_neto: 50000, tipo_iva_id: 1 });
 
-      const factura2 = new Factura('98765432-1', 'Distribuidor XYZ', '2024-11-11', '002-54321', 'F002-000002', 'credito');
-      factura2.id = 2; // Asigna un id único a la factura
-      factura2.agregarProducto(new Producto({ codigo: 'P003', descripcion: 'Producto C', cantidad: 5, valorUnitario: 15000, tipoImpuesto: 'exenta' }));
+  const factura2 = new Factura('98765432-1', 'Distribuidor XYZ', '2024-11-11', '002-54321', 'F002-000002', 'credito');
+  factura2.id = 2; // Asigna un id único a la factura
+  factura2.agregarProducto({ codigo_producto: 'P003', descripcion: 'Producto C', cantidad: 5, precio_unitario_neto: 15000, tipo_iva_id: 3 });
 
       this.facturas = [factura1, factura2];
 
@@ -20,6 +21,13 @@ class FacturaServiceMock {
   async obtenerFacturas() {
     return new Promise((resolve) => {
       setTimeout(() => resolve([...this.facturas]), 500);
+    });
+  }
+
+  async obtenerFacturaPorId(id) {
+    return new Promise((resolve) => {
+      const f = this.facturas.find(x => String(x.id) === String(id));
+      setTimeout(() => resolve(f || null), 200);
     });
   }
 

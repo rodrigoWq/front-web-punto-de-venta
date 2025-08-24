@@ -31,6 +31,8 @@ import ControlInventarioView from '@/views/Inventario/ControlInventarioView.vue'
 import DepositosView from '@/views/Inventario/DepositosView.vue';
 import CategoriaView from '@/views/Inventario/CategoriaView.vue';
 import UnidadMedidaView from '@/views/Inventario/UnidadMedidaView.vue';
+// Vista de impresión (carga perezosa)
+const FacturaPrint = () => import('@/views/FacturaPrint.vue');
 
 const routes = [
   {
@@ -138,6 +140,12 @@ const routes = [
     props: route => ({
       datosParaFactura: route.query.datosParaFactura ? JSON.parse(decodeURIComponent(route.query.datosParaFactura)) : null,
     }),
+  },
+  {
+    path: '/print/factura/:id',
+    name: 'FacturaPrint',
+    component: FacturaPrint,
+    props: true
   },
   {
     path: '/nota-de-remision/:id',
