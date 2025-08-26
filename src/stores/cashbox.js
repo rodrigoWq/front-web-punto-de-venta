@@ -34,7 +34,8 @@ actions: {
         this.isOpen = false
       }
     } catch (err) {
-      console.error('Error al obtener apertura actual', err)
+      // Silenciar errores cuando no hay caja abierta (es un estado normal)
+      console.log('No hay caja abierta para el usuario actual')
       this.isOpen = false
     }
   }

@@ -59,8 +59,13 @@
 
     <!-- Se ve únicamente si la caja está CERRADA -->
     <div v-if="!cajaAbierta" class="text-center my-5">
+      <div class="alert alert-info mx-auto" style="max-width: 500px;">
+        <i class="bi bi-info-circle me-2"></i>
+        <strong>Caja Cerrada</strong>
+        <p class="mb-3 mt-2">No hay una caja abierta para el usuario actual. Debe abrir una caja para comenzar a realizar operaciones de tesorería.</p>
+      </div>
       <button class="btn btn-success btn-lg" @click="openModalCaja">
-        Abrir Caja
+        <i class="bi bi-unlock me-2"></i>Abrir Caja
       </button>
     </div>
 

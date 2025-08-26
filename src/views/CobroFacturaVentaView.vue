@@ -121,6 +121,7 @@ import AppNavbar from '@/components/AppNavbar.vue'
 import AppHeader from '@/components/AppHeader.vue'
 import PaymentForms from '@/components/PaymentForms.vue'
 import apiService from '@/services/apiService.js'
+import { useCashboxStore } from '@/stores/cashbox'
 
 
 // Search term and invoices (populated from backend)
@@ -176,7 +177,9 @@ const hasCredito = computed(() =>
   payments.value.some(p => (p.type || '').toUpperCase() === 'CREDITO')
 )
 
-function submitCobro() {
+const cashboxStore = useCashboxStore()
+
+async function submitCobro() {
   if (selectedInvoices.length === 0) {
     alert('Selecciona una factura para cobrar.');
     return;
@@ -210,19 +213,24 @@ function submitCobro() {
   // Loguear payload antes de enviar (como pidió)
   console.log('Payload -> /api/cashbox/collect-sale', payload)
 
-  // Enviar al backend
-  apiService.post('/api/cashbox/collect-sale', payload)
-    .then(resp => {
-      console.log('Respuesta collect-sale:', resp && resp.data)
-      alert('Cobro registrado correctamente.')
-      // limpiar estado: quitar factura seleccionada y pagos
-      selectedInvoices.splice(0, selectedInvoices.length)
-      payments.value = []
-    })
-    .catch(err => {
-      console.error('Error enviando collect-sale:', err)
-      alert('Error al registrar el cobro. Revisa la consola para más detalles.')
-    })
+  try {
+    const resp = await apiService.post('/api/cashbox/collect-sale', payload)
+    console.log('Respuesta collect-sale:', resp && resp.data)
+    alert('Cobro registrado correctamente.')
+
+    // limpiar estado: quitar factura seleccionada y pagos
+    selectedInvoices.splice(0, selectedInvoices.length)
+    payments.value = []
+
+    // Refresh: actualizar lista de pendientes y estado global de caja
+    await fetchPendingCollections()
+    if (cashboxStore && typeof cashboxStore.fetchCurrentOpen === 'function') {
+      await cashboxStore.fetchCurrentOpen()
+    }
+  } catch (err) {
+    console.error('Error enviando collect-sale:', err)
+    alert('Error al registrar el cobro. Revisa la consola para más detalles.')
+  }
 }
 
 // Fetch pending collections from backend and populate invoices

@@ -92,6 +92,20 @@ export default {
   data() {
     return { type: '', amount: 0 }
   },
+  mounted() {
+    this.initDefaultType()
+  },
+  watch: {
+    types: {
+      handler(newVal) {
+        // Si el tipo actual no existe en la lista o está vacío, reinicializar
+        if (!this.type || !newVal.includes(this.type)) {
+          this.initDefaultType()
+        }
+      },
+      deep: false
+    }
+  },
   computed: {
     assigned() {
       return this.payments.reduce((sum, p) => sum + p.amount, 0)
@@ -123,11 +137,21 @@ export default {
     },
   },
   methods: {
+    initDefaultType() {
+      const list = Array.isArray(this.types) ? this.types : []
+      if (list.includes('Efectivo')) {
+        this.type = 'Efectivo'
+      } else {
+        this.type = list[0] || ''
+      }
+    },
     add() {
       const nuevo = [...this.payments, { type: this.type, amount: this.amount }]
       this.$emit('update:payments', nuevo) 
       this.type = ''
       this.amount = 0
+      // Tras agregar, deja preseleccionado de nuevo 'Efectivo' (o primer tipo)
+      this.initDefaultType()
     },
     formatCurrency(val) {
       return new Intl.NumberFormat('es-PY', {
