@@ -12,7 +12,6 @@
         <table class="table mb-0">
           <thead>
             <tr>
-              <th style="width: 80px;">ID</th>
               <th>Nombre</th>
               <th>Descripción</th>
               <th style="width: 200px;">Acciones</th>
@@ -20,13 +19,12 @@
           </thead>
           <tbody>
             <tr v-if="loading">
-              <td colspan="4" class="text-center py-4">Cargando...</td>
+              <td colspan="3" class="text-center py-4">Cargando...</td>
             </tr>
             <tr v-else-if="error">
-              <td colspan="4" class="text-danger py-4">{{ error }}</td>
+              <td colspan="3" class="text-danger py-4">{{ error }}</td>
             </tr>
             <tr v-else v-for="u in units" :key="unitKey(u)">
-              <td>{{ unitId(u) }}</td>
               <td>{{ u.nombre }}</td>
               <td>{{ u.descripcion }}</td>
               <td>
@@ -35,7 +33,7 @@
               </td>
             </tr>
             <tr v-if="!loading && !error && units.length === 0">
-              <td colspan="4" class="text-center py-4">Sin unidades</td>
+              <td colspan="3" class="text-center py-4">Sin unidades</td>
             </tr>
           </tbody>
         </table>

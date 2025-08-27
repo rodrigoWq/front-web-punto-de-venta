@@ -3,14 +3,6 @@
   <AppNavbar/>
   <div class="d-flex flex-column">	
     <AppHeader title="Sistema de Inventario" class="header-compact px-4 border-bottom">
-      <template #buttons>
-        <button class="btn btn-outline-secondary me-2">
-          <i class="bi bi-bell"></i> Alertas (3)
-        </button>
-        <button class="btn btn-outline-secondary">
-          <i class="bi bi-gear"></i> Configuración
-        </button>
-      </template>
     </AppHeader>
 
     <div class="d-flex flex-grow-1">
