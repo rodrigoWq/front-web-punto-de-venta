@@ -159,8 +159,9 @@ const categories = ref([])
 const selectedCategory = ref('')
 const loading = ref(false)
 
-// Cargar productos desde el backend
-async function loadProducts() {
+// Cargar productos desde el backend (con opción para silenciar alertas)
+async function loadProducts(options = {}) {
+  const { suppressAlert = false } = options || {}
   loading.value = true
   try {
     const response = await apiService.get('/api/products')
@@ -194,37 +195,15 @@ async function loadProducts() {
     console.log('[ProductosView] Productos cargados:', products.value.length)
   } catch (error) {
     console.error('Error cargando productos:', error)
-    alert('Error al cargar los productos. Revise la consola.')
+    if (!suppressAlert) {
+      alert('Error al cargar los productos. Revise la consola.')
+    }
   } finally {
     loading.value = false
   }
 }
 
-// Crear producto
-async function createProduct(productData) {
-  try {
-    const response = await apiService.post('/api/products', productData)
-    console.log('Producto creado:', response.data)
-    await loadProducts() // Recargar lista
-    return response.data
-  } catch (error) {
-    console.error('Error creando producto:', error)
-    throw error
-  }
-}
-
-// Actualizar producto
-async function updateProduct(id, productData) {
-  try {
-    const response = await apiService.put(`/api/products/${id}`, productData)
-    console.log('Producto actualizado:', response.data)
-    await loadProducts() // Recargar lista
-    return response.data
-  } catch (error) {
-    console.error('Error actualizando producto:', error)
-    throw error
-  }
-}
+// Las operaciones de crear/editar se realizan en el modal y aquí solo se refresca la lista.
 
 // Eliminar producto
 async function deleteProduct(id) {
@@ -270,20 +249,16 @@ function openProductModal(prod = null) {
   showProductModal.value = true
 }
 
-async function onProductRegistered(productData) {
+async function onProductRegistered() {
+  // El modal ya realizó el POST/PUT correctamente.
+  // Sólo recargar lista en silencio y cerrar modal.
   try {
-    if (editingProduct.value) {
-      // Editar producto existente
-      await updateProduct(editingProduct.value.id, productData)
-    } else {
-      // Crear nuevo producto
-      await createProduct(productData)
-    }
-    showProductModal.value = false
-    editingProduct.value = null
-  } catch (error) {
-    alert('Error al guardar el producto. Revise la consola para más detalles.')
+    await loadProducts({ suppressAlert: true })
+  } catch (e) {
+    console.warn('Producto guardado, pero falló la recarga de productos:', e)
   }
+  showProductModal.value = false
+  editingProduct.value = null
 }
 
  const currentPage  = ref(1)

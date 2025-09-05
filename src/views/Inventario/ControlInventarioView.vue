@@ -594,7 +594,7 @@ const filteredLoadItems = computed(() => {
 
 function unidadesPorPresentacion(row) {
   const sel = row.presentaciones?.find(p => p._key === row.presentacionSeleccionada)
-  return sel?.unidades_por_presentacion ? `${sel.unidades_por_presentacion} unidades` : '—'
+  return sel?.unidades_por_presentacion ? `${sel.unidades_por_presentacion} unidades` : '1'
 }
 
 function finalizarCarga() {
