@@ -10,7 +10,7 @@
     </div>
 
     <!-- Tabs -->
-    <ul class="nav nav-tabs mb-3">
+  <ul class="nav nav-tabs mb-3">
       <li class="nav-item">
         <button class="nav-link" :class="{ active: activeTab==='new' }" type="button" @click="activeTab='new'">Nuevo control</button>
       </li>
@@ -18,7 +18,7 @@
         <button class="nav-link" :class="{ active: activeTab==='load' }" type="button" @click="switchToLoad()">Cargar conteo</button>
       </li>
       <li class="nav-item">
-        <button class="nav-link disabled" type="button" tabindex="-1" aria-disabled="true">Revisión/Ajustes</button>
+    <button class="nav-link" :class="{ active: activeTab==='review' }" type="button" @click="switchToReview()">Revisión/Ajustes</button>
       </li>
     </ul>
 
@@ -160,7 +160,7 @@
     </div>
 
     <!-- Tab: Cargar conteo -->
-    <div v-else-if="activeTab==='load'" class="row g-4">
+  <div v-else-if="activeTab==='load'" class="row g-4">
       <div class="col-12">
         <div class="card mb-3">
           <div class="card-body">
@@ -251,6 +251,109 @@
 
             <div class="d-flex justify-content-end mt-3">
               <button class="btn btn-dark" :disabled="!loadItems.length" @click="finalizarCarga">Finalizar carga</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab: Revisión/Ajustes -->
+    <div v-else-if="activeTab==='review'" class="row g-4">
+      <div class="col-12">
+        <div class="card mb-3">
+          <div class="card-body">
+            <div class="d-flex align-items-center mb-2">
+              <h5 class="fw-bold mb-0 me-3">Controles</h5>
+              <small class="text-muted">Selecciona un control para revisar</small>
+            </div>
+
+            <div v-if="reviewControlsLoading" class="text-muted">Cargando controles...</div>
+            <div v-else>
+              <div v-if="!reviewControls.length" class="text-muted">No hay controles disponibles.</div>
+              <div v-else class="list-group list-group-flush">
+                <div class="list-group-item d-flex justify-content-between align-items-center flex-wrap" v-for="ctl in reviewControls" :key="'r_'+ctl.control_id">
+                  <div class="d-flex align-items-center gap-3 flex-wrap">
+                    <div class="fw-bold">Control #{{ ctl.codigo_control }}</div>
+                    <span class="badge text-uppercase" :class="badgeClass(ctl.estado_control)">{{ ctl.estado_control }}</span>
+                    <span class="text-muted">{{ ctl.deposito_nombre }}</span>
+                    <span class="text-muted">{{ formatDate(ctl.fecha) }}</span>
+                  </div>
+                  <div class="d-flex gap-2">
+                    <button class="btn btn-link btn-sm" @click="revisarPlanilla(ctl)">Revisar Planilla</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Revisión de Diferencias -->
+      <div class="col-12">
+        <div class="card">
+          <div class="card-body">
+            <h5 class="fw-bold">Revisión de Diferencias</h5>
+            <small class="text-muted d-block mb-3">Revise las diferencias y tome decisiones por cada item</small>
+
+            <div class="table-responsive" v-if="reviewItems.length">
+              <table class="table align-middle">
+                <thead class="table-light">
+                  <tr>
+                    <th>Producto</th>
+                    <th>U. base</th>
+                    <th>Sistema</th>
+                    <th>Físico</th>
+                    <th>Diferencia</th>
+                    <th>Decisión</th>
+                    <th>Vencimiento</th>
+                    <th>Motivo</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="row in reviewItems" :key="row.producto_id">
+                    <td>
+                      <div class="fw-semibold">{{ row.nombre }}</div>
+                      <small class="text-muted">{{ row.codigo_barra || '-' }}</small>
+                    </td>
+                    <td>{{ row.unidad_base }}</td>
+                    <td>{{ row.sistema }}</td>
+                    <td>{{ row.fisico }}</td>
+                    <td>
+                      <span :class="['badge', diffBadgeClass(row.diferencia)]">{{ signed(row.diferencia) }}</span>
+                    </td>
+                    <td style="min-width: 160px;">
+                      <select class="form-select form-select-sm" v-model="row.decision">
+                        <option value="PENDIENTE">PENDIENTE</option>
+                        <option value="ACEPTAR">ACEPTAR</option>
+                        <option value="RECHAZAR">RECHAZAR</option>
+                        <option value="AJUSTAR">AJUSTAR</option>
+                      </select>
+                    </td>
+                    <td style="min-width: 160px;">
+                      <input type="date" class="form-control form-control-sm" :value="earliestIngreso(row.vencimientos)" disabled />
+                    </td>
+                    <td style="min-width: 160px;">
+                      <input type="text" class="form-control form-control-sm" placeholder="Motivo..." v-model.trim="row.motivo" />
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div v-else class="text-muted">Selecciona un control y pulsa "Revisar Planilla".</div>
+
+            <div class="d-flex gap-2 mt-3">
+              <button class="btn btn-outline-secondary btn-sm" :disabled="!reviewItems.length" @click="marcarTodos('ACEPTAR')">Marcar todos con diferencia = ACEPTAR AJUSTE</button>
+              <button class="btn btn-outline-secondary btn-sm" :disabled="!reviewItems.length" @click="marcarTodos('RECHAZAR')">Marcar todos = RECHAZAR</button>
+              <div class="ms-auto d-flex gap-2">
+                <button class="btn btn-outline-secondary" :disabled="!canSaveReview" @click="guardarRevision">
+                  <span v-if="savingReview" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                  Guardar revisión
+                </button>
+                <button class="btn btn-dark" :disabled="!canExecuteAdjustments" @click="ejecutarAjustes">
+                  <span v-if="executingAdj" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                  Ejecutar ajustes
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -618,5 +721,123 @@ function badgeClass(estado) {
   if (e.includes('CARG')) return 'bg-dark text-white'
   if (e.includes('PEND')) return 'bg-warning'
   return 'bg-success'
+}
+
+// ---------- Revisión/Ajustes (Tab 3) ----------
+const reviewControls = ref([])
+const reviewControlsLoading = ref(false)
+const reviewHeader = ref(null)
+const reviewItems = ref([])
+const savingReview = ref(false)
+const executingAdj = ref(false)
+
+function switchToReview() {
+  activeTab.value = 'review'
+  if (!reviewControls.value.length) fetchReviewControls()
+}
+
+async function fetchReviewControls() {
+  reviewControlsLoading.value = true
+  try {
+    const { data } = await InventoryControlService.getMyFiscalizations()
+    reviewControls.value = data?.controls || []
+    if (!Array.isArray(reviewControls.value)) reviewControls.value = []
+  } catch (e) {
+    reviewControls.value = []
+  } finally {
+    reviewControlsLoading.value = false
+  }
+}
+
+async function revisarPlanilla(ctl) {
+  try {
+    const { data } = await InventoryControlService.getRevisionData(ctl.control_id)
+    reviewHeader.value = data?.header || null
+    const items = Array.isArray(data?.items) ? data.items : []
+    // Normalizar para edición local
+    reviewItems.value = items.map(it => ({
+      ...it,
+      decision: it.decision || 'PENDIENTE',
+      motivo: it.motivo || ''
+    }))
+  } catch (e) {
+    reviewHeader.value = null
+    reviewItems.value = []
+  }
+}
+
+function earliestIngreso(vencs) {
+  const arr = Array.isArray(vencs) ? vencs : []
+  if (!arr.length) return ''
+  // Seleccionar la fecha de ingreso más antigua
+  const min = arr.reduce((acc, v) => {
+    const current = new Date(v.ingreso)
+    return !acc || current < acc ? current : acc
+  }, null)
+  if (!min) return ''
+  try {
+    return min.toISOString().slice(0, 10)
+  } catch {
+    return ''
+  }
+}
+
+function diffBadgeClass(diff) {
+  if (diff > 0) return 'bg-success'
+  if (diff < 0) return 'bg-danger'
+  return 'bg-secondary'
+}
+
+function signed(n) {
+  if (n > 0) return `+${n}`
+  return String(n)
+}
+
+function marcarTodos(tipo) {
+  if (!reviewItems.value.length) return
+  reviewItems.value = reviewItems.value.map(it => ({
+    ...it,
+    decision: tipo
+  }))
+}
+
+const canSaveReview = computed(() => !!(reviewHeader.value && reviewItems.value.length))
+const canExecuteAdjustments = computed(() => !!(reviewHeader.value && reviewItems.value.length))
+
+async function guardarRevision() {
+  if (!canSaveReview.value) return
+  savingReview.value = true
+  try {
+    const decisiones = reviewItems.value.map(it => ({
+      producto_id: it.producto_id,
+      decision: it.decision,
+      motivo: it.motivo || ''
+    }))
+    const { data } = await InventoryControlService.reviewControl(reviewHeader.value.control_id, decisiones)
+    window.alert(data?.message || 'Control revisado')
+    // refrescar lista de controles para reflejar estado
+    fetchReviewControls()
+  } catch (e) {
+    // handled globally
+  } finally {
+    savingReview.value = false
+  }
+}
+
+async function ejecutarAjustes() {
+  if (!canExecuteAdjustments.value) return
+  executingAdj.value = true
+  try {
+    const { data } = await InventoryControlService.executeAdjustments(reviewHeader.value.control_id)
+    window.alert(data?.message || 'Ajustes ejecutados')
+    // Tras ajustar, refrescar controles y limpiar items actuales
+    fetchReviewControls()
+    reviewItems.value = []
+    reviewHeader.value = null
+  } catch (e) {
+    // handled globally
+  } finally {
+    executingAdj.value = false
+  }
 }
 </script>
