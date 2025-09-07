@@ -224,8 +224,8 @@
                 <tbody>
                   <tr v-for="row in filteredLoadItems" :key="row.producto_id">
                     <td>
-                      <div class="fw-semibold">{{ row.producto_nombre }}</div>
-                      <small class="text-muted">{{ row.codigo_barras || row.codigo_producto || '-' }}</small>
+                      <div class="fw-semibold">{{ row.nombre }}</div>
+                      <small class="text-muted">{{ row.codigo_barra || row.codigo_producto || '-' }}</small>
                     </td>
                     <td>{{ row.unidad_base }}</td>
                     <td>{{ row.categoria_nombre }}</td>

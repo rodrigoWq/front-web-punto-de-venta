@@ -4,7 +4,7 @@
         <div class="modal-content">
           <div class="modal-header">
             <h5 class="modal-title" :id="modalLabelId">{{ title }}</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" @click="$emit('close')"></button>
           </div>
           <div class="modal-body">
             <slot name="body"></slot>
@@ -31,6 +31,7 @@
         required: true
       }
     },
+    emits: ['close'],
     computed: {
       modalLabelId() {
         return `${this.modalId}Label`;
