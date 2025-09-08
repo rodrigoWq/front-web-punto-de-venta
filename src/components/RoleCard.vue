@@ -80,9 +80,13 @@ export default {
     },
     onModalSaved(newPermIds) {
       // actualizar la lista de permisos mostrada en el card
-      this.permisos = this.allPermissions.filter(p =>
-        newPermIds.includes(p.id_permiso || p.id)
-      )
+      this.permisos = this.allPermissions
+        .filter(p => newPermIds.includes(p.permiso_id ?? p.id_permiso))
+        .map(p => ({
+          id_permiso: p.permiso_id ?? p.id_permiso,
+          nombre_permiso: p.nombre_permiso,
+          descripcion: p.descripcion
+        }))
       // notificar al padre si es necesario
       this.$emit('update-permissions', { rolId: this.rol.rol_id, permisos: newPermIds })
       this.showModal = false
