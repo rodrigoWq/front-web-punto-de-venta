@@ -259,11 +259,11 @@ export default {
       }
     },
     money(n) {
-      const num = Number(n || 0)
+      const num = Math.ceil(Number(n || 0))
       return num.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })
     },
     fmt(n) {
-      const num = Number(n || 0)
+      const num = Math.ceil(Number(n || 0))
       return num.toLocaleString()
     }
   }

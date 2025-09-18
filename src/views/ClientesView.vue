@@ -400,6 +400,14 @@ export default {
         console.log(`Línea de crédito actualizada para ${this.clienteActual.nombre}: ${this.creditoMonto}`);
         this.cerrarModalCredito();
       }
+    },
+    formateaNumero(n) {
+      if (n === null || n === undefined) return '';
+      return Number(Math.round(n)).toLocaleString('es-PY', { minimumFractionDigits: 0 });
+    },
+    redondearHaciaArriba(valor) {
+      if (valor === null || valor === undefined || isNaN(valor)) return 0;
+      return Math.round(Number(valor));
     }
   },
 

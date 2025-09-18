@@ -28,17 +28,17 @@ export default class Producto {
     const base = this.cantidad * this.precio_unitario_neto;
     if (this.tipoImpuesto === 'iva_10') {
       // Se asume que el monto de IVA se calcula dividiendo la base entre 11 (ya que la base es el 90.9%)
-      this.iva10 = base / 11;
+      this.iva10 = Math.round(base / 11);
       this.iva5 = 0;
       this.exenta = 0;
     } else if (this.tipoImpuesto === 'iva_5') {
       // Si el 5% se calcula, se hace de forma similar. (Adapta la fórmula según tu necesidad)
-      this.iva5 = base / 21;  // por ejemplo
+      this.iva5 = Math.round(base / 21);  // por ejemplo
       this.iva10 = 0;
       this.exenta = 0;
     } else {
       // Exenta: toda la base va a exenta.
-      this.exenta = base;
+      this.exenta = Math.round(base);
       this.iva10 = 0;
       this.iva5 = 0;
     }
@@ -46,7 +46,7 @@ export default class Producto {
   }
   
   calcularTotal() {
-    this.totalProducto = this.cantidad * this.precio_unitario_neto;
+    this.totalProducto = Math.round(this.cantidad * this.precio_unitario_neto);
     return this.totalProducto;
   }
 }

@@ -100,23 +100,23 @@
           </td>
           <td>
             <input v-if="productoEditandoIndex === index" v-model.number="productoData.precio_unitario_neto" type="number" class="form-control form-control-sm" />
-            <span v-else>{{ producto.precio_unitario_neto  }}</span>
+            <span v-else>{{ formateaNumero(producto.precio_unitario_neto) }}</span>
           </td>
           <td>
             <span v-if="producto.tipo_iva_id === 3 || producto.tipoImpuesto === 'exenta'">
-              {{ producto.cantidad * producto.precio_unitario_neto }}
+              {{ formateaNumero(redondearHaciaArriba(producto.cantidad * producto.precio_unitario_neto)) }}
             </span>
             <span v-else></span>
           </td>
           <td>
             <span v-if="producto.tipo_iva_id === 2">
-              {{ producto.cantidad * producto.precio_unitario_neto }}
+              {{ formateaNumero(redondearHaciaArriba(producto.cantidad * producto.precio_unitario_neto)) }}
             </span>
             <span v-else></span>
           </td>
           <td>
             <span v-if="producto.tipo_iva_id === 1 || producto.tipo_iva_id === 10">
-              {{ producto.cantidad * producto.precio_unitario_neto }}
+              {{ formateaNumero(redondearHaciaArriba(producto.cantidad * producto.precio_unitario_neto)) }}
             </span>
             <span v-else></span>
           </td>
@@ -141,22 +141,22 @@
           <div class="row g-3">
             <div class="col-md-6">
               <label for="iva_5" class="form-label">Liquidación del IVA 5%</label>
-              <input type="number" class="form-control" id="iva_5" :value="factura.totalIva5" placeholder="IVA 5%" readonly  />
+              <input type="text" class="form-control" id="iva_5" :value="formateaNumero(redondearHaciaArriba(factura.totalIva5))" placeholder="IVA 5%" readonly  />
             </div>
             <div class="col-md-6">
               <label for="iva_10" class="form-label">Liquidación del IVA 10%</label>
-              <input type="number" class="form-control" id="iva_10" :value="factura.totalIva10" placeholder="IVA 10%" readonly  />
+              <input type="text" class="form-control" id="iva_10" :value="formateaNumero(redondearHaciaArriba(factura.totalIva10))" placeholder="IVA 10%" readonly  />
             </div>
           </div>
           <h3>Totales</h3>
           <div class="row g-3">
             <div class="col-md-6">
               <label for="total_factura" class="form-label">Total IVA</label>
-              <input type="number" id="total_factura" class="form-control" :value="factura.totalFactura" placeholder="Total Factura IVA" readonly />
+              <input type="text" id="total_factura" class="form-control" :value="formateaNumero(redondearHaciaArriba(factura.totalFactura))" placeholder="Total Factura IVA" readonly />
             </div>
             <div class="col-md-6">
               <label for="monto_total" class="form-label">Monto Total</label>
-              <input type="number" id="monto_total" class="form-control" :value="montoTotal" placeholder="Monto Total" readonly />
+              <input type="text" id="monto_total" class="form-control" :value="formateaNumero(redondearHaciaArriba(montoTotal))" placeholder="Monto Total" readonly />
             </div>
           </div>
 
@@ -281,7 +281,7 @@ export default {
           this.factura.fechaEmision = cabecera.fecha_emision ? cabecera.fecha_emision.split('T')[0] : '';
           this.factura.timbrado = cabecera.timbrado.toString();
           this.factura.nroFactura = cabecera.nro_comprobante.toString();
-          this.factura.condicionVenta = cabecera.credito_contado.toLowerCase() === 'contado' ? 'contado' : 'credito';
+          this.factura.condicionVenta = cabecera.credito_contado.toUpperCase() === 'CONTADO' ? 'CONTADO' : 'CONTADO';
           this.factura.direccion = cabecera.direccion || '';
           this.factura.tipo_moneda = cabecera.tipo_moneda || 'USD';
           
@@ -337,7 +337,7 @@ export default {
         this.nuevoProducto = { codigo: '', descripcion: '', valorUnitario: 0, tipoImpuesto: 'exenta' };
       },
       calcularImpuestoPorTipo() {
-        const subtotal = Number(this.productoData.cantidad) * Number(this.productoData.precio_unitario_neto);
+        const subtotal = Math.round(Number(this.productoData.cantidad) * Number(this.productoData.precio_unitario_neto));
         if (this.productoData.tipo_iva_id === 'exenta') {
           this.productoData.exenta = subtotal;
           this.productoData.iva5   = 0;
@@ -447,7 +447,7 @@ export default {
               nro_nota_remision: nroNotaRemision,
               fecha_emision: this.factura.fechaEmision ? new Date(this.factura.fechaEmision).toISOString() : null,
               tipo_moneda: this.factura.tipo_moneda || 'USD',
-              credito_contado: this.factura.condicionVenta === 'contado' ? 'CONTADO' : 'CREDITO',
+              credito_contado: this.factura.condicionVenta === 'CONTADO' ? 'CONTADO' : 'CONTADO',
               tipo_documento: 'RUC',
               nro_documento: this.selectedProviderInput,
               nombre_razon_social: this.factura.razonSocial,
@@ -487,6 +487,14 @@ export default {
         } catch (error) {
           console.error('Error al guardar la factura:', error);
         }
+      },
+      formateaNumero(n) {
+        if (n === null || n === undefined) return '';
+        return Number(n).toLocaleString('es-PY', { minimumFractionDigits: 0 });
+      },
+      redondearHaciaArriba(valor) {
+        if (valor === null || valor === undefined || isNaN(valor)) return 0;
+        return Math.round(Number(valor));
       }
   
 

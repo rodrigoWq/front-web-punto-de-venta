@@ -34,7 +34,7 @@ export default class Factura {
       sumIva10  += Number(prod.iva10)  || 0;
     });
 
-    const r = n => Number(n.toFixed(2))
+    const r = n => Math.round(Number(n))
   
     this.totalIvaExenta = r(sumExenta);
     this.totalIva5      = r(sumIva5);

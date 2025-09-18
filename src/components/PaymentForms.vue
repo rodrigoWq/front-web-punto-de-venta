@@ -157,7 +157,7 @@ export default {
       return new Intl.NumberFormat('es-PY', {
         style: 'currency',
         currency: 'PYG'
-      }).format(val)
+      }).format(Math.round(Number(val || 0)))
     },
     /** Elimina el pago en la posición indicada */
     removePayment(index) {

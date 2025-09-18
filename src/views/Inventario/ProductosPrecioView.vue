@@ -74,9 +74,9 @@
           <tbody>
             <tr v-for="prod in pagedProducts" :key="prod.producto_id">
               <td>{{ prod.nombre }}</td>
-              <td class="text-end">{{ prod.precio_venta ?? 'Sin precio' }}</td>
+              <td class="text-end">{{ prod.precio_venta ? formateaNumero(prod.precio_venta) : 'Sin precio' }}</td>
               <td>{{ prod.categoria }}</td>
-              <td class="text-end">{{ prod.precio_ultima_compra ?? 'Sin precio' }}</td>
+              <td class="text-end">{{ prod.precio_ultima_compra ? formateaNumero(prod.precio_ultima_compra) : 'Sin precio' }}</td>
               <td class="text-end">
                 <button class="btn btn-success btn-sm me-1" @click="openPriceModal(prod)">
                   $ Precio Venta
@@ -399,6 +399,10 @@ export default {
       const mm   = (`0${d.getMonth()+1}`).slice(-2);
       const dd   = (`0${d.getDate()}`).slice(-2);
       return `${yyyy}-${mm}-${dd}`;
+    },
+    formateaNumero(n) {
+      if (n === null || n === undefined) return '';
+      return Number(Math.round(n)).toLocaleString('es-PY', { minimumFractionDigits: 0 });
     }
   },
 

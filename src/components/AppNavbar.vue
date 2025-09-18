@@ -192,7 +192,7 @@ export default {
                 <strong>Categoría:</strong> ${producto.categoria_nombre}<br>
                 <strong>Descripción:</strong> ${producto.descripcion ?? '—'}<br>
                 <strong>Disponibilidad:</strong> ${producto.stock_disponible > 0 ? 'Disponible' : 'Sin stock'}<br>
-                <strong>Precio:</strong> $${(producto.precio_venta_actual ?? 0)}<br>
+                <strong>Precio:</strong> ${this.formateaNumero(producto.precio_venta_actual ?? 0)} ₲<br>
                 <strong>Unidad de Medida:</strong> ${producto.unidad_medida_nombre}<br>
                 <strong>IVA:</strong> ${producto.porcentaje_iva}%<br>
 
@@ -267,7 +267,11 @@ export default {
         return new Intl.NumberFormat("es-ES", {
           style: "currency",
           currency: "USD"
-        }).format(value);
+        }).format(Math.round(Number(value || 0)));
+      },
+      formateaNumero(n) {
+        if (n === null || n === undefined) return '';
+        return Number(Math.round(n)).toLocaleString('es-PY', { minimumFractionDigits: 0 });
       },
       async obtenerVentasEnEspera() {
         try {

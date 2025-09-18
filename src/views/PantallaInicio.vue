@@ -44,7 +44,7 @@
             <td>{{ producto.nombre }}</td>
             <td>{{ producto.cantidad }}</td>
             <td>{{ producto.unidad_medida }}</td>
-            <td>{{ String(producto.precio).split('.')[0] }}</td>
+            <td>{{ formateaNumero(producto.precio) }}</td>
             <td>
               <button type="button" class="btn btn-danger btn-sm" @click="eliminarProducto(index)">
                 <i class="bi bi-trash"></i>
@@ -138,9 +138,9 @@ export default {
   },
   computed: {
     totalAmount() {
-      return this.productos.reduce((acc, producto) => {
+      return Math.round(this.productos.reduce((acc, producto) => {
         return acc + producto.cantidad * producto.precio;
-      }, 0);
+      }, 0));
     },
     productosPaginados() {
     const start = (this.paginaActual - 1) * this.itemsPorPagina;
@@ -397,6 +397,10 @@ export default {
       if (n === null || n === undefined) return ''
       return Number(n).toLocaleString('es-PY', { minimumFractionDigits: 0 })
     },
+    redondearHaciaArriba(valor) {
+      if (valor === null || valor === undefined || isNaN(valor)) return 0;
+      return Math.round(Number(valor));
+    }
   },
   mounted() {
     this.userName = localStorage.getItem("user_name") || '';

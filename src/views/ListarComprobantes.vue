@@ -31,7 +31,7 @@
           <td>{{ comprobante.nro_comprobante || 'N/A' }}</td>
           <td>{{ comprobante.nro_documento || 'N/A' }}</td>
           <td>{{ comprobante.fecha_emision ? comprobante.fecha_emision.split('T')[0] : 'N/A' }}</td>
-          <td>{{ Math.trunc(comprobante.total_iva_incluido) || Math.trunc(comprobante.total_sin_iva) || 'N/A' }}</td>
+          <td>{{ formatearMonto(Math.trunc(comprobante.total_iva_incluido) || Math.trunc(comprobante.total_sin_iva)) || 'N/A' }}</td>
           <td>{{ comprobante.estado }}</td>
 
           <td>Factura</td>
@@ -110,12 +110,8 @@ export default {
       this.paginaActual = page;
     },
     formatearMonto(monto) {
-      if (monto === undefined || monto === null) return "0,00";
-      let partes = monto.toString().split('.');
-      let parteEntera = partes[0];
-      let parteDecimal = partes[1] ? ',' + partes[1] : '';
-      parteEntera = parteEntera.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-      return parteEntera + parteDecimal;
+      if (monto === undefined || monto === null) return "0";
+      return Number(Math.round(monto)).toLocaleString('es-PY', { minimumFractionDigits: 0 });
     },
     actualizarListaComprobantes() {
       this.paginaActual = 1;
