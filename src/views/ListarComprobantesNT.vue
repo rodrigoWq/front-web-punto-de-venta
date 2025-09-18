@@ -9,7 +9,7 @@
       </template>
     </AppHeader>
 
-    <AppFilter v-model="searchInput" placeholder="Buscar por número de nota o RUC..." customClasses="mt-4 mb-4">
+    <AppFilter v-model="searchInput" placeholder="Buscar por número de nota o proveedor..." customClasses="mt-4 mb-4">
     </AppFilter>
 
     <!-- Tabla de Comprobantes -->
@@ -18,7 +18,7 @@
       <thead>
         <tr>
           <th>N° de Nota de Remisión</th>
-          <th>RUC</th>
+          <th>Proveedor</th>
           <th>Fecha</th>
           <th>Estado</th>
           <th>Tipo de Comprobante</th>
@@ -28,7 +28,7 @@
       <tbody>
         <tr v-for="(comprobante, index) in comprobantesFiltradosPaginados" :key="index">
           <td>{{ comprobante.nro_nota_remision || 'N/A' }}</td>
-          <td>{{ comprobante.nro_documento || 'N/A' }}</td>
+          <td>{{ comprobante.nombre_razon_social || 'N/A' }}</td>
           <td>{{ comprobante.fecha_emision ? comprobante.fecha_emision.split('T')[0] : 'N/A' }}</td>
           <td>{{ comprobante.estado }}</td>
           <td>Nota de Remisión</td>
@@ -90,8 +90,8 @@
           }
           return this.comprobantes.filter(comprobante => {
             const numero = (comprobante.nro_nota_remision || '').toLowerCase();
-            const ruc = (comprobante.nro_documento || '').toLowerCase();
-            return numero.includes(this.searchInput.toLowerCase()) || ruc.includes(this.searchInput.toLowerCase());
+            const proveedor = (comprobante.nombre_razon_social || '').toLowerCase();
+            return numero.includes(this.searchInput.toLowerCase()) || proveedor.includes(this.searchInput.toLowerCase());
           });
         },
         comprobantesFiltradosPaginados() {

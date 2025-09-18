@@ -8,7 +8,7 @@
     </AppHeader>
 
 
-    <AppFilter v-model="searchInput" placeholder="Buscar por número de comprobante o RUC..." customClasses="mt-4 mb-4">
+    <AppFilter v-model="searchInput" placeholder="Buscar por número de comprobante o proveedor..." customClasses="mt-4 mb-4">
     </AppFilter>
 
 
@@ -18,7 +18,7 @@
       <thead>
         <tr>
           <th>N° de Comprobante</th>
-          <th>RUC</th>
+          <th>Proveedor</th>
           <th>Fecha</th>
           <th>Monto Total</th>
           <th>Estado</th>
@@ -29,7 +29,7 @@
       <tbody>
         <tr v-for="(comprobante, index) in comprobantesFiltradosPaginados" :key="index">
           <td>{{ comprobante.nro_comprobante || 'N/A' }}</td>
-          <td>{{ comprobante.nro_documento || 'N/A' }}</td>
+          <td>{{ comprobante.nombre_razon_social || 'N/A' }}</td>
           <td>{{ comprobante.fecha_emision ? comprobante.fecha_emision.split('T')[0] : 'N/A' }}</td>
           <td>{{ formatearMonto(Math.trunc(comprobante.total_iva_incluido) || Math.trunc(comprobante.total_sin_iva)) || 'N/A' }}</td>
           <td>{{ comprobante.estado }}</td>
@@ -76,8 +76,8 @@ export default {
     comprobantesFiltrados() {
       return this.comprobantes.filter(comprobante => {
         const numero = (comprobante.nro_comprobante || '').toLowerCase();
-        const ruc = (comprobante.nro_documento || '').toLowerCase();
-        return numero.includes(this.searchInput.toLowerCase()) || ruc.includes(this.searchInput.toLowerCase());
+        const proveedor = (comprobante.nombre_razon_social || '').toLowerCase();
+        return numero.includes(this.searchInput.toLowerCase()) || proveedor.includes(this.searchInput.toLowerCase());
       });
     },
     comprobantesFiltradosPaginados() {

@@ -19,7 +19,7 @@
           <select v-model="typeFilter" class="form-select">
             <option value="all">Todos los tipos</option>
             <option value="COBRO">COBRO</option>
-            <option value="PAGO">PAGO</option>
+            <option value="PAGO">PAGO A PROVEEDORES</option>
             <option value="INGRESO_VARIO">INGRESO_VARIO</option>
             <option value="EGRESO_VARIO">EGRESO_VARIO</option>
             <option value="APERTURA">APERTURA</option>
@@ -60,11 +60,11 @@
             <tr v-for="mov in displayedMovements" :key="mov.id">
               <td>{{ mov.id }}</td>
               <td>
-                <span :class="['badge', isPositive(mov) ? 'bg-success' : 'bg-danger']">{{ mov.tipo_movimiento }}</span>
+                <span :class="['badge', getBadgeClass(mov.tipo_movimiento)]">{{ getDisplayMovementType(mov.tipo_movimiento) }}</span>
               </td>
               <td>{{ mov.tipo_operacion }}</td>
               <td>{{ mov.forma || '-' }}</td>
-              <td class="text-end" :class="isPositive(mov) ? 'text-success' : 'text-danger'">{{ isPositive(mov) ? '+' : '-' }}Gs. {{ formateaNumero(mov.monto) }}</td>
+              <td class="text-end" :class="getMontoClass(mov)">{{ getMontoPrefix(mov) }}Gs. {{ formateaNumero(mov.monto) }}</td>
               <td>{{ mov.descripcion }}</td>
               <td><span v-if="mov.comprobante" class="badge bg-light text-dark">{{ mov.comprobante }}</span></td>
               <td>{{ mov.modulo }}</td>
@@ -135,6 +135,47 @@ const displayedMovements = computed(() => {
 
 function isPositive(mov) {
   return mov.tipo_movimiento === 'COBRO' || mov.tipo_movimiento === 'INGRESO_VARIO'
+}
+
+function isNegative(mov) {
+  return mov.tipo_movimiento === 'PAGO' || mov.tipo_movimiento === 'EGRESO_VARIO'
+}
+
+
+function getMontoClass(mov) {
+  if (isPositive(mov)) return 'text-success'
+  if (isNegative(mov)) return 'text-danger'
+  return 'text-secondary' // neutral for APERTURA
+}
+
+function getMontoPrefix(mov) {
+  if (isPositive(mov)) return '+'
+  if (isNegative(mov)) return '-'
+  return '' // no prefix for APERTURA
+}
+
+function getBadgeClass(tipoMovimiento) {
+  switch (tipoMovimiento) {
+    case 'COBRO':
+    case 'INGRESO_VARIO':
+      return 'bg-success'
+    case 'PAGO':
+    case 'EGRESO_VARIO':
+      return 'bg-danger'
+    case 'APERTURA':
+      return 'bg-secondary'
+    default:
+      return 'bg-secondary'
+  }
+}
+
+function getDisplayMovementType(tipoMovimiento) {
+  switch (tipoMovimiento) {
+    case 'PAGO':
+      return 'PAGO A PROVEEDORES'
+    default:
+      return tipoMovimiento
+  }
 }
 
 function formateaNumero(n) {

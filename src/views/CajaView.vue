@@ -26,7 +26,7 @@
               <li>
                 <a class="dropdown-item" href="#">
                   <router-link class="nav-link" to="/pago-factura">
-                    <i class="bi bi-graph-down text-danger me-2"></i>Pago de Factura
+                    <i class="bi bi-graph-down text-danger me-2"></i>Pago a Proveedores
                   </router-link>
                 </a>
               </li>
@@ -121,10 +121,11 @@
       </div>
       <div v-for="mov in movimientosRecientes" :key="mov.id" class="recent-mov-card mb-2 p-3 d-flex align-items-center justify-content-between rounded border">
         <div class="d-flex align-items-center">
-            <span v-if="isPositive(mov)" class="me-2 text-success fs-4"><i class="bi bi-graph-up"></i></span>
-            <span v-else class="me-2 text-danger fs-4"><i class="bi bi-graph-down"></i></span>
+            <span v-if="isPositive(mov)" class="me-2 fs-4" :class="getMovementIconClass(mov)"><i class="bi bi-graph-up"></i></span>
+            <span v-else-if="isNegative(mov)" class="me-2 fs-4" :class="getMovementIconClass(mov)"><i class="bi bi-graph-down"></i></span>
+            <span v-else class="me-2 fs-4" :class="getMovementIconClass(mov)"></span>
           <div>
-              <span class="fw-bold" :class="isPositive(mov) ? 'text-success' : 'text-danger'">
+              <span class="fw-bold" :class="getMovementIconClass(mov)">
                 {{ movLabel(mov) }}
                 <span v-if="mov.comprobante">#{{ mov.comprobante }}</span>
               </span>
@@ -133,8 +134,8 @@
           </div>
         </div>
         <div class="text-end">
-          <div :class="isPositive(mov) ? 'text-success fw-bold' : 'text-danger fw-bold'">
-            {{ isPositive(mov) ? '+' : '-' }}Gs. {{ formateaNumero(mov.monto) }}
+          <div :class="getMovementIconClass(mov) + ' fw-bold'">
+            {{ isPositive(mov) ? '+' : (isNegative(mov) ? '-' : '') }}Gs. {{ formateaNumero(mov.monto) }}
           </div>
           <div class="text-muted small">{{ formatFechaHora(mov.fecha) }}</div>
         </div>
@@ -326,11 +327,37 @@ function isPositive(mov) {
   return mov.tipo_movimiento === 'COBRO' || mov.tipo_movimiento === 'INGRESO_VARIO'
 }
 
+function isNegative(mov) {
+  // PAGO and EGRESO_VARIO are considered negative (red)
+  return mov.tipo_movimiento === 'PAGO' || mov.tipo_movimiento === 'EGRESO_VARIO'
+}
+
+/*function isNeutral(mov) {
+  // APERTURA is considered neutral
+  return mov.tipo_movimiento === 'APERTURA'
+}*/
+
+function getMovementIconClass(mov) {
+  switch (mov.tipo_movimiento) {
+    case 'COBRO':
+    case 'INGRESO_VARIO':
+      return 'text-success'
+    case 'PAGO':
+    case 'EGRESO_VARIO':
+      return 'text-danger'
+    case 'APERTURA':
+      return 'text-secondary'
+    default:
+      return isPositive(mov) ? 'text-success' : 'text-danger'
+  }
+}
+
 function movLabel(mov) {
   if (mov.tipo_movimiento === 'COBRO') return mov.tipo_operacion === 'VENTA' ? 'Cobro Factura' : 'Cobro'
   if (mov.tipo_movimiento === 'INGRESO_VARIO') return 'Ingreso Varios'
-  if (mov.tipo_movimiento === 'PAGO') return 'Pago a proveedor'
+  if (mov.tipo_movimiento === 'PAGO') return 'Pago a Proveedores'
   if (mov.tipo_movimiento === 'EGRESO_VARIO') return 'Egreso Varios'
+  if (mov.tipo_movimiento === 'APERTURA') return 'Apertura de Caja'
   return mov.tipo_movimiento
 }
 
