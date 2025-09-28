@@ -262,7 +262,7 @@ async function onProductRegistered() {
 }
 
  const currentPage  = ref(1)
- const itemsPerPage = ref(4)       // 4 filas por página
+ const itemsPerPage = ref(10)       // 4 filas por página
 
  // recalcular total de páginas
  const totalPages = computed(() =>
