@@ -129,9 +129,13 @@ const routes = [
     component: ClientesView
   },
   {
-    path: '/factura/:id(\\d+)', // Ruta para ver una factura existente
+    // Permitimos IDs alfanuméricos con guiones (ej: FAC-120-19999-4) para que el refresh (F5)
+    // matchee correctamente. Antes estaba restringido a solo dígitos (\d+) y al recargar
+    // /factura/FAC-120-19999-4 no encontraba coincidencia => pantalla en blanco.
+    path: '/factura/:id([A-Za-z0-9-]+)',
     name: 'Factura',
-    component: FacturaView
+    component: FacturaView,
+    props: true
   },
   {
     path: '/factura', // Ruta para registrar una nueva factura

@@ -250,15 +250,19 @@ export default {
           this.productoData.tipo_iva_id = producto.tipo_iva;
           this.productoData.producto_id = producto.producto_id || null; 
         } else {
+          // Producto no encontrado (respuesta vacía) -> abrir directamente modal de registrar producto
           this.initialProductCode = this.productoData.codigo_producto;
-          this.registerModalTitle  = 'Producto no encontrado';
-          this.showRegisterModal   = true;
+          this.registerModalTitle  = ''; // ya no usamos el modal intermedio para este caso
+          this.showRegisterModal   = false; // asegurar cerrado
+          this.showProductModal    = true;  // abrir modal de registro
         }
       } catch (error) {
         console.error("Error al obtener el producto:", error);
+        // Error consultando backend / producto inexistente -> abrir modal de registro directamente
         this.initialProductCode = this.productoData.codigo_producto;
-        this.registerModalTitle  = 'Producto no encontrado';
-        this.showRegisterModal   = true;
+        this.registerModalTitle  = '';
+        this.showRegisterModal   = false;
+        this.showProductModal    = true;
       }
     },
     async cargarFacturaDesdeParams() {

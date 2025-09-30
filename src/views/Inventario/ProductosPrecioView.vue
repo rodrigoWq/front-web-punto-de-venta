@@ -198,41 +198,47 @@ export default {
   },
 
   computed: {
-    // 🔄 MODIFICADO – filtrado sólo por precio + search
+    // Filtro unificado (nombre / descripción / categoría / unidad) + categoría + estado de precio
     filteredProducts() {
-      let filtered = this.products;
+      // Copia base
+      let filtered = Array.isArray(this.products) ? this.products : [];
 
-      if (this.searchTerm?.trim()) {
-        const term = this.searchTerm.toLowerCase();
+      // Normalizar término de búsqueda
+      const term = (this.searchTerm || '').trim().toLowerCase();
+      if (term) {
         filtered = filtered.filter(p => {
-          const nombre       = (p.nombre || '').toLowerCase();
-          const descripcion  = (p.descripcion || '').toLowerCase();
-          const categoria    = (p.categoria || '').toLowerCase();
-          const unidad       = (p.unidad_medida || '').toLowerCase();
-          return (
-            nombre.includes(term) ||
-            descripcion.includes(term) ||
-            categoria.includes(term) ||
-            unidad.includes(term)
-          );
+          const nombre      = (p.nombre || '').toLowerCase();
+            const desc        = (p.descripcion || '').toLowerCase();
+            const categoria   = (p.categoria || p.categoria_nombre || '').toLowerCase();
+            const unidad      = (p.unidad_medida || p.unidad_medida_nombre || '').toLowerCase();
+            return (
+              nombre.includes(term) ||
+              desc.includes(term) ||
+              categoria.includes(term) ||
+              unidad.includes(term)
+            );
         });
       }
 
-      if (this.categoryFilter !== 'all') {
-        filtered = filtered.filter(p =>
-          p.categoria === this.categoryFilter
-        );
+      // Filtro por categoría (case-insensitive)
+      if (this.categoryFilter && this.categoryFilter !== 'all') {
+        const catNeedle = this.categoryFilter.trim().toLowerCase();
+        filtered = filtered.filter(p => (p.categoria || p.categoria_nombre || '').trim().toLowerCase() === catNeedle);
       }
 
-  if (this.priceFilter === 'zero') {
-        filtered = filtered.filter(p =>
-          !p.precio_venta || Number(p.precio_venta) === 0
-        );
+      // Filtro por estado de precio
+      if (this.priceFilter === 'zero') {
+        filtered = filtered.filter(p => {
+          const val = Number(p.precio_venta || 0);
+          return isNaN(val) || val === 0;
+        });
       } else if (this.priceFilter === 'nonzero') {
-        filtered = filtered.filter(p =>
-          p.precio_venta && Number(p.precio_venta) > 0
-        );
+        filtered = filtered.filter(p => {
+          const val = Number(p.precio_venta);
+          return !isNaN(val) && val > 0;
+        });
       }
+
       return filtered;
     },
 
@@ -407,9 +413,20 @@ export default {
   },
 
   watch: {
+    // Reset page when filters change
     searchTerm() { this.currentPage = 1; },
     categoryFilter() { this.currentPage = 1; },
-    priceFilter() { this.currentPage = 1; }
+    priceFilter() { this.currentPage = 1; },
+    // Asegurar que currentPage nunca exceda totalPages después de aplicar filtros
+    filteredProducts() {
+      const total = this.totalPages;
+      if (this.currentPage > total && total > 0) {
+        this.currentPage = total; // Ajustar a última página disponible
+      }
+      if (total === 0) {
+        this.currentPage = 1; // Evitar página 0 visualmente
+      }
+    }
   },
 
   mounted() { this.fetchProducts(); }                                         // ≡

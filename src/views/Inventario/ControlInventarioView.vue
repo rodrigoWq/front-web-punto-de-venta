@@ -475,6 +475,10 @@ async function handleGuardarControl() {
     // Reset after success
     resetForm()
     clearListado()
+    // Navegar automáticamente a la pestaña "Cargar conteo" para continuar flujo
+    activeTab.value = 'load'
+    // Refrescar listado de controles del usuario para que aparezca el recién creado
+    await fetchMyControls()
   } catch (e) {
     // handled globally
   } finally {
@@ -534,6 +538,7 @@ const myControlsLoading = ref(false)
 const selectedControl = ref(null)
 const loadHeader = ref(null)
 const loadItems = ref([])
+const savingLoad = ref(false)
 const barcodeFilter = ref('')
 
 function switchToLoad() {
@@ -616,75 +621,78 @@ async function cargarPlanilla(ctl) {
 }
 
 function imprimirPlanilla(ctl) {
-  // Reutiliza el mismo detalle, renderiza simple y dispara print
+  // Obtiene detalle, imprime planilla con columna de Cantidad (en blanco) para completar a mano
   InventoryControlService.getControlLoadDetail(ctl.control_id)
-    .then(({ data }) => {
-      const header = data?.header
-      const items = data?.items || []
-      const win = window.open('', '_blank')
-      if (!win) return
-      const rows = items.map(i => `
-        <tr>
-          <td>${i.producto_nombre}</td>
-          <td>${i.unidad_base || ''}</td>
-          <td>${i.categoria_nombre || ''}</td>
-          <td>${i.codigo_barras || i.codigo_producto || ''}</td>
-        </tr>`).join('')
-      const html = `
-        <html><head><title>Planilla ${header?.codigo_control || ''}</title>
-        <style>body{font-family:Arial;padding:16px} table{width:100%;border-collapse:collapse} th,td{border:1px solid #ddd;padding:6px;text-align:left} th{background:#f7f7f7}</style>
-        </head><body>
-        <h3>Planilla de Conteo - ${header?.codigo_control || ''}</h3>
-        <div><strong>Depósito:</strong> ${header?.deposito_nombre || ''}</div>
-        <div><strong>Fiscalizador:</strong> ${header?.fiscalizador_nombre || ''} &nbsp; <strong>Controlador:</strong> ${header?.controlador_nombre || ''}</div>
-        <div><strong>Fecha:</strong> ${formatDate(header?.fecha)}</div>
-        <hr/>
-        <table><thead><tr><th>Producto</th><th>Unidad</th><th>Categoría</th><th>Código</th></tr></thead>
-  <tbody>${rows}</tbody></table>
-  <script>window.onload=()=>window.print()</scr${''}ipt>
-        </body></html>`
-      win.document.open()
-      win.document.write(html)
-      win.document.close()
-    })
+    .then(({ data }) => buildPrintWindow(data?.header, data?.items))
     .catch(() => {
-      // Fallback para impresión
-      const header = {
-        codigo_control: ctl?.codigo_control ?? 'CTRL-001',
-        deposito_nombre: ctl?.deposito_nombre ?? 'Depósito Central',
-        fiscalizador_nombre: ctl?.fiscalizador_nombre ?? 'Emilio',
-        controlador_nombre: ctl?.controlador_nombre ?? 'Emilio',
+      // Fallback mínimo
+      const fallbackHeader = {
+        codigo_control: ctl?.codigo_control ?? 'CTRL-XXX',
+        deposito_nombre: ctl?.deposito_nombre ?? '',
+        fiscalizador_nombre: ctl?.fiscalizador_nombre ?? '',
+        controlador_nombre: ctl?.controlador_nombre ?? '',
         fecha: ctl?.fecha ?? new Date().toISOString()
       }
-      const items = [
-        { producto_nombre: 'Prueba004', unidad_base: 'onza', categoria_nombre: 'Embutidos', codigo_barras: '' }
+      const fallbackItems = [
+        { producto_nombre: 'Producto demo', unidad_base: 'unidad', categoria_nombre: 'Categoría', codigo_barras: '' }
       ]
-      const win = window.open('', '_blank')
-      if (!win) return
-      const rows = items.map(i => `
-        <tr>
-          <td>${i.producto_nombre}</td>
-          <td>${i.unidad_base || ''}</td>
-          <td>${i.categoria_nombre || ''}</td>
-          <td>${i.codigo_barras || ''}</td>
-        </tr>`).join('')
-      const html = `
-        <html><head><title>Planilla ${header?.codigo_control || ''}</title>
-        <style>body{font-family:Arial;padding:16px} table{width:100%;border-collapse:collapse} th,td{border:1px solid #ddd;padding:6px;text-align:left} th{background:#f7f7f7}</style>
-        </head><body>
-        <h3>Planilla de Conteo - ${header?.codigo_control || ''}</h3>
-        <div><strong>Depósito:</strong> ${header?.deposito_nombre || ''}</div>
-        <div><strong>Fiscalizador:</strong> ${header?.fiscalizador_nombre || ''} &nbsp; <strong>Controlador:</strong> ${header?.controlador_nombre || ''}</div>
-        <div><strong>Fecha:</strong> ${formatDate(header?.fecha)}</div>
-        <hr/>
-        <table><thead><tr><th>Producto</th><th>Unidad</th><th>Categoría</th><th>Código</th></tr></thead>
-        <tbody>${rows}</tbody></table>
-        <script>window.onload=()=>window.print()</scr${''}ipt>
-        </body></html>`
-      win.document.open()
-      win.document.write(html)
-      win.document.close()
+      buildPrintWindow(fallbackHeader, fallbackItems)
     })
+
+  function buildPrintWindow(header, rawItems) {
+    const win = window.open('', '_blank')
+    if (!win) return
+
+    const escape = (str) => String(str ?? '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;')
+
+    const items = Array.isArray(rawItems) ? rawItems : []
+    const rows = items.map(i => {
+      const nombre = i.producto_nombre || i.nombre || i.nombre_producto || i.descripcion || ''
+      const unidad = i.unidad_base || i.unidad_medida || ''
+      const categoria = i.categoria_nombre || i.categoria || ''
+      return `<tr>
+        <td>${escape(nombre)}</td>
+        <td>${escape(unidad)}</td>
+        <td>${escape(categoria)}</td>
+        <td></td>
+      </tr>`
+    }).join('')
+
+    const html = `<!DOCTYPE html><html><head><title>Planilla ${escape(header?.codigo_control || '')}</title>
+      <meta charset="utf-8" />
+      <style>
+        body{font-family:Arial,Helvetica,sans-serif;padding:24px;font-size:13px;color:#111}
+        h3{margin:0 0 8px;font-size:18px}
+        .meta{margin-bottom:12px}
+        table{width:100%;border-collapse:collapse;margin-top:12px}
+        th,td{border:1px solid #555;padding:6px 8px;vertical-align:top;font-size:12px}
+        th{background:#f2f2f2;text-align:left}
+        td:last-child{width:120px}
+        @media print { body{padding:8px} }
+      </style>
+    </head><body>
+      <h3>Planilla de Conteo - ${escape(header?.codigo_control || '')}</h3>
+      <div class="meta">
+        <strong>Depósito:</strong> ${escape(header?.deposito_nombre || '')}<br/>
+        <strong>Fiscalizador:</strong> ${escape(header?.fiscalizador_nombre || '')} &nbsp; 
+        <strong>Controlador:</strong> ${escape(header?.controlador_nombre || '')}<br/>
+        <strong>Fecha:</strong> ${escape(formatDate(header?.fecha))}
+      </div>
+      <table>
+        <thead><tr><th>Producto</th><th>Unidad</th><th>Categoría</th><th>Cantidad</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+      <script>window.onload=()=>window.print()</scr${''}ipt>
+    </body></html>`
+    win.document.open()
+    win.document.write(html)
+    win.document.close()
+  }
 }
 
 const filteredLoadItems = computed(() => {
@@ -700,19 +708,46 @@ function unidadesPorPresentacion(row) {
   return sel?.unidades_por_presentacion ? `${sel.unidades_por_presentacion} unidades` : '1'
 }
 
-function finalizarCarga() {
-  // TODO: endpoint de finalizar carga; por ahora feedback local
-  window.alert('Carga finalizada (demo).')
+async function finalizarCarga() {
+  if (!selectedControl.value || !loadItems.value.length) return
+  // Construir payload
+  const itemsPayload = loadItems.value.map(it => ({
+    producto_id: it.producto_id,
+    cantidad_fisica: Number(it.cantidadFisica) || 0
+  }))
+
+  // Validación opcional: al menos un valor distinto de null/undefined
+  const hasAny = itemsPayload.some(i => !isNaN(i.cantidad_fisica))
+  if (!hasAny) {
+    window.alert('Ingrese al menos una cantidad física antes de finalizar.')
+    return
+  }
+
+  savingLoad.value = true
+  try {
+    await InventoryControlService.updateControlLoad(selectedControl.value.control_id, { items: itemsPayload })
+    window.alert('Conteo físico guardado correctamente.')
+    // Tras guardar, pasar a revisión
+    activeTab.value = 'review'
+    fetchReviewControls()
+  } catch (e) {
+    console.error('Error guardando conteo físico:', e)
+    window.alert('Error al guardar el conteo físico. Revise la consola.')
+  } finally {
+    savingLoad.value = false
+  }
 }
 
+// Formatear fecha SIN aplicar la conversión de zona horaria.
+// El backend envía 'YYYY-MM-DDT00:00:00.000Z' representando una fecha lógica (no un instante local).
+// Si parseamos con new Date(), el timezone local (UTC-4) la retrocede al día anterior.
+// Solución: tomar sólo la parte de fecha (YYYY-MM-DD) y formatear manualmente.
 function formatDate(dateStr) {
   if (!dateStr) return ''
-  try {
-    const d = new Date(dateStr)
-    return d.toLocaleDateString('es-PY', { year: 'numeric', month: '2-digit', day: '2-digit' })
-  } catch {
-    return ''
-  }
+  const match = String(dateStr).trim().match(/^(\d{4})-(\d{2})-(\d{2})/)
+  if (!match) return ''
+  const [, y, m, d] = match
+  return `${d}/${m}/${y}` // dd/MM/yyyy
 }
 
 function badgeClass(estado) {

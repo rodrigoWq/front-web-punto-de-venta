@@ -43,6 +43,12 @@ export default {
     return api.get(`/api/inventory-controls/${controlId}/load/`)
   }
   ,
+  // Enviar conteo físico (carga) del control
+  updateControlLoad(controlId, payload) {
+    // payload esperado: { items: [ { producto_id, cantidad_fisica } ] }
+    return api.put(`/api/inventory-controls/${controlId}/load/`, payload)
+  }
+  ,
   // Guardar revisión de decisiones
   reviewControl(controlId, decisiones) {
     const payload = Array.isArray(decisiones) ? { decisiones } : decisiones

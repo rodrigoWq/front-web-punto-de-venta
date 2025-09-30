@@ -192,16 +192,21 @@ export default {
           this.productoData.fechaVencimiento = producto.fecha_vencimiento;
           this.productoData.id = producto.producto_id || null; 
         } else {
-          // Si no se encuentra, precargar el código en el modal de registro
+          // Producto no encontrado -> abrir directamente modal de registro de producto
           this.nuevoProducto.codigo = this.productoData.codigo_barras;
-          this.initialProductCode = this.productoData.codigo_barras;
+          this.initialProductCode   = this.productoData.codigo_barras;
+          this.registerModalTitle   = ''; // no usamos mensaje "Producto no encontrado" ahora
+          this.showRegisterModal    = false;
+          this.showProductModal     = true; // abrir registrar producto
         }
       } catch (error) {
         console.error("Error al obtener el producto:", error);
+        // Error o no existe -> abrir directamente el modal de registro
         this.nuevoProducto.codigo = this.productoData.codigo_barras;
-        this.registerModalTitle = "Producto no encontrado";
-        this.initialProductCode = this.productoData.codigo_barras;
-        this.showRegisterModal = true;
+        this.initialProductCode   = this.productoData.codigo_barras;
+        this.registerModalTitle   = '';
+        this.showRegisterModal    = false;
+        this.showProductModal     = true;
       }
     },
     onProductRegistered(newProduct) {
