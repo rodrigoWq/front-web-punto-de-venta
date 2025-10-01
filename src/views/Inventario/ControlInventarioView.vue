@@ -554,12 +554,19 @@ async function fetchMyControls() {
     if (!Array.isArray(myControls.value)) myControls.value = []
   } catch (e) {
     // Fallback si el backend falla: autorespuesta básica
+    const now = new Date()
+    const paraguayDate = new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'America/Asuncion',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit'
+    }).format(now)
     myControls.value = [
       {
         control_id: 1,
         codigo_control: 'CTRL-001',
         estado_control: 'GENERADO',
-        fecha: new Date().toISOString(),
+        fecha: paraguayDate + 'T00:00:00.000Z',
         deposito_id: 1,
         deposito_nombre: 'Depósito Central',
         fiscalizador_id: 1,
@@ -599,7 +606,12 @@ async function cargarPlanilla(ctl) {
       fiscalizador_nombre: ctl?.fiscalizador_nombre ?? 'Emilio',
       controlador_id: ctl?.controlador_id ?? 1,
       controlador_nombre: ctl?.controlador_nombre ?? 'Emilio',
-      fecha: ctl?.fecha ?? new Date().toISOString()
+      fecha: ctl?.fecha ?? (new Intl.DateTimeFormat('en-CA', {
+        timeZone: 'America/Asuncion',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit'
+      }).format(new Date()) + 'T00:00:00.000Z')
     }
     const fallbackItems = [
       {
@@ -631,7 +643,12 @@ function imprimirPlanilla(ctl) {
         deposito_nombre: ctl?.deposito_nombre ?? '',
         fiscalizador_nombre: ctl?.fiscalizador_nombre ?? '',
         controlador_nombre: ctl?.controlador_nombre ?? '',
-        fecha: ctl?.fecha ?? new Date().toISOString()
+        fecha: ctl?.fecha ?? (new Intl.DateTimeFormat('en-CA', {
+          timeZone: 'America/Asuncion',
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit'
+        }).format(new Date()) + 'T00:00:00.000Z')
       }
       const fallbackItems = [
         { producto_nombre: 'Producto demo', unidad_base: 'unidad', categoria_nombre: 'Categoría', codigo_barras: '' }
@@ -738,16 +755,36 @@ async function finalizarCarga() {
   }
 }
 
-// Formatear fecha SIN aplicar la conversión de zona horaria.
-// El backend envía 'YYYY-MM-DDT00:00:00.000Z' representando una fecha lógica (no un instante local).
-// Si parseamos con new Date(), el timezone local (UTC-4) la retrocede al día anterior.
-// Solución: tomar sólo la parte de fecha (YYYY-MM-DD) y formatear manualmente.
+// Formatear fecha para Paraguay (GMT-3)
+// El backend puede enviar fechas ISO o fechas lógicas.
+// Para Paraguay usamos zona horaria America/Asuncion (GMT-3)
 function formatDate(dateStr) {
   if (!dateStr) return ''
-  const match = String(dateStr).trim().match(/^(\d{4})-(\d{2})-(\d{2})/)
-  if (!match) return ''
-  const [, y, m, d] = match
-  return `${d}/${m}/${y}` // dd/MM/yyyy
+  
+  try {
+    // Si es una fecha ISO completa, usar formateo con zona horaria de Paraguay
+    if (dateStr.includes('T') || dateStr.includes('Z')) {
+      const date = new Date(dateStr)
+      return new Intl.DateTimeFormat('es-PY', {
+        timeZone: 'America/Asuncion',
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+      }).format(date)
+    }
+    
+    // Si es solo fecha (YYYY-MM-DD), formatear directamente
+    const match = String(dateStr).trim().match(/^(\d{4})-(\d{2})-(\d{2})/)
+    if (match) {
+      const [, y, m, d] = match
+      return `${d}/${m}/${y}` // dd/MM/yyyy
+    }
+    
+    return dateStr
+  } catch (error) {
+    console.warn('Error formateando fecha:', dateStr, error)
+    return dateStr
+  }
 }
 
 function badgeClass(estado) {
@@ -811,7 +848,14 @@ function earliestIngreso(vencs) {
   }, null)
   if (!min) return ''
   try {
-    return min.toISOString().slice(0, 10)
+    // Formatear fecha en zona horaria de Paraguay y devolver en formato YYYY-MM-DD para input date
+    const formatter = new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'America/Asuncion',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit'
+    })
+    return formatter.format(min)
   } catch {
     return ''
   }
