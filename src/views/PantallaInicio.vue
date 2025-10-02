@@ -15,7 +15,7 @@
           </div>
           <div class="col">
             <label for="productQuantity" class="form-label">Cantidad</label>
-            <input type="number" class="form-control" v-model="productQuantity" value="1" @keyup.enter.prevent="agregarProducto" />
+            <input type="number" class="form-control" v-model="productQuantity" value="1" min="1" @keyup.enter.prevent="agregarProducto" />
           </div>
           <div class="col">
             <label for="rucCliente" class="form-label">RUC / CI</label>
@@ -157,6 +157,13 @@ export default {
         alert("Por favor, ingresa un código de producto");
         return;
       }
+      
+      // Validar que la cantidad sea positiva
+      if (!this.productQuantity || this.productQuantity <= 0) {
+        alert("La cantidad debe ser mayor a 0");
+        return;
+      }
+      
       try {
         // Se usa el método GET del servicio, pasando el parámetro 'codigo_barras'
         const url = `${process.env.VUE_APP_API_BASE_URL}/api/prices/barcode/${this.productCode}?cantidad_unidades=${this.productQuantity}`;

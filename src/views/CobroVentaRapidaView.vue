@@ -59,7 +59,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted, watch } from 'vue'
+import { ref, reactive, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import AppNavbar from '@/components/AppNavbar.vue'
 import AppHeader from '@/components/AppHeader.vue'
@@ -176,18 +176,7 @@ function formatCurrency(value) {
   }).format(value)
 }
 
-// Inicializar forma de pago por defecto: Efectivo por el total
-watch(
-  totalToCharge,
-  (val) => {
-    const total = Number(val) || 0
-    // Si no hay pagos y no es crédito, pre-cargar Efectivo por el total
-    if ((payments.value || []).length === 0 && total > 0 && !hasCredito.value) {
-      payments.value = [{ type: 'Efectivo', amount: total }]
-    }
-  },
-  { immediate: true }
-)
+// No precargar pagos automáticamente - el usuario debe seleccionar manualmente
 </script>
 
 <style scoped>

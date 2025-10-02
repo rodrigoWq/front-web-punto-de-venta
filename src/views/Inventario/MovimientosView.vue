@@ -24,11 +24,11 @@
       <div class="row g-2 w-100">
   <div class="col-6 col-md-3 col-lg-2">
           <label class="form-label mb-1">Desde</label>
-          <input type="date" class="form-control form-control-sm" v-model="filters.desde" />
+          <input type="text" class="form-control form-control-sm" v-model="filters.desde" placeholder="dd/mm/yyyy" pattern="\d{2}/\d{2}/\d{4}" />
         </div>
   <div class="col-6 col-md-3 col-lg-2">
           <label class="form-label mb-1">Hasta</label>
-          <input type="date" class="form-control form-control-sm" v-model="filters.hasta" />
+          <input type="text" class="form-control form-control-sm" v-model="filters.hasta" placeholder="dd/mm/yyyy" pattern="\d{2}/\d{2}/\d{4}" />
         </div>
         <div class="col-12 col-md-6 col-lg-4 d-flex align-items-end">
           <div class="d-flex gap-2 w-100">
@@ -214,6 +214,12 @@ function formatDate(iso) {
   }
 }
 
+function convertDateToISO(ddmmyyyy) {
+  if (!ddmmyyyy || !ddmmyyyy.match(/^\d{2}\/\d{2}\/\d{4}$/)) return null
+  const [day, month, year] = ddmmyyyy.split('/')
+  return `${year}-${month}-${day}`
+}
+
 function qtyClass(mov) {
   const tipo = mov?.tipo_movimiento
   if (tipo === 'ENTRADA') return 'text-success'
@@ -239,8 +245,10 @@ async function fetchMovements() {
     }
     if (filters.tipo) params.tipo = filters.tipo
     // Nota: el backend requiere 'desde' y 'hasta' en minúsculas
-    if (filters.desde) params.desde = filters.desde
-    if (filters.hasta) params.hasta = filters.hasta
+    const desdeISO = convertDateToISO(filters.desde)
+    const hastaISO = convertDateToISO(filters.hasta)
+    if (desdeISO) params.desde = desdeISO
+    if (hastaISO) params.hasta = hastaISO
 
     const { data } = await api.get('/api/inventory/warehouse/movements', params)
     movements.value = Array.isArray(data?.items) ? data.items : []
