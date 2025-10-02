@@ -238,8 +238,8 @@ async function fetchMovements() {
       pageSize: itemsPerPage.value,
     }
     if (filters.tipo) params.tipo = filters.tipo
-    // Nota: el backend requiere 'DESDE' en mayúsculas y 'hasta' en minúsculas
-    if (filters.desde) params.DESDE = filters.desde
+    // Nota: el backend requiere 'desde' y 'hasta' en minúsculas
+    if (filters.desde) params.desde = filters.desde
     if (filters.hasta) params.hasta = filters.hasta
 
     const { data } = await api.get('/api/inventory/warehouse/movements', params)
