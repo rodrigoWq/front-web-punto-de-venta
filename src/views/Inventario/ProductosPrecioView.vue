@@ -64,29 +64,25 @@
         <table class="table align-middle">
           <thead class="table-light">
             <tr>
-              <th>Nombre</th>
-              <th class="text-end">Precio Actual</th>
-              <th>Categoría</th>
-              <th class="text-end">Precio última compra</th>
-              <th class="text-end">Acciones</th>
+              <th class="col-nombre">Nombre</th>
+              <th class="text-end col-price">Precio Actual</th>
+              <th class="col-categoria">Categoría</th>
+              <th class="text-end col-price-compra">Precio última compra</th>
+              <th class="text-end col-actions">Acciones</th>
             </tr>
           </thead>
           <tbody>
             <tr v-for="prod in pagedProducts" :key="prod.producto_id">
-              <td>{{ prod.nombre }}</td>
-              <td class="text-end">{{ prod.precio_venta ? formateaNumero(prod.precio_venta) : 'Sin precio' }}</td>
-              <td>{{ prod.categoria }}</td>
-              <td class="text-end">{{ prod.precio_ultima_compra ? formateaNumero(prod.precio_ultima_compra) : 'Sin precio' }}</td>
-              <td class="text-end">
-                <button class="btn btn-success btn-sm me-1" @click="openPriceModal(prod)">
-                  $ Precio Venta
-                </button>
-                <button class="btn btn-warning btn-sm me-1" @click="openProductModal(prod)">
-                  <i class="bi bi-pencil-fill"></i> Editar
-                </button>
-                <button class="btn btn-danger btn-sm" @click="deleteProduct(prod)">
-                  <i class="bi bi-trash-fill"></i> Eliminar
-                </button>
+              <td class="col-nombre">{{ prod.nombre }}</td>
+              <td class="text-end col-price">{{ prod.precio_venta ? formateaNumero(prod.precio_venta) : 'Sin precio' }}</td>
+              <td class="col-categoria">{{ prod.categoria }}</td>
+              <td class="text-end col-price-compra">{{ prod.precio_ultima_compra ? formateaNumero(prod.precio_ultima_compra) : 'Sin precio' }}</td>
+              <td class="text-end col-actions">
+                <div class="d-inline-flex flex-nowrap gap-1 actions-wrapper">
+                  <button class="btn btn-success btn-sm" @click="openPriceModal(prod)">$ Precio Venta</button>
+                  <button class="btn btn-warning btn-sm" @click="openProductModal(prod)"><i class="bi bi-pencil-fill"></i> Editar</button>
+                  <button class="btn btn-danger btn-sm" @click="deleteProduct(prod)"><i class="bi bi-trash-fill"></i> Eliminar</button>
+                </div>
               </td>
             </tr>
           </tbody>
@@ -228,15 +224,11 @@ export default {
 
       // Filtro por estado de precio
       if (this.priceFilter === 'zero') {
-        filtered = filtered.filter(p => {
-          const val = Number(p.precio_venta || 0);
-          return isNaN(val) || val === 0;
-        });
+        // Sin precio: no hay precio vigente (precio_venta null/undefined/NaN)
+        filtered = filtered.filter(p => !Number(p.precio_venta));
       } else if (this.priceFilter === 'nonzero') {
-        filtered = filtered.filter(p => {
-          const val = Number(p.precio_venta);
-          return !isNaN(val) && val > 0;
-        });
+        // Con precio: precio numérico > 0
+        filtered = filtered.filter(p => Number(p.precio_venta) > 0);
       }
 
       return filtered;
@@ -274,19 +266,42 @@ export default {
       try {
         const { data } = await apiService.get(this.api('/api/prices'));
         const list = Array.isArray(data) ? data : (data ? [data] : []);
-        // Mapear según el contrato del endpoint /api/prices
-        this.products = list.map(item => ({
-          producto_id: item.producto_id,
-          nombre: item.nombre || '',
-          descripcion: item.descripcion || '',
-          stock_disponible: item.stock_disponible ?? 0,
-          categoria: item.categoria || item.categoria_nombre || '',
-          unidad_medida: item.unidad_medida || item.unidad_medida_nombre || '',
-          precio_venta: item.precio_venta ?? 0,
-          precio_ultima_compra: item.precio_ultima_compra ?? null,
-          vigencia_desde: item.vigencia_desde ?? null,
-          vigencia_hasta: item.vigencia_hasta ?? null
-        }));
+
+        // Helper para seleccionar el precio vigente principal
+        const pickCurrentPrice = (arr = []) => {
+          if (!Array.isArray(arr) || !arr.length) return null;
+          const now = new Date();
+          const qty = 1; // Vista lista asume cantidad 1
+          let candidates = arr.filter(p => {
+            const desde = p?.vigencia_desde ? new Date(p.vigencia_desde) : null;
+            if (!desde || isNaN(desde.getTime())) return false;
+            const hasta = p?.vigencia_hasta ? new Date(p.vigencia_hasta) : null;
+            const inDate = desde <= now && (!hasta || hasta >= now);
+            const cantidadOK = (p.cantidad_desde == null || p.cantidad_desde <= qty) && (p.cantidad_hasta == null || p.cantidad_hasta >= qty);
+            return inDate && cantidadOK;
+          });
+          if (!candidates.length) candidates = [...arr];
+          candidates.sort((a,b) => new Date(b.vigencia_desde) - new Date(a.vigencia_desde));
+            return candidates[0] || null;
+        };
+
+        this.products = list.map(item => {
+          const priceRec = pickCurrentPrice(item.precios_vigentes || []);
+          const precioVentaNum = priceRec ? Number(priceRec.precio_venta) : null;
+          return {
+            producto_id: item.producto_id,
+            nombre: item.nombre || '',
+            descripcion: item.descripcion || '',
+            stock_disponible: item.stock_disponible ?? 0,
+            categoria: item.categoria || item.categoria_nombre || '',
+            unidad_medida: item.unidad_medida || item.unidad_medida_nombre || '',
+            precio_venta: (Number.isFinite(precioVentaNum) && precioVentaNum > 0) ? precioVentaNum : null,
+            precio_ultima_compra: item.precio_ultima_compra ?? null,
+            vigencia_desde: priceRec?.vigencia_desde || null,
+            vigencia_hasta: priceRec?.vigencia_hasta || null,
+            _precios_vigentes: item.precios_vigentes || []
+          };
+        });
       } catch (err) {
         console.error('Error fetching products:', err);
         this.products = [];
@@ -381,19 +396,51 @@ export default {
 
     updatePrice() {                                                           
         const { productId, nuevoPrecio, fechaVigencia } = this.modalData;
+        if (!productId) {
+          console.error('No productId for price update');
+          return;
+        }
+        const payload = {
+          cantidad_desde: 1, // Por ahora fijo según requerimiento
+          vigencia_desde: fechaVigencia, // YYYY-MM-DD
+          precio_venta: Number(nuevoPrecio)
+        };
         apiService.post(
-          this.api(`/api/prices/${productId}`),
-          {
-            precio_venta: nuevoPrecio,
-            vigencia_desde: fechaVigencia
-          }
+          this.api(`/api/prices/${productId}/prices/schedule`),
+          payload
         )
-        .then(() => {
-          const prod = this.products.find(p => p.producto_id === productId);
-          if (prod) prod.precio_venta = nuevoPrecio;
-          this.closePriceModal();
+        .then(({ data }) => {
+          // Si el backend responde { ok: true } asumimos éxito
+          if (data?.ok) {
+            // Actualizar cache local (si la vigencia es hoy o pasada adoptamos como precio actual)
+            const today = this.formatDate(new Date());
+            const prod = this.products.find(p => p.producto_id === productId);
+            if (prod) {
+              if (fechaVigencia <= today) {
+                prod.precio_venta = Number(nuevoPrecio);
+                prod.vigencia_desde = fechaVigencia;
+                prod.vigencia_hasta = null;
+              }
+              // Agregar al historial local
+              if (Array.isArray(prod._precios_vigentes)) {
+                prod._precios_vigentes.unshift({
+                  precio_venta: String(nuevoPrecio),
+                  vigencia_desde: fechaVigencia + 'T00:00:00.000Z',
+                  vigencia_hasta: null,
+                  cantidad_desde: 1,
+                  cantidad_hasta: null
+                });
+              }
+            }
+            this.closePriceModal();
+          } else {
+            console.warn('Respuesta inesperada al programar precio', data);
+          }
         })
-        .catch(err => console.error('Error updating price:', err));
+        .catch(err => {
+          console.error('Error scheduling price:', err);
+          alert('Error al programar el precio.');
+        });
     },
 
     /* ---------- Otros ---------- */
@@ -452,5 +499,22 @@ export default {
 .header-buttons {
   display: flex;
   justify-content: flex-end;
+}
+
+/* Column width control to keep layout stable between filter states */
+.col-nombre { width: 26%; min-width: 200px; }
+.col-price { width: 12%; min-width: 110px; }
+.col-categoria { width: 18%; min-width: 140px; }
+.col-price-compra { width: 15%; min-width: 130px; }
+.col-actions { width: 29%; min-width: 260px; }
+
+/* Ensure action buttons stay on one line and wrap gracefully if very narrow */
+.actions-wrapper { white-space: nowrap; }
+@media (max-width: 1200px) {
+  .col-actions { width: 34%; }
+}
+@media (max-width: 992px) {
+  .actions-wrapper { flex-wrap: wrap; white-space: normal; }
+  .col-actions { width: 100%; }
 }
 </style>

@@ -192,9 +192,9 @@ export default {
                 <strong>Categoría:</strong> ${producto.categoria_nombre}<br>
                 <strong>Descripción:</strong> ${producto.descripcion ?? '—'}<br>
                 <strong>Disponibilidad:</strong> ${producto.stock_disponible > 0 ? 'Disponible' : 'Sin stock'}<br>
-                <strong>Precio:</strong> ${this.formateaNumero(producto.precio_venta_actual ?? 0)} ₲<br>
+                <strong>Precio:</strong> ${this.formateaNumero(producto.precio_unitario_resuelto ?? 0)} ₲<br>
                 <strong>Unidad de Medida:</strong> ${producto.unidad_medida_nombre}<br>
-                <strong>IVA:</strong> ${producto.porcentaje_iva}%<br>
+                <strong>IVA:</strong> ${this.formateaNumero(producto.porcentaje_iva)}%<br>
 
               </div>`;
           } else {
