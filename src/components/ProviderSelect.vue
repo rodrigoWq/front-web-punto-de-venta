@@ -1,32 +1,49 @@
 <template>
-    <div class="col-md-6">
-      <label class="form-label">Proveedor</label>
-      <input
-        list="providers-list"
-        v-model="inputValue"
-        @input="onInput"
-        :readonly="disabled"
-        class="form-control"
-        placeholder="Buscar o crear proveedor..."
+  <div v-if="!bare" class="col-md-6">
+    <label class="form-label">Proveedor</label>
+    <input
+      :list="noList ? null : 'providers-list'"
+      v-model="inputValue"
+      @input="onInput"
+      :readonly="disabled"
+      class="form-control"
+      :placeholder="placeholder || 'Buscar o crear proveedor...'"
+    />
+    <datalist v-if="!noList" id="providers-list">
+      <option
+        v-for="prov in filteredProviders"
+        :key="prov.id"
+        :value="`${prov.nro_documento} – ${prov.nombre}`"
       />
-      <datalist id="providers-list">
-        <option
-          v-for="prov in filteredProviders"
-          :key="prov.id"
-          :value="`${prov.nro_documento} – ${prov.nombre}`"
-        />
-        <option value="Registrar proveedor…" />
-
-      </datalist>
-      <small
-        v-if="inputValue && !isMatched"
-        @click="onRegister"
-        class="text-primary"
-        style="cursor: pointer; margin-top: .25rem; display: block;"
-      >
-        Registrar proveedor…
-      </small>
-    </div>
+      <option value="Registrar proveedor…" />
+    </datalist>
+    <small
+      v-if="inputValue && !isMatched"
+      @click="onRegister"
+      class="text-primary"
+      style="cursor: pointer; margin-top: .25rem; display: block;"
+    >
+      Registrar proveedor…
+    </small>
+  </div>
+  <template v-else>
+    <input
+      :list="noList ? null : 'providers-list'"
+      v-model="inputValue"
+      @input="onInput"
+      :readonly="disabled"
+      class="form-control"
+      :placeholder="placeholder || 'Buscar o crear proveedor...'"
+    />
+    <datalist v-if="!noList" id="providers-list">
+      <option
+        v-for="prov in filteredProviders"
+        :key="prov.id"
+        :value="`${prov.nro_documento} – ${prov.nombre}`"
+      />
+      <option value="Registrar proveedor…" />
+    </datalist>
+  </template>
 </template>
   
 <script>
@@ -38,7 +55,10 @@
     model: { prop: 'modelValue', event: 'update:modelValue' },
     props: {
       modelValue: { type: String, default: '' },
-      disabled: { type: Boolean, default: false }
+      disabled: { type: Boolean, default: false },
+      bare: { type: Boolean, default: false },
+      placeholder: { type: String, default: 'Buscar o crear proveedor...' },
+      noList: { type: Boolean, default: false }
     },
     data() {
       return {
@@ -86,9 +106,13 @@
       },
       onInput() {
         console.log('onInput Call', this.inputValue);
+        if (this.noList) {
+          // En modo sin lista, no intentamos autoseleccionar ni registrar desde el input
+          return;
+        }
         if (this.inputValue === 'Registrar proveedor…') {
-            this.onRegister();
-            return;
+          this.onRegister();
+          return;
         }
         const prov = this.providers.find(
           p => p.nro_documento === this.inputValue ||
@@ -106,7 +130,9 @@
       }
     },
     async mounted() {
-      await this.loadProviders();
+      if (!this.noList) {
+        await this.loadProviders();
+      }
     }
   };
 </script>

@@ -5,13 +5,21 @@
       <form @submit.prevent="guardarFactura">
           <!-- Información de factura -->
           <div class="row g-3 mb-3">
-            <ProviderSelect
-              ref="providerSelect"
-              v-model="selectedProviderInput"
-              :disabled="readOnly && !fromDeliveryNote"
-              @provider-selected="onProviderSelected"
-              @register="openProviderModal"
-            />
+            <div class="col-md-6">
+              <label class="form-label">Proveedor</label>
+              <div class="input-group">
+                <ProviderSelect
+                  ref="providerSelect"
+                  v-model="selectedProviderInput"
+                  :disabled="true"
+                  @provider-selected="onProviderSelected"
+                  @register="openProviderModal"
+                  :bare="true"
+                  :noList="true"
+                />
+                <button type="button" class="btn btn-outline-primary btn-sm px-3" @click="toggleBuscarProveedor" :disabled="readOnly && !fromDeliveryNote">Buscar</button>
+              </div>
+            </div>
             <div class="col-md-6">
                 <label for="razon_social" class="form-label">Nombre o Razón Social</label>
                 <input type="text" v-model="factura.razonSocial" class="form-control" placeholder="Nombre o razón social" :readonly="readOnly">
@@ -29,10 +37,10 @@
               </div>
           </div>
           <div class="row g-3 mb-3">
-              <div class="col-md-6">
-                  <label for="nro_factura" class="form-label">N° de Factura</label>
-                  <input type="text" v-model="factura.nroFactura" class="form-control" placeholder="Número de factura" :readonly="readOnl && !fromDeliveryNotey">
-              </div>
+        <div class="col-md-6">
+          <label for="nro_factura" class="form-label">N° de Factura</label>
+          <input type="text" v-model="factura.nroFactura" class="form-control" placeholder="Número de factura" :readonly="readOnly && !fromDeliveryNote">
+        </div>
               <div class="col-md-6">
                   <label for="condicion_venta" class="form-label">Condición de Venta</label>
                   <select v-model="factura.condicionVenta" class="form-control" :readonly="readOnly">
@@ -175,6 +183,23 @@
         @product-registered="onProductRegistered"
         @close-all-register-modals="showRegisterModal = false"
       />
+      <!-- Overlay selector de proveedores -->
+      <div v-if="mostrarSelectorProveedor" class="overlay-backdrop" @click.self="cerrarSelectorProveedor">
+        <div class="overlay-panel card">
+          <div class="overlay-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Seleccionar Proveedor</h5>
+            <button type="button" class="btn-close" @click="cerrarSelectorProveedor"></button>
+          </div>
+          <div class="overlay-body">
+            <ProveedoresView
+              :selectorMode="true"
+              :hideHeader="false"
+              :allowRegisterInSelector="true"
+              @proveedor-seleccionado="onProveedorSeleccionado"
+            />
+          </div>
+        </div>
+      </div>
   </div>
 </template>
 
@@ -188,6 +213,7 @@ import ProviderSelect from '@/components/ProviderSelect.vue';
 import RegistrarProveedorModal    from '@/components/RegistrarProveedorModal.vue'
 import RegisterProductModal from '@/components/RegistrarProductoModal.vue';
 import AppNavbar from '@/components/AppNavbar.vue';
+import ProveedoresView from '@/views/ProveedoresView.vue';
 
 export default {
   name: 'FacturaView',
@@ -197,7 +223,8 @@ export default {
   SimpleRegisterModal,
   ProviderSelect,
   RegistrarProveedorModal,
-  RegisterProductModal
+  RegisterProductModal,
+  ProveedoresView
   },
   props: {
     datosParaFactura: {
@@ -234,10 +261,32 @@ export default {
             tipo_iva_id: 'exenta',
           },
           selectedProviderInput: '',
-          productoEditandoIndex: null // Índice para identificar el producto que se está editando
+          productoEditandoIndex: null, // Índice para identificar el producto que se está editando
+          mostrarSelectorProveedor: false
       };
   },
   methods: {
+    toggleBuscarProveedor() {
+      this.mostrarSelectorProveedor = !this.mostrarSelectorProveedor;
+      document.body.style.overflow = this.mostrarSelectorProveedor ? 'hidden' : '';
+      this.$nextTick(() => {
+        if (this.mostrarSelectorProveedor) {
+          const input = document.querySelector('.overlay-body input[type="text"]');
+          if (input) input.focus();
+        }
+      });
+    },
+    cerrarSelectorProveedor() {
+      this.mostrarSelectorProveedor = false;
+      document.body.style.overflow = '';
+    },
+    onProveedorSeleccionado(provider) {
+      this.onProviderSelected({
+        nro_documento: provider.nro_documento,
+        nombre: provider.nombre
+      });
+      this.cerrarSelectorProveedor();
+    },
     async autocompletarProducto() {
       if (!this.productoData.codigo_producto) return;
       try {
@@ -610,6 +659,32 @@ export default {
   .editable-cell {
       background-color: #eaffea;
       border: 1px solid #5cb85c;
+  }
+
+  /* Overlay selector styles */
+  .overlay-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+  }
+  .overlay-panel {
+    width: 95vw;
+    max-width: 1100px;
+    max-height: 90vh;
+    overflow: hidden;
+  }
+  .overlay-header {
+    border-bottom: 1px solid #e9ecef;
+    padding: 10px 14px;
+  }
+  .overlay-body {
+    padding: 4px 12px 12px;
+    max-height: calc(90vh - 56px);
+    overflow: auto;
   }
 
     .btn-accion {

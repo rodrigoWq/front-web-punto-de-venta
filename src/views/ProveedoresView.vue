@@ -1,8 +1,8 @@
 <template>
-    <AppNavbar />
-    <div class="container mt-5">
-      <AppHeader title="Gestión de Proveedores">
-        <template #buttons>
+    <AppNavbar v-if="!selectorMode && !hideHeader" />
+  <div class="container" :class="selectorMode ? 'mt-1 pt-2' : 'mt-5'">
+      <AppHeader v-if="!hideHeader" title="Gestión de Proveedores" :class="{ 'mb-2': selectorMode }">
+        <template v-if="!selectorMode || allowRegisterInSelector" #buttons>
           <!-- Al hacer click navega a la pantalla de registro (ya existente) -->
           <button class="btn btn-success" @click="()=>{ editProviderId=null; showProviderModal=true }">
             Registrar Proveedor
@@ -11,21 +11,21 @@
       </AppHeader>
   
       <!-- Barra de Filtros -->
-      <AppFilter v-model="searchInput" placeholder="Buscar por nombre..." customClasses="mt-4 mb-4" />
+  <AppFilter v-model="searchInput" placeholder="Buscar por nombre..." :customClasses="selectorMode ? 'mt-1 mb-3' : 'mt-4 mb-4'" />
   
       <!-- Tabla de Proveedores -->
       <h2>Lista de Proveedores</h2>
-      <AppTable :headers="['Nombre', 'Contacto', 'Identificación Fiscal', 'Teléfono', 'Email', 'Acciones']">
-        <tr v-for="provider in providersFilteredPaginated" :key="provider.proveedor_id">
+      <AppTable :headers="tableHeaders">
+        <tr v-for="provider in providersFilteredPaginated" :key="provider.proveedor_id" :class="{ 'selectable-row': selectorMode }" @click="selectorMode ? seleccionarProveedor(provider) : null">
           <td>{{ provider.nombre }}</td>
           <td>{{ provider.contacto }}</td>
           <td>{{ provider.nro_documento }}</td>
           <td>{{ provider.telefono_celular }}</td>
           <td>{{ provider.email }}</td>
-          <td>
+          <td v-if="!selectorMode">
             <!-- Al editar, navegamos a la pantalla de registro en modo edición -->
-            <button class="btn btn-primary btn-sm" @click="editarProveedor(provider)">✏️</button>
-            <button class="btn btn-danger btn-sm" @click="eliminarProveedor(provider.proveedor_id)">🗑️</button>
+            <button class="btn btn-primary btn-sm" @click.stop="editarProveedor(provider)">✏️</button>
+            <button class="btn btn-danger btn-sm" @click.stop="eliminarProveedor(provider.proveedor_id)">🗑️</button>
           </td>
         </tr>
       </AppTable>
@@ -61,6 +61,12 @@ export default {
     AppPagination,
     RegistrarProveedorModal,
   },
+  emits: ['proveedor-seleccionado'],
+  props: {
+    selectorMode: { type: Boolean, default: false },
+    hideHeader: { type: Boolean, default: false },
+    allowRegisterInSelector: { type: Boolean, default: false }
+  },
   data() {
     return {
       providers: [],       // Lista de proveedores
@@ -73,6 +79,10 @@ export default {
     };
   },
   computed: {
+    tableHeaders() {
+      const base = ['Nombre', 'Contacto', 'Identificación Fiscal', 'Teléfono', 'Email'];
+      return this.selectorMode ? base : [...base, 'Acciones'];
+    },
     providersFiltered() {
       const search = this.searchInput.toLowerCase();
       return this.providers.filter(provider =>
@@ -88,6 +98,9 @@ export default {
     },
   },
   methods: {
+    seleccionarProveedor(provider) {
+      this.$emit('proveedor-seleccionado', provider);
+    },
     async cargarProveedores() {
       try {
         const url = `${process.env.VUE_APP_API_BASE_URL}/api/providers/`;
@@ -122,3 +135,12 @@ export default {
   },
 };
 </script>
+
+<style scoped>
+.selectable-row {
+  cursor: pointer;
+}
+.selectable-row:hover {
+  background-color: #f8f9fa;
+}
+</style>

@@ -5,13 +5,30 @@
     <form @submit.prevent="guardarNotaRemision">
       <!-- Encabezado -->
       <div class="row g-3 mb-3">
-        <ProviderSelect
-          ref="providerSelect"
-          v-model="selectedProviderInput"
-          :disabled="readOnly"
-          @provider-selected="onProviderSelected"
-          @register="() => showProviderModal = true" 
-        />
+        <div class="col-md-6">
+          <label class="form-label d-block">Proveedor</label>
+          <div class="input-group">
+            <ProviderSelect
+              ref="providerSelect"
+              v-model="selectedProviderInput"
+              :disabled="true"
+              :bare="true"
+              :noList="true"
+              placeholder="RUC / Nombre del proveedor"
+              @provider-selected="onProviderSelected"
+              @register="() => showProviderModal = true"
+            />
+            <button
+              type="button"
+              class="btn btn-outline-primary btn-sm px-3"
+              @click="toggleBuscarProveedor"
+              :disabled="readOnly"
+              title="Buscar proveedor"
+            >
+              Buscar
+            </button>
+          </div>
+        </div>
         <div class="col-md-6">
           <label for="nombre_razon_social" class="form-label">Razón Social</label>
           <input type="text" v-model="notaData.nombre_razon_social" class="form-control" placeholder="Razón Social" :readonly="readOnly">
@@ -109,6 +126,24 @@
       @provider-registered="onProviderRegistered" 
     />
 
+    <!-- Overlay selector de proveedores -->
+    <div v-if="mostrarSelectorProveedor" class="overlay-backdrop" @click.self="cerrarSelectorProveedor">
+      <div class="overlay-panel">
+        <div class="overlay-header d-flex justify-content-between align-items-center">
+          <h5 class="mb-0">Seleccionar Proveedor</h5>
+          <button type="button" class="btn-close" aria-label="Cerrar" @click="cerrarSelectorProveedor"></button>
+        </div>
+        <div class="overlay-body">
+          <ProveedoresView
+            :selectorMode="true"
+            :hideHeader="false"
+            :allowRegisterInSelector="true"
+            @proveedor-seleccionado="onProveedorSeleccionado"
+          />
+        </div>
+      </div>
+    </div>
+
   </div>
 </template>
   
@@ -121,6 +156,7 @@ import SimpleRegisterModal from '@/components/SimpleRegisterModal.vue';
 import ProviderSelect from '@/components/ProviderSelect.vue';
 import RegistrarProveedorModal from '@/components/RegistrarProveedorModal.vue';
 import RegisterProductModal from '@/components/RegistrarProductoModal.vue';
+import ProveedoresView from '@/views/ProveedoresView.vue';
 
 export default {
   name: 'NotaDeRemision',
@@ -130,7 +166,8 @@ export default {
     SimpleRegisterModal,
     ProviderSelect,
     RegistrarProveedorModal,
-    RegisterProductModal
+    RegisterProductModal,
+    ProveedoresView
   
   },
   props: ['id'], // Recibe el id como prop
@@ -164,6 +201,7 @@ export default {
       },
       showRegisterModal: false,
       showProviderModal: false,
+      mostrarSelectorProveedor: false,
       registerModalTitle: '',
       nuevoProducto: {
         codigo: '',
@@ -229,6 +267,25 @@ export default {
         unidadMedida: '',
         fechaVencimiento: '',
       };
+    },
+    toggleBuscarProveedor() {
+      if (this.readOnly) return;
+      this.mostrarSelectorProveedor = !this.mostrarSelectorProveedor;
+      document.body.style.overflow = this.mostrarSelectorProveedor ? 'hidden' : '';
+      if (this.mostrarSelectorProveedor) {
+        this.$nextTick(() => {
+          const firstInput = document.querySelector('.overlay-panel input');
+          if (firstInput) firstInput.focus();
+        });
+      }
+    },
+    cerrarSelectorProveedor() {
+      this.mostrarSelectorProveedor = false;
+      document.body.style.overflow = '';
+    },
+    onProveedorSeleccionado(prov) {
+      this.onProviderSelected(prov);
+      this.cerrarSelectorProveedor();
     },
     cancelarEdicion() {
       // Si quieres revertir el producto en el array:
@@ -448,6 +505,36 @@ export default {
   height: 100%;
   background-color: rgba(0, 0, 0, 0.5); /* Fondo semitransparente */
   z-index: 1040;
+}
+
+/* Overlay selector styles */
+.overlay-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 40px;
+  z-index: 1050;
+}
+.overlay-panel {
+  width: min(1100px, 96%);
+  max-height: 86vh;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+.overlay-header {
+  padding: 10px 14px;
+  border-bottom: 1px solid #e5e7eb;
+}
+.overlay-body {
+  padding: 4px 12px 12px; /* top padding reducido */
+  overflow: auto;
 }
 
 </style>
