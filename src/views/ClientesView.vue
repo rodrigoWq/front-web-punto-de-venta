@@ -41,73 +41,13 @@
       <AppPagination :currentPage="paginaActual" :totalPages="totalPaginas" @page-changed="cambiarPagina" />
 
 
-  <!-- Modal para Registrar Cliente -->
-  <div v-if="!selectorMode" class="modal fade" id="crearClienteModal" tabindex="-1">
-        <div class="modal-dialog modal-lg">
-          <div class="modal-content">
-            <div class="modal-header">
-              <h5 class="modal-title">Registrar Cliente</h5>
-              <button type="button" class="btn-close" @click="cerrarModal('crearClienteModal')"></button>
-            </div>
-            <div class="modal-body">
-              <form @submit.prevent="guardarCliente">
-                <div class="container-fluid">
-                  <div class="row mb-3">
-                    <div class="col-md-12">
-                      <label for="nombreCompleto" class="form-label">Nombre Completo</label>
-                      <input type="text" id="nombreCompleto" v-model="cliente.nombre_completo" class="form-control" required />
-                    </div>
-                  </div>
-                  <div class="row mb-3">
-                    <div class="col-md-6">
-                      <label for="nroDocumento" class="form-label">Nro. Documento</label>
-                      <input type="text" id="nroDocumento" v-model="cliente.nro_documento" class="form-control" required />
-                    </div>
-                    <div class="col-md-6">
-                      <label for="ruc" class="form-label">RUC</label>
-                      <input type="text" id="ruc" v-model="cliente.ruc" class="form-control" required />
-                    </div>
-                  </div>
-                  <div class="row mb-3">
-                    <div class="col-md-6">
-                      <label for="direccion" class="form-label">Dirección</label>
-                      <input type="text" id="direccion" v-model="cliente.direccion" class="form-control" />
-                    </div>
-                    <div class="col-md-6">
-                      <label for="telefono" class="form-label">Teléfono</label>
-                      <input type="tel" id="telefono" v-model="cliente.telefono" class="form-control" />
-                    </div>
-                  </div>
-                  <div class="row mb-3">
-                    <div class="col-md-6">
-                      <label for="email" class="form-label">Email</label>
-                      <input type="email" id="email" v-model="cliente.email" class="form-control" />
-                    </div>
-                    <div class="col-md-6">
-                      <label for="nombreFantasia" class="form-label">Nombre Fantasía</label>
-                      <input type="text" id="nombreFantasia" v-model="cliente.nombre_fantasia" class="form-control" />
-                    </div>
-                  </div>
-                  <div class="row mb-3">
-                    <div class="col-md-6">
-                      <label for="condicionesPago" class="form-label">Condiciones de Pago</label>
-                      <select id="condicionesPago" v-model="cliente.condiciones_pago" class="form-select">
-                        <option value="CONTADO">Contado</option>
-                        <option value="CREDITO">Crédito</option>
-                      </select>
-                    </div>
-                  </div>
-                  <div class="row">
-                    <div class="col text-end">
-                      <button type="submit" class="btn btn-primary">Guardar Cliente</button>
-                    </div>
-                  </div>
-                </div>
-              </form>
-            </div>
-          </div>
-        </div>
-      </div>
+  <!-- Modal para Registrar Cliente (reutilizable) -->
+  <RegistrarClienteModal
+    v-if="!selectorMode"
+    :open="showCrearClienteModal"
+    @saved="onClienteCreado"
+    @close="showCrearClienteModal = false"
+  />
 
 
       <!-- Modal para Editar Cliente -->
@@ -212,6 +152,7 @@ import AppFilter from '../components/AppFilter.vue';
 import AppButton from '../components//AppButton.vue';
 import AppPagination from '../components/AppPagination.vue';
 import apiService from '../services/apiService.js'; 
+import RegistrarClienteModal from '@/components/RegistrarClienteModal.vue';
 export default {
   name: 'ClientesView',
   props: {
@@ -224,7 +165,8 @@ export default {
     AppTable,
     AppFilter,
     AppButton,
-    AppPagination
+    AppPagination,
+    RegistrarClienteModal
   },
   data() {
     return {
@@ -244,7 +186,8 @@ export default {
       filtroTipo: 'all',
       paginaActual: 1,
       itemsPorPagina: 5,
-      creditoMonto: null // Monto de línea de crédito
+      creditoMonto: null, // Monto de línea de crédito
+      showCrearClienteModal: false
     };  
   },
   computed: {
@@ -295,19 +238,14 @@ export default {
       }
     },
     abrirModalCrear() {
+      // Abrir componente reutilizable de registro
       this.clienteActual = null;
-      this.cliente = {
-        nombre_completo: '',
-        nro_documento: '',
-        ruc: '',
-        direccion: '',
-        telefono: '',
-        email: '',
-        nombre_fantasia: '',
-        condiciones_pago: 'Contado'
-      };
-      const modalInstance = new Modal(document.getElementById('crearClienteModal'));
-      modalInstance.show();
+      this.showCrearClienteModal = true;
+    },
+    onClienteCreado() {
+      // Cerrar y refrescar listado al crear
+      this.showCrearClienteModal = false;
+      this.cargarClientes();
     },
     abrirModalEditar(cliente) {
       this.clienteActual = cliente;

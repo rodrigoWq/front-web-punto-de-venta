@@ -1,11 +1,11 @@
 <template>
   <div class="container-xl px-4">
-    <!-- Título y botón «Nuevo» -->
-    <div class="row">
+    <!-- Título y botón «Nuevo» (oculto en modo selector) -->
+    <div class="row" v-if="!hideHeader">
       <div class="col-12">
         <div class="d-flex justify-content-between align-items-center mb-4 mt-2">
-          <h2 class="fw-bold mb-0">Gestión Precios de Productos</h2>
-          <button class="btn btn-dark d-flex align-items-center" @click="openProductModal()">
+          <h2 class="fw-bold mb-0">{{ selectorMode ? 'Seleccionar Producto' : 'Gestión Precios de Productos' }}</h2>
+          <button v-if="!selectorMode" class="btn btn-dark d-flex align-items-center" @click="openProductModal()">
             <i class="bi bi-plus-lg me-2"></i> Nuevo Producto
           </button>
         </div>
@@ -68,16 +68,21 @@
               <th class="text-end col-price">Precio Actual</th>
               <th class="col-categoria">Categoría</th>
               <th class="text-end col-price-compra">Precio última compra</th>
-              <th class="text-end col-actions">Acciones</th>
+              <th v-if="!selectorMode" class="text-end col-actions">Acciones</th>
             </tr>
           </thead>
           <tbody>
-            <tr v-for="prod in pagedProducts" :key="prod.producto_id">
+            <tr
+              v-for="prod in pagedProducts"
+              :key="prod.producto_id"
+              :class="{ 'selectable-row': selectorMode }"
+              @click="selectorMode && seleccionarProducto(prod)"
+            >
               <td class="col-nombre">{{ prod.nombre }}</td>
               <td class="text-end col-price">{{ prod.precio_venta ? formateaNumero(prod.precio_venta) : 'Sin precio' }}</td>
               <td class="col-categoria">{{ prod.categoria }}</td>
               <td class="text-end col-price-compra">{{ prod.precio_ultima_compra ? formateaNumero(prod.precio_ultima_compra) : 'Sin precio' }}</td>
-              <td class="text-end col-actions">
+              <td v-if="!selectorMode" class="text-end col-actions">
                 <div class="d-inline-flex flex-nowrap gap-1 actions-wrapper">
                   <button class="btn btn-success btn-sm" @click="openPriceModal(prod)">$ Precio Venta</button>
                   <button class="btn btn-warning btn-sm" @click="openProductModal(prod)"><i class="bi bi-pencil-fill"></i> Editar</button>
@@ -170,6 +175,11 @@ export default {
     RegistrarProducto                                                         // 
   },
 
+  props: {
+    selectorMode: { type: Boolean, default: false },
+    hideHeader:   { type: Boolean, default: false }
+  },
+
   data() {
     return {
       // ≡ SIN CAMBIOS
@@ -257,6 +267,10 @@ export default {
   },
 
   methods: {
+    seleccionarProducto(prod) {
+      // Emitir el producto seleccionado (id y nombre son suficientes para buscar detalles fuera)
+      this.$emit('producto-seleccionado', prod);
+    },
     /* ---------- Utilidades ---------- */
     // 🆕 Helper para construir urls
     api(path) { return `${process.env.VUE_APP_API_BASE_URL}${path}`; },
@@ -479,6 +493,15 @@ export default {
   mounted() { this.fetchProducts(); }                                         // ≡
 };
 </script>
+
+<style scoped>
+.selectable-row {
+  cursor: pointer;
+}
+.selectable-row:hover {
+  background-color: #f8f9fa;
+}
+</style>
 /*    {
         "producto_id": 22,
         "nombre": "prueba",

@@ -34,18 +34,18 @@ apiService.interceptors.response.use(
        error.response?.data?.message?.includes('caja abierta') ||
        error.response?.data?.message?.includes('No hay'))
     
-    // Mostrar mensaje del backend: prioriza 'error', luego 'message'
+    // Mostrar mensaje del backend en consola: prioriza 'error', luego 'message'
     if (error.response && error.response.data && !isExpectedError) {
       const backendError = error.response.data.error || error.response.data.message;
       if (backendError) {
-        window.alert(backendError);
+        console.log('[API error]', backendError);
       }
     }
     
     if (error.response && (error.response.status === 401 || error.response.status === 403)) {
       // Por ejemplo, redirigir a login o notificar al usuario que no tiene permisos
       // Aquí podrías limpiar el token y redirigir:
-      window.location.href = '/';
+      console.log('[API error 401 0 403]');
     }
     return Promise.reject(error);
   }

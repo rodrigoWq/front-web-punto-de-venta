@@ -1,39 +1,41 @@
 <template>
     <AppNavbar />
-    <div class="container">
-      <AppHeader title="User Management" style="margin-top: 15px;">
+    <div class="container mt-5">
+      <AppHeader title="Gestión de Usuarios">
         <template #buttons>
-          <button class="ms-2 permissions-btn" @click="irARoles">Roles</button>
-          <button class="create-user-btn" @click="abrirModalCrearUsuario">Create User</button>
+          <button class="btn btn-outline-secondary me-2" @click="irARoles">Roles</button>
+          <button class="btn btn-success" @click="abrirModalCrearUsuario">Crear Usuario</button>
         </template>
       </AppHeader>
 
-  
-      <AppFilter v-model="filtroNombre" placeholder="Search by name..." customClasses="filter-section">
-        <button :class="['me-2', { active: filtroRol === 'all' }]" @click="filtrarRol('all')">All Roles</button>
-        <button :class="['me-2', { active: filtroEstado === 'active' }]" @click="filtrarEstado('active')">Active</button>
-        <button :class="{ active: filtroEstado === 'inactive'   }" @click="filtrarEstado('inactive')">Inactive</button>
+      <AppFilter v-model="filtroNombre" placeholder="Buscar por nombre..." customClasses="mt-4 mb-4">
+        <button class="btn me-2" :class="filtroRol === 'all' ? 'btn-success' : 'btn-outline-secondary'" @click="filtrarRol('all')">Todos los Roles</button>
+        <button class="btn me-2" :class="filtroEstado === 'active' ? 'btn-success' : 'btn-outline-secondary'" @click="filtrarEstado('active')">Activos</button>
+        <button class="btn" :class="filtroEstado === 'inactive' ? 'btn-success' : 'btn-outline-secondary'" @click="filtrarEstado('inactive')">Inactivos</button>
       </AppFilter>
 
-  
       <!-- Tabla de Usuarios -->
+      <h2>Lista de Usuarios</h2>
       <AppTable :headers="['Name', 'Role', 'Status', 'Actions']">
         <tr v-for="usuario in usuariosFiltrados" :key="usuario.id">
           <td>{{ usuario.nombre }}</td>
-         <!-- <td>{{ usuario.telefono }}</td> -->
           <td>{{ usuario.rol }}</td>
           <td>
-            <span :class="['status', usuario.status]">{{ usuario.status }}</span>
+            <span class="badge" :class="usuario.status === 'active' ? 'bg-success' : 'bg-secondary'">
+              {{ usuario.status === 'active' ? 'Activo' : 'Inactivo' }}
+            </span>
           </td>
-          <td style="display: flex; align-items: center; gap: 0.5rem;">
-            <button  @click="abrirModalEditarUsuario(usuario)">✏️</button>
-            <button  @click="eliminarUsuario(usuario.id)">🗑️</button>
-            <button  @click="abrirModalResetPassword(usuario)">🔒 Reset</button>
+          <td>
+            <div class="actions-wrapper">
+              <button class="btn btn-primary btn-sm me-1" @click="abrirModalEditarUsuario(usuario)">✏️ Editar</button>
+              <button class="btn btn-danger btn-sm me-1" @click="eliminarUsuario(usuario.id)">🗑️ Eliminar</button>
+              <button class="btn btn-warning btn-sm" @click="abrirModalResetPassword(usuario)">🔒 Reset</button>
+            </div>
           </td>
         </tr>
       </AppTable>
 
-      <AppPagination :currentPage="currentPage" :totalPages="totalPages" @page-changed="changePage" />
+  <AppPagination :currentPage="currentPage" :totalPages="totalPages" @page-changed="changePage" />
 
       <!-- Modal Crear Usuario -->
       <div class="modal fade" id="crearUsuarioModal" tabindex="-1" aria-labelledby="crearUsuarioModalLabel">
@@ -508,4 +510,28 @@
 <style scoped>
 
 
+</style>
+
+<style scoped>
+/* Estilos generales consistentes con otras pantallas */
+.container {
+  background-color: #ffffff;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+h1, h2 {
+  color: #343a40;
+}
+.form-label {
+  font-weight: bold;
+  color: #495057;
+}
+
+/* Alinear y espaciar acciones de la tabla */
+.actions-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
 </style>

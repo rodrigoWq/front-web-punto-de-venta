@@ -45,6 +45,9 @@
                   @keyup.enter.prevent="buscarProducto"
                   @blur="productCode && buscarProducto()"
                 />
+                <button type="button" class="btn btn-outline-primary btn-sm" @click="toggleBuscarProducto">
+                  Buscar
+                </button>
               </div>
             </div>
             <div class="col">
@@ -100,6 +103,29 @@
         </div>
       </div>
   
+      <!-- Overlay de selección de producto -->
+      <div
+        v-if="mostrarSelectorProducto"
+        class="overlay-backdrop"
+        role="dialog"
+        aria-modal="true"
+        @click.self="cerrarSelectorProducto"
+      >
+        <div class="overlay-panel card">
+          <div class="overlay-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Seleccionar Producto</h5>
+            <button type="button" class="btn-close" aria-label="Cerrar" @click="cerrarSelectorProducto"></button>
+          </div>
+          <div class="overlay-body">
+            <ProductosPrecioView
+              :selectorMode="true"
+              :hideHeader="true"
+              @producto-seleccionado="onProductoSeleccionado"
+            />
+          </div>
+        </div>
+      </div>
+
       <!-- Tabla de Productos -->
       <div class="table-container">
         <AppTable :headers="['No. de Producto', 'Código', 'Nombre', 'Cantidad', 'Unidad de Medida', 'Precio Unitario', 'Acciones']">
@@ -145,10 +171,6 @@
       </button>
     </div>
 
-  <ModalCliente v-if="showClienteModal" @close="showClienteModal = false" @verificarRUC="verificarRUC" />
-
-
-
   </div>
   <PendingSaleModal
     v-if="showPendingModal"
@@ -159,6 +181,15 @@
     @submit="handlePendingSubmit"
   />
   
+  <!-- Modal Registrar Cliente reutilizable -->
+  <RegistrarClienteModal
+    :open="showCrearClienteModal"
+    :prefillRuc="rucCliente"
+    :prefillDocumento="rucCliente"
+    @saved="onClienteCreadoDesdeModal"
+    @close="showCrearClienteModal = false"
+  />
+  
 </template>
 
 <script>
@@ -167,14 +198,15 @@ import AppTable from '../components/AppTable.vue';
 import AppNavbar from '../components/AppNavbar.vue';
 import AppPagination from '../components/AppPagination.vue';
 import apiService from '../services/apiService.js';
-import ModalCliente from '../components/ClienteModal.vue';
 import PendingSaleModal from '../components/PendingSaleModal.vue';
 import ClientesView from './ClientesView.vue';
+import ProductosPrecioView from '@/views/Inventario/ProductosPrecioView.vue';
+import RegistrarClienteModal from '@/components/RegistrarClienteModal.vue';
 
 
 export default {
   name: "PantallaInicio",
-  components: { AppTable, AppNavbar, AppPagination, ModalCliente, PendingSaleModal, ClientesView },
+  components: { AppTable, AppNavbar, AppPagination, PendingSaleModal, ClientesView, ProductosPrecioView, RegistrarClienteModal },
   data() {
     return {
       productCode: '',
@@ -195,8 +227,17 @@ export default {
       paginaActual: 1,
       itemsPorPagina: 5,
       showPendingModal: false,
-      showClienteModal: false,
-      mostrarSelectorCliente: false
+      mostrarSelectorCliente: false,
+  mostrarSelectorProducto: false,
+      showCrearClienteModal: false,
+      // Guardas para evitar bucles/verificaciones repetidas
+      isVerifyingRuc: false,
+      lastRucChecked: '',
+      rucNotFoundForValue: '',
+      // Guardas para búsqueda de producto
+      isCheckingProduct: false,
+      productNotFoundForCode: '',
+      lastProductCheckedCode: ''
     };
   },
   computed: {
@@ -219,6 +260,14 @@ export default {
       // Si el código cambia, invalidar la selección previa
       this.selectedProduct = null;
       this.productDescription = '';
+      this.productNotFoundForCode = '';
+    },
+    // Si el usuario modifica el RUC/CI, permitimos reintentar y limpiamos flags
+    rucCliente(newVal, oldVal) {
+      if (newVal !== oldVal) {
+        this.rucNotFoundForValue = '';
+        // No bloqueamos un nuevo chequeo para el nuevo valor
+      }
     }
   },
   methods: {
@@ -241,46 +290,139 @@ export default {
       this.clienteNombre = cliente.nombre_completo || cliente.nombre_fantasia || '';
       this.cerrarSelectorCliente();
     },
+    abrirModalCrearClienteDesdeInicio() {
+      this.showCrearClienteModal = true;
+    },
+    onClienteCreadoDesdeModal(cli) {
+      this.rucCliente = cli?.ruc || cli?.nro_documento || this.rucCliente || '';
+      this.clienteNombre = cli?.nombre_completo || cli?.nombre_fantasia || this.clienteNombre || '';
+      this.showCrearClienteModal = false;
+      // Resetear flags tras crear
+      this.rucNotFoundForValue = '';
+      this.lastRucChecked = this.rucCliente?.trim() || '';
+    },
     async buscarProducto() {
       // Buscar y mostrar descripción, sin agregar a la tabla
       this.selectedProduct = null;
       this.productDescription = '';
-      if (!this.productCode) {
-        return;
-      }
+      const code = (this.productCode || '').trim();
+      if (!code) return;
+      if (this.isCheckingProduct) return; // Evita doble disparo (Enter + blur)
+      if (this.productNotFoundForCode === code) return; // Ya avisado para este código; esperar que el usuario lo cambie
       if (!this.productQuantity || this.productQuantity <= 0) {
-        alert("La cantidad debe ser mayor a 0");
+        alert('La cantidad debe ser mayor a 0');
         return;
       }
-      try {
-        const url = `${process.env.VUE_APP_API_BASE_URL}/api/prices/barcode/${this.productCode}?cantidad_unidades=${this.productQuantity}`;
-        const response = await apiService.get(url);
-        const product = response.data;
-        if (product) {
-          const precioActual = Number(product.precio_venta_actual ?? 0);
-          if (!precioActual || precioActual <= 0) {
-            const msg = `El producto "${product.nombre}" no tiene un precio de venta asignado.\n\n¿Deseas ir a la pantalla de Gestión de Precios para asignarlo ahora?`;
-            const irGestionPrecios = window.confirm(msg);
-            if (irGestionPrecios) {
-              this.$router.push({ name: 'ProductosPrecio' });
-            }
-            return;
+      const qty = Number(this.productQuantity) || 1;
+      this.isCheckingProduct = true;
+      // Helper para mapear respuesta a selectedProduct
+      const mapToSelected = (p) => {
+        // Resolver precio desde distintas formas
+        const now = new Date();
+        let price = Number(p.precio_venta_actual ?? p.precio_unitario_resuelto ?? p.precio_venta ?? 0);
+        if (!price || price <= 0) {
+          const arr = Array.isArray(p.precios_vigentes) ? p.precios_vigentes : [];
+          if (arr.length) {
+            let candidates = arr.filter(x => {
+              const desde = x?.vigencia_desde ? new Date(x.vigencia_desde) : null;
+              const hasta = x?.vigencia_hasta ? new Date(x.vigencia_hasta) : null;
+              const inDate = (!desde || desde <= now) && (!hasta || hasta >= now);
+              const qtyOk = (x.cantidad_desde == null || x.cantidad_desde <= qty) && (x.cantidad_hasta == null || x.cantidad_hasta >= qty);
+              return inDate && qtyOk;
+            });
+            if (!candidates.length) candidates = arr;
+            candidates.sort((a,b) => new Date(b.vigencia_desde) - new Date(a.vigencia_desde));
+            const pick = candidates[0];
+            price = Number(pick?.precio_venta ?? 0);
           }
-          // Guardamos producto seleccionado y mostramos descripción
-          this.selectedProduct = {
-            codigo: product.producto_id,
-            nombre: product.nombre,
-            unidad_medida: product.unidad_medida_nombre,
-            precio: precioActual
-          };
-          this.productDescription = `${product.nombre}`;
-        } else {
-          alert('Producto no encontrado');
         }
-      } catch (error) {
-        console.error('Error al obtener el producto:', error);
-        alert('Error al obtener el producto');
+        return {
+          codigo: p.producto_id ?? p.id,
+          nombre: p.nombre,
+          unidad_medida: p.unidad_medida_nombre ?? p.unidad_medida ?? '',
+          precio: price || 0
+        };
+      };
+
+      let found = false;
+      let notFound = false;
+      // 1) Intentar por código de barras
+      try {
+        const url = `${process.env.VUE_APP_API_BASE_URL}/api/prices/barcode/${code}?cantidad_unidades=${qty}`;
+        const { data: product } = await apiService.get(url);
+        if (product) {
+          const sel = mapToSelected(product);
+          if (!sel.precio || sel.precio <= 0) {
+            const msg = `El producto "${sel.nombre}" no tiene un precio de venta asignado.\n\n¿Deseas ir a la pantalla de Gestión de Precios para asignarlo ahora?`;
+            const irGestionPrecios = window.confirm(msg);
+            if (irGestionPrecios) this.$router.push({ name: 'ProductosPrecio' });
+          } else {
+            this.selectedProduct = sel;
+            this.productDescription = `${sel.nombre}`;
+            found = true;
+          }
+        }
+      } catch (e1) {
+        // Si 404 continuamos al fallback; otros errores sólo se registran
+        if (e1?.response?.status !== 404) {
+          console.error('Error buscando por código de barras:', e1);
+        }
       }
+
+      // 2) Fallback por ID si aún no se encontró
+      if (!found) {
+        try {
+          const urlById = `${process.env.VUE_APP_API_BASE_URL}/api/prices/${code}`;
+          const { data: productById } = await apiService.get(urlById);
+          if (productById) {
+            const sel = mapToSelected(productById);
+            if (!sel.precio || sel.precio <= 0) {
+              const msg = `El producto "${sel.nombre}" no tiene un precio de venta asignado.\n\n¿Deseas ir a la pantalla de Gestión de Precios para asignarlo ahora?`;
+              const irGestionPrecios = window.confirm(msg);
+              if (irGestionPrecios) this.$router.push({ name: 'ProductosPrecio' });
+            } else {
+              this.selectedProduct = sel;
+              this.productDescription = `${sel.nombre}`;
+              found = true;
+            }
+          } else {
+            notFound = true;
+          }
+        } catch (e2) {
+          if (e2?.response?.status === 404) {
+            notFound = true;
+          } else {
+            console.error('Error al obtener el producto por ID:', e2);
+            alert('Error al obtener el producto');
+          }
+        }
+      }
+
+      if (!found && notFound) {
+        // Avisar una sola vez para este código hasta que el usuario cambie el valor
+        this.productNotFoundForCode = code;
+        alert('Producto no encontrado');
+      }
+      this.lastProductCheckedCode = code;
+      this.isCheckingProduct = false;
+    },
+    toggleBuscarProducto() {
+      this.mostrarSelectorProducto = !this.mostrarSelectorProducto;
+      if (this.mostrarSelectorProducto) {
+        document.body.style.overflow = 'hidden';
+      } else {
+        document.body.style.overflow = '';
+      }
+    },
+    cerrarSelectorProducto() {
+      this.mostrarSelectorProducto = false;
+      document.body.style.overflow = '';
+    },
+    onProductoSeleccionado(prod) {
+      // Tomar el ID del producto y buscarlo (fallback por ID en buscarProducto cubre este caso)
+      this.productCode = String(prod?.producto_id ?? prod?.id ?? '');
+      this.cerrarSelectorProducto();
+      this.$nextTick(() => this.buscarProducto());
     },
     agregarProducto() {
       // Agregar a la tabla el producto previamente buscado
@@ -405,7 +547,6 @@ export default {
     this.rucCliente = '';
     this.clienteNombre = '';
     this.showPendingModal = false;
-    this.showClienteModal = false;
     },
     cambiarPagina(page) {
       this.paginaActual = page;
@@ -459,26 +600,35 @@ export default {
       }
     },
     async verificarRUC() {
-      if (!this.rucCliente.trim()) return;
+      const value = (this.rucCliente || '').trim();
+      if (!value) return;
+      // Evitar doble ejecución por Enter + blur y evitar reintentos infinitos para el mismo valor
+      if (this.isVerifyingRuc) return;
+      if (this.rucNotFoundForValue === value) return; // ya se intentó y no se encontró; esperar cambio del input
+      if (this.showCrearClienteModal) return; // si el modal ya está abierto, no volver a disparar
+
+      this.isVerifyingRuc = true;
       try {
-        const url = `${process.env.VUE_APP_API_BASE_URL}/api/clients/search/${this.rucCliente}`;
-        const response = await apiService.get(url);
-        const cliente = response.data;
+        const url = `${process.env.VUE_APP_API_BASE_URL}/api/clients/search/${value}`;
+        const { data: cliente } = await apiService.get(url);
         if (cliente && Object.keys(cliente).length > 0) {
-          this.clienteNombre = cliente.nombre_completo;
-          this.showClienteModal = false;
-        }else {
+          this.clienteNombre = cliente.nombre_completo || '';
+        } else {
           this.clienteNombre = '';
-          this.showClienteModal = true;
+          this.rucNotFoundForValue = value;
+          this.abrirModalCrearClienteDesdeInicio();
         }
       } catch (error) {
-        // Si el error es por cliente no encontrado, se puede mostrar el modal
-        if (error.response && error.response.status === 404) {
+        if (error?.response?.status === 404) {
           this.clienteNombre = '';
-          this.showClienteModal = true;
+          this.rucNotFoundForValue = value;
+          this.abrirModalCrearClienteDesdeInicio();
         } else {
-          console.error("Error al verificar RUC:", error);
+          console.error('Error al verificar RUC:', error);
         }
+      } finally {
+        this.lastRucChecked = value;
+        this.isVerifyingRuc = false;
       }
     },
     mostrarReloj() {
