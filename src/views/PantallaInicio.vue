@@ -488,28 +488,9 @@ export default {
         console.log('Payload venta:', payload);
         const resp = await apiService.post(`${process.env.VUE_APP_API_BASE_URL}/api/sales`, payload);
         console.log('[PantallaInicio] /api/sales resp.data:', resp?.data);
-        //alert('Venta registrada correctamente');
-
-        // Armar objeto de factura a enviar a CobroVentaRapida
-        const d = resp?.data || {};
-        const inv = {
-          // Usar movimiento_cobro_id provisto por el backend para registrar el cobro
-          id: d.movimiento_cobro_id || d.movimiento_id || d.id || d?.venta?.movimiento_id || d?.data?.movimiento_id || null,
-          // Mostrar número de factura si está, si no el número de comprobante
-          number: d.nro_factura || d.nro_comprobante || d?.venta?.nro_comprobante || d?.data?.nro_comprobante || '',
-          // Preferir nombre desde cabecera si viene, si no el input local
-          client: d?.cabecera?.nombre_razon_social || this.clienteNombre || '',
-          date: new Date().toLocaleString(),
-          total: this.totalAmount
-        };
-        const encoded = encodeURIComponent(JSON.stringify(inv));
-        console.log('[PantallaInicio] CobroVentaRapida invoice object:', inv);
-        console.log('[PantallaInicio] CobroVentaRapida encoded invoice:', encoded);
-
-        // Redirigir a pantalla de cobro con la factura seleccionada
-        this.$router.push({ name: 'CobroVentaRapida', query: { invoice: encoded } });
-
-        // 7) Limpio todo (estado local)
+        // 7) Venta registrada: limpiar el formulario para una nueva carga (sin redirigir)
+        alert('Venta registrada correctamente.');
+        // Limpiar estado local
         this.productos = [];
         this.paginaActual = 1;
         this.cabecera.referencia = '';
