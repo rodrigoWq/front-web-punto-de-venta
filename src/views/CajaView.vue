@@ -4,58 +4,34 @@
     <AppHeader title="Sistema de Caja" subtitle="Gestión de Tesorería">
       <template #buttons>
         <template v-if="cajaAbierta">
-          <span class="badge bg-dark me-2">Caja Abierta</span>
-          <div class="btn-group" ref="dropdownGroup">
-            <button
-              type="button"
-              class="btn btn-primary dropdown-toggle"
-              :aria-expanded="isOpen"
-              @click="toggleDropdown"
-            >
-              + Nuevo Movimiento
-            </button>
-            <ul class="dropdown-menu" :class="{ show: isOpen }">
-              <li>
-                <a class="dropdown-item" href="#">
-                  <router-link class="nav-link" to="/cobro-factura-venta">
-                    <i class="bi bi-graph-up text-success me-2"></i>Cobro de Factura de Venta
-                  </router-link>
-                  
-                </a>
-              </li>
-              <li>
-                <a class="dropdown-item" href="#">
-                  <router-link class="nav-link" to="/pago-factura">
-                    <i class="bi bi-graph-down text-danger me-2"></i>Pago a Proveedores
-                  </router-link>
-                </a>
-              </li>
-              <li>
-                <a class="dropdown-item" href="#">
-                  <router-link class="nav-link" to="/ingreso-varios">
-                    <i class="bi bi-plus-lg text-primary me-2"></i>Ingreso Varios
-                  </router-link>               
-                </a>
-              </li>
-              <li>
-                <a class="dropdown-item" href="#">
-                  <router-link class="nav-link" to="/egreso-varios">
-                    <i class="bi bi-dash-lg text-warning me-2"></i>Egreso Varios
-                  </router-link>
-                </a>
-              </li>
-              <li>
-                <a class="dropdown-item" href="#">
-                  <router-link class="nav-link" to="/cobro-cliente-credito">
-                    <i class="bi bi-credit-card text-purple me-2"></i>Cobro a Cliente Crédito
-                  </router-link>
-                </a>
-              </li>
-            </ul>
-          </div>
+          <span class="badge bg-dark">Caja Abierta</span>
         </template>
       </template>
     </AppHeader>
+
+    <!-- Acciones rápidas: siempre visibles cuando la caja está abierta -->
+  <div v-if="cajaAbierta" class="quick-actions mt-3 mb-4">
+      <router-link class="action-tile tile-success" to="/cobro-factura-venta" title="Registrar cobro de factura de venta">
+        <div class="icon-circle"><i class="bi bi-graph-up"></i></div>
+        <div class="tile-text">Cobro de Factura de Venta</div>
+      </router-link>
+      <router-link class="action-tile tile-danger" to="/pago-factura" title="Registrar pago a proveedores">
+        <div class="icon-circle"><i class="bi bi-graph-down"></i></div>
+        <div class="tile-text">Pago a Proveedores</div>
+      </router-link>
+      <router-link class="action-tile tile-primary" to="/ingreso-varios" title="Registrar ingreso varios">
+        <div class="icon-circle"><i class="bi bi-plus-lg"></i></div>
+        <div class="tile-text">Ingreso Varios</div>
+      </router-link>
+      <router-link class="action-tile tile-warning" to="/egreso-varios" title="Registrar egreso varios">
+        <div class="icon-circle"><i class="bi bi-dash-lg"></i></div>
+        <div class="tile-text">Egreso Varios</div>
+      </router-link>
+      <router-link class="action-tile tile-purple" to="/cobro-cliente-credito" title="Cobro a cliente con crédito">
+        <div class="icon-circle"><i class="bi bi-credit-card"></i></div>
+        <div class="tile-text">Cobro a Cliente Crédito</div>
+      </router-link>
+    </div>
 
     <!-- Se ve únicamente si la caja está CERRADA -->
     <div v-if="!cajaAbierta" class="text-center my-5">
@@ -248,7 +224,6 @@ onMounted(() => {
 })
 
 const modalOpen   = ref(false)
-const isOpen      = ref(false)
 
 const openForm = reactive({
   fechaApertura: '',
@@ -292,11 +267,7 @@ async function abrirCaja () {
 }
 
 
-
-
-function toggleDropdown() {
-  isOpen.value = !isOpen.value
-}
+// (Se removió el dropdown; acciones ahora están siempre visibles)
 
 /* ---------- helpers de formato ---------- */
 function formatoFecha (val) {
@@ -383,20 +354,104 @@ function movLabel(mov) {
 #caja-view .nav-link.active {
   font-weight: bold;
 }
-.dropdown-menu.show {
-  display: block;
-  position: absolute;
-  z-index: 1050;
+
+/* Acciones rápidas como “tarjetas/botones” */
+.quick-actions {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: 1fr;
 }
-/* Asegúrate de que el contenedor btn-group sea relativo */
-.btn-group {
-  position: relative;
+@media (min-width: 576px) {
+  .quick-actions { grid-template-columns: repeat(2, 1fr); }
+}
+@media (min-width: 768px) {
+  .quick-actions { grid-template-columns: repeat(3, 1fr); }
+}
+@media (min-width: 992px) {
+  .quick-actions { grid-template-columns: repeat(4, 1fr); }
+}
+@media (min-width: 1200px) {
+  .quick-actions { grid-template-columns: repeat(5, 1fr); }
 }
 
-/* Ubica el dropdown 100% abajo del botón */
-.dropdown-menu {
-  top: 100%;
-  left: 0;
-  margin-top: 0.25rem; /* espaciado pequeño */
+.action-tile {
+  /* variables por defecto */
+  --tile-bg: #f8f9fa;
+  --tile-border: #e5e5e5;
+  --tile-text: #212529;
+  --tile-icon-bg: #eef1f4;
+
+  background: var(--tile-bg);
+  border: 1px solid var(--tile-border);
+  border-radius: 10px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+  padding: 18px 16px;
+  height: 96px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-decoration: none;
+  color: var(--tile-text);
+  transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease;
 }
+.action-tile:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  text-decoration: none;
+  border-color: rgba(0,0,0,0.08);
+}
+.action-tile:focus-visible {
+  outline: 3px solid rgba(13,110,253,.35);
+  outline-offset: 2px;
+}
+
+.icon-circle {
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--tile-icon-bg);
+  font-size: 1.1rem;
+}
+
+.tile-text {
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+/* Variantes “soft” */
+.tile-success {
+  --tile-bg: #f3fcf5;
+  --tile-border: #d7f0dc;
+  --tile-text: #146c43;
+  --tile-icon-bg: #e7f8ea;
+}
+.tile-danger {
+  --tile-bg: #fff4f4;
+  --tile-border: #f5d6d6;
+  --tile-text: #b02a37;
+  --tile-icon-bg: #ffe9e9;
+}
+.tile-primary {
+  --tile-bg: #f2f6ff;
+  --tile-border: #d7e3ff;
+  --tile-text: #0d6efd;
+  --tile-icon-bg: #e7efff;
+}
+.tile-warning {
+  --tile-bg: #fff9ed;
+  --tile-border: #ffe4b8;
+  --tile-text: #b68200;
+  --tile-icon-bg: #fff0cc;
+}
+.tile-purple {
+  --tile-bg: #f7f2ff;
+  --tile-border: #e4d6ff;
+  --tile-text: #6f42c1;
+  --tile-icon-bg: #eee4ff;
+}
+
+.text-purple { color: #6f42c1; }
 </style>
