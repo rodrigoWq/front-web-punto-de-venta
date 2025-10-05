@@ -5,32 +5,97 @@
     <!-- Contenido Principal -->
     <div class="container mt-4 flex-grow-1">
       <!-- Formulario de Producto -->
-      <div class="card p-4 mb-4">
-        <div class="row g-3">
-          <div class="col">
-            <label for="productCode" class="form-label">Código del producto</label>
-            <div class="input-group">
-              <input type="text" class="form-control" v-model="productCode" placeholder="Ingresa el código"  @keyup.enter.prevent="agregarProducto" />
+      <div class="card p-2 mb-3 compact-form">
+          <!-- Fila de Cliente (arriba) -->
+          <div class="row g-2 mb-1">
+            <div class="col">
+              <label for="rucCliente" class="form-label">RUC / CI</label>
+              <div class="input-group">
+                <input
+                  type="text"
+                  class="form-control form-control-sm"
+                  v-model="rucCliente"
+                  placeholder="Ingresa el RUC/CI del cliente"
+                  @blur="verificarRUC"
+                  @keyup.enter.prevent="verificarRUC"
+                />
+              </div>
+            </div>
+            <div class="col">
+              <label for="nombreCliente" class="form-label">Cliente</label>
+              <div class="input-group">
+                <input type="text" id="nombreCliente" class="form-control form-control-sm" v-model="clienteNombre" readonly />
+                <button type="button" class="btn btn-outline-primary btn-sm" @click="toggleBuscarCliente">
+                  Buscar
+                </button>
+              </div>
             </div>
           </div>
-          <div class="col">
-            <label for="productQuantity" class="form-label">Cantidad</label>
-            <input type="number" class="form-control" v-model="productQuantity" value="1" min="1" @keyup.enter.prevent="agregarProducto" />
-          </div>
-          <div class="col">
-            <label for="rucCliente" class="form-label">RUC / CI</label>
-            <div class="input-group">
-              <input type="text" class="form-control" v-model="rucCliente" placeholder="Ingresa el RUC/CI del cliente"  @blur="verificarRUC" @keyup.enter.prevent="verificarRUC" />
+
+          <!-- Fila de Producto (abajo) -->
+          <div class="row g-2">
+            <div class="col">
+              <label for="productCode" class="form-label">Código del producto</label>
+              <div class="input-group">
+                <input
+                  type="text"
+                  class="form-control form-control-sm"
+                  v-model="productCode"
+                  placeholder="Ingresa el código"
+                  @keyup.enter.prevent="buscarProducto"
+                  @blur="productCode && buscarProducto()"
+                />
+              </div>
+            </div>
+            <div class="col">
+              <label for="productQuantity" class="form-label">Cantidad</label>
+              <input
+                type="number"
+                class="form-control form-control-sm"
+                v-model="productQuantity"
+                value="1"
+                min="1"
+                @keyup.enter.prevent="agregarProducto"
+              />
+            </div>
+            <div class="col">
+              <label for="productDescription" class="form-label">Descripción del producto</label>
+              <div class="input-group">
+                <input
+                  type="text"
+                  id="productDescription"
+                  class="form-control form-control-sm"
+                  v-model="productDescription"
+                  placeholder="Descripción mostrada al buscar por código"
+                  readonly
+                />
+                <button type="button" class="btn btn-success btn-sm" @click="agregarProducto" :disabled="!selectedProduct">
+                  <i class="bi bi-plus"></i>
+                </button>
+              </div>
             </div>
           </div>
-          <div class="col">
-            <label for="nombreCliente" class="form-label">Cliente</label>
-            <div class="input-group">
-              <input type="text" id="nombreCliente" class="form-control" v-model="clienteNombre" readonly />
-              <button type="button" class="btn btn-success" @click="agregarProducto">
-                <i class="bi bi-plus"></i>
-              </button>
-            </div>
+      </div>
+
+      <!-- Overlay de selección de cliente -->
+      <div
+        v-if="mostrarSelectorCliente"
+        class="overlay-backdrop"
+        role="dialog"
+        aria-modal="true"
+        @click.self="cerrarSelectorCliente"
+      >
+        <div class="overlay-panel card">
+          <div class="overlay-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Seleccionar Cliente</h5>
+            <button type="button" class="btn-close" aria-label="Cerrar" @click="cerrarSelectorCliente"></button>
+          </div>
+          <div class="overlay-body">
+            <ClientesView
+              :selectorMode="true"
+              :hideHeader="true"
+              @cliente-seleccionado="onClienteSeleccionado"
+            />
           </div>
         </div>
       </div>
@@ -104,21 +169,18 @@ import AppPagination from '../components/AppPagination.vue';
 import apiService from '../services/apiService.js';
 import ModalCliente from '../components/ClienteModal.vue';
 import PendingSaleModal from '../components/PendingSaleModal.vue';
+import ClientesView from './ClientesView.vue';
 
 
 export default {
   name: "PantallaInicio",
-  components: {
-    AppTable,
-    AppNavbar,
-    AppPagination,
-    ModalCliente,
-    PendingSaleModal
-  },
+  components: { AppTable, AppNavbar, AppPagination, ModalCliente, PendingSaleModal, ClientesView },
   data() {
     return {
       productCode: '',
       productQuantity: 1,
+      productDescription: '',
+      selectedProduct: null,
       rucCliente: '',
       clienteNombre: '',
       userName: '',
@@ -133,7 +195,8 @@ export default {
       paginaActual: 1,
       itemsPorPagina: 5,
       showPendingModal: false,
-      showClienteModal: false
+      showClienteModal: false,
+      mostrarSelectorCliente: false
     };
   },
   computed: {
@@ -151,60 +214,97 @@ export default {
       return Math.ceil(this.productos.length / this.itemsPorPagina);
     }
   },
+  watch: {
+    productCode() {
+      // Si el código cambia, invalidar la selección previa
+      this.selectedProduct = null;
+      this.productDescription = '';
+    }
+  },
   methods: {
-    async agregarProducto() {
+    toggleBuscarCliente() {
+      this.mostrarSelectorCliente = !this.mostrarSelectorCliente;
+      // Evitar scroll del fondo cuando está visible
+      if (this.mostrarSelectorCliente) {
+        document.body.style.overflow = 'hidden';
+      } else {
+        document.body.style.overflow = '';
+      }
+    },
+    cerrarSelectorCliente() {
+      this.mostrarSelectorCliente = false;
+      document.body.style.overflow = '';
+    },
+    onClienteSeleccionado(cliente) {
+      // Completar los datos en la pantalla de inicio y cerrar el selector
+      this.rucCliente = cliente.ruc || cliente.nro_documento || '';
+      this.clienteNombre = cliente.nombre_completo || cliente.nombre_fantasia || '';
+      this.cerrarSelectorCliente();
+    },
+    async buscarProducto() {
+      // Buscar y mostrar descripción, sin agregar a la tabla
+      this.selectedProduct = null;
+      this.productDescription = '';
       if (!this.productCode) {
-        alert("Por favor, ingresa un código de producto");
         return;
       }
-      
-      // Validar que la cantidad sea positiva
       if (!this.productQuantity || this.productQuantity <= 0) {
         alert("La cantidad debe ser mayor a 0");
         return;
       }
-      
       try {
-        // Se usa el método GET del servicio, pasando el parámetro 'codigo_barras'
         const url = `${process.env.VUE_APP_API_BASE_URL}/api/prices/barcode/${this.productCode}?cantidad_unidades=${this.productQuantity}`;
         const response = await apiService.get(url);
         const product = response.data;
         if (product) {
-          // Si el producto no tiene precio de venta actual o es 0, ofrecemos redirigir al usuario
           const precioActual = Number(product.precio_venta_actual ?? 0);
           if (!precioActual || precioActual <= 0) {
             const msg = `El producto "${product.nombre}" no tiene un precio de venta asignado.\n\n¿Deseas ir a la pantalla de Gestión de Precios para asignarlo ahora?`;
             const irGestionPrecios = window.confirm(msg);
             if (irGestionPrecios) {
-              // Navegar a la vista de gestión de precios (ruta definida en router)
-              // Usamos el nombre de ruta 'ProductosPrecio' definido en router/index.js
               this.$router.push({ name: 'ProductosPrecio' });
             }
-            // No permitimos agregar el producto si no tiene precio
             return;
           }
-
-          // Mapeamos solo los campos que usaremos en el front
-          const productoNuevo = {
+          // Guardamos producto seleccionado y mostramos descripción
+          this.selectedProduct = {
             codigo: product.producto_id,
             nombre: product.nombre,
-            cantidad: this.productQuantity,
-            // Como el backend envía 'unidad_medida_nombre', lo usamos para mostrar la unidad
             unidad_medida: product.unidad_medida_nombre,
-            // Precio seguro (ya validado arriba)
             precio: precioActual
           };
-          this.productos.push(productoNuevo);
-          // Reiniciar la cantidad a 1 después de agregar el producto
-          this.productQuantity = 1;
-          
+          this.productDescription = `${product.nombre}`;
         } else {
-          alert("Producto no encontrado");
+          alert('Producto no encontrado');
         }
       } catch (error) {
-        console.error("Error al obtener el producto:", error);
-        alert("Error al obtener el producto");
+        console.error('Error al obtener el producto:', error);
+        alert('Error al obtener el producto');
       }
+    },
+    agregarProducto() {
+      // Agregar a la tabla el producto previamente buscado
+      if (!this.selectedProduct) {
+        alert('Primero buscá un producto por su código');
+        return;
+      }
+      if (!this.productQuantity || this.productQuantity <= 0) {
+        alert('La cantidad debe ser mayor a 0');
+        return;
+      }
+      const productoNuevo = {
+        codigo: this.selectedProduct.codigo,
+        nombre: this.selectedProduct.nombre,
+        cantidad: this.productQuantity,
+        unidad_medida: this.selectedProduct.unidad_medida,
+        precio: this.selectedProduct.precio
+      };
+      this.productos.push(productoNuevo);
+      // Reset controlado: mantener código si se desea seguir escaneando, pero limpiar cantidad y selección
+      this.productQuantity = 1;
+      this.selectedProduct = null;
+      this.productDescription = '';
+      this.productCode = '';
     },
     async confirmarVenta() {
       try {
@@ -275,6 +375,8 @@ export default {
         this.cabecera.tipo_entrega  = 'domicilio';
         this.productCode     = '';
         this.productQuantity = 1;
+        this.productDescription = '';
+        this.selectedProduct = null;
         this.rucCliente      = '';
         this.clienteNombre   = '';
       } catch (error) {
@@ -298,6 +400,8 @@ export default {
     this.cabecera.tipo_entrega = 'domicilio';
     this.productCode = '';
     this.productQuantity = 1;
+    this.productDescription = '';
+    this.selectedProduct = null;
     this.rucCliente = '';
     this.clienteNombre = '';
     this.showPendingModal = false;
@@ -345,6 +449,8 @@ export default {
         this.showPendingModal = false;
         this.productCode     = '';
         this.productQuantity = 1;
+        this.productDescription = '';
+        this.selectedProduct = null;
         this.rucCliente      = '';
         this.clienteNombre   = '';
       } catch (error) {
@@ -546,5 +652,54 @@ h4 span {
 .comercial-graciela {
   color: white !important;
   font-weight: bold;
+}
+
+/* Compact form styles to reduce vertical space above the table */
+.compact-form {
+  padding: 8px !important;
+}
+.compact-form .form-label {
+  margin-bottom: 2px;
+  font-size: 0.875rem;
+}
+.compact-form .input-group > .form-control,
+.compact-form .form-control.form-control-sm {
+  height: 32px;
+  padding: 0.25rem 0.5rem;
+}
+.compact-form .btn,
+.compact-form .btn-sm {
+  padding: 0.25rem 0.5rem;
+  line-height: 1.1;
+}
+.compact-form .row {
+  margin-right: 0;
+  margin-left: 0;
+}
+
+/* Fullscreen overlay for embedded client selector */
+.overlay-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000; /* above footer and total section */
+}
+.overlay-panel {
+  width: 95vw;
+  max-width: 1100px;
+  max-height: 90vh;
+  overflow: hidden;
+}
+.overlay-header {
+  border-bottom: 1px solid #e9ecef;
+  padding: 10px 14px; /* ligeramente más compacto */
+}
+.overlay-body {
+  padding: 6px 12px 12px; /* reducir espacio superior */
+  max-height: calc(90vh - 56px);
+  overflow: auto;
 }
 </style>

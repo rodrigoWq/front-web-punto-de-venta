@@ -1,16 +1,16 @@
 /* eslint-disable no-undef */
 <template>
-    <AppNavbar />
-    <div class="container mt-5">
-      <AppHeader title="Gestión de Clientes">
+    <AppNavbar v-if="!selectorMode" />
+  <div :class="['container', (selectorMode && hideHeader) ? 'mt-2' : 'mt-5']">
+      <AppHeader v-if="!hideHeader" :title="selectorMode ? 'Seleccionar Cliente' : 'Gestión de Clientes'">
         <template #buttons>
-          <button class="btn btn-success" @click="abrirModalCrear">Registrar Cliente</button>
+          <button v-if="!selectorMode" class="btn btn-success" @click="abrirModalCrear">Registrar Cliente</button>
         </template>
       </AppHeader>
 
   
       <!-- Barra de Filtros -->
-      <AppFilter v-model="searchInput" placeholder="Buscar por nombre..." customClasses="mt-4 mb-4">
+      <AppFilter v-model="searchInput" placeholder="Buscar por nombre..." :customClasses="filterClasses">
         <AppButton variant="outline-secondary" customClass="me-2" :class="{ active: filtroTipo === 'all' }" @click="setFiltro('all')">Todos los Tipos</AppButton>
         <AppButton variant="outline-secondary" customClass="me-2" :class="{ active: filtroTipo === 'CONTADO' }" @click="setFiltro('CONTADO')">Contado</AppButton>
         <AppButton variant="outline-secondary" customClass="me-2" :class="{ active: filtroTipo === 'CREDITO' }" @click="setFiltro('CREDITO')">Crédito</AppButton>
@@ -19,16 +19,21 @@
   
       <!-- Tabla de Clientes -->
       <h2>Lista de Clientes</h2>
-      <AppTable :headers="['Nombre Completo', 'RUC', 'Teléfono', 'Email', 'Condiciones de Pago', 'Acciones']">
-        <tr v-for="cliente in clientesFiltradosPaginados" :key="cliente.id">
+      <AppTable :headers="tableHeaders">
+        <tr
+          v-for="cliente in clientesFiltradosPaginados"
+          :key="cliente.id"
+          :class="{ 'selectable-row': selectorMode }"
+          @click="selectorMode && seleccionarCliente(cliente)"
+        >
           <td>{{ cliente.nombre_completo }}</td>
           <td>{{ cliente.ruc }}</td>
           <td>{{ cliente.telefono }}</td>
           <td>{{ cliente.email }}</td>
           <td>{{ cliente.condiciones_pago }}</td>
-          <td>
-            <button class="btn btn-primary btn-sm" @click="editarCliente(cliente)">✏️</button>
-            <button class="btn btn-danger btn-sm" @click="eliminarCliente(cliente.cliente_id)">🗑️</button>
+          <td v-if="!selectorMode">
+            <button class="btn btn-primary btn-sm" @click.stop="editarCliente(cliente)">✏️</button>
+            <button class="btn btn-danger btn-sm" @click.stop="eliminarCliente(cliente.cliente_id)">🗑️</button>
           </td>
         </tr>
       </AppTable>
@@ -36,8 +41,8 @@
       <AppPagination :currentPage="paginaActual" :totalPages="totalPaginas" @page-changed="cambiarPagina" />
 
 
-      <!-- Modal para Registrar Cliente -->
-      <div class="modal fade" id="crearClienteModal" tabindex="-1">
+  <!-- Modal para Registrar Cliente -->
+  <div v-if="!selectorMode" class="modal fade" id="crearClienteModal" tabindex="-1">
         <div class="modal-dialog modal-lg">
           <div class="modal-content">
             <div class="modal-header">
@@ -106,7 +111,7 @@
 
 
       <!-- Modal para Editar Cliente -->
-      <div class="modal fade" id="editarClienteModal" tabindex="-1">
+  <div v-if="!selectorMode" class="modal fade" id="editarClienteModal" tabindex="-1">
         <div class="modal-dialog modal-lg">
           <div class="modal-content">
             <div class="modal-header">
@@ -175,7 +180,7 @@
 
 
       <!-- Modal para Línea de Crédito -->
-      <div class="modal fade" id="creditoModal" tabindex="-1">
+  <div v-if="!selectorMode" class="modal fade" id="creditoModal" tabindex="-1">
         <div class="modal-dialog">
           <div class="modal-content">
             <div class="modal-header">
@@ -209,6 +214,10 @@ import AppPagination from '../components/AppPagination.vue';
 import apiService from '../services/apiService.js'; 
 export default {
   name: 'ClientesView',
+  props: {
+    selectorMode: { type: Boolean, default: false },
+    hideHeader: { type: Boolean, default: false }
+  },
   components: {
     AppNavbar,
     AppHeader,
@@ -239,6 +248,14 @@ export default {
     };  
   },
   computed: {
+    filterClasses() {
+      return (this.selectorMode && this.hideHeader) ? 'mt-2 mb-3' : 'mt-4 mb-4';
+    },
+    tableHeaders() {
+      return this.selectorMode
+        ? ['Nombre Completo', 'RUC', 'Teléfono', 'Email', 'Condiciones de Pago']
+        : ['Nombre Completo', 'RUC', 'Teléfono', 'Email', 'Condiciones de Pago', 'Acciones'];
+    },
     clientesFiltrados() {
       return this.clientes.filter(cliente => {
         const search = this.searchInput.toLowerCase();
@@ -266,6 +283,9 @@ export default {
     }
   },
   methods: {
+    seleccionarCliente(cliente) {
+      this.$emit('cliente-seleccionado', cliente);
+    },
     async cargarClientes() {
       try {
         const response = await apiService.get(`${process.env.VUE_APP_API_BASE_URL}/api/clients`);
@@ -461,4 +481,7 @@ h1 {
   background-color: #28a745;
   border-color: #28a745;
 }
+
+.selectable-row { cursor: pointer; }
+.selectable-row:hover { background-color: #f5f5f5; }
 </style>
