@@ -79,7 +79,13 @@
                 <div><small class="text-muted">{{ inv.client }}</small></div>
               </div>
               <div class="d-flex align-items-center">
-                <div class="me-3 fw-bold">{{ formatCurrency(inv.total) }}</div>
+                <button
+                  class="btn btn-outline-secondary btn-sm me-2"
+                  title="Ver detalle"
+                  @click="openDetalle(inv)"
+                >
+                  <i class="bi bi-eye"></i>
+                </button>
                 <button
                   class="btn btn-outline-danger btn-sm"
                   @click="removeInvoice(inv)"
@@ -113,6 +119,13 @@
       </div>
     </div>
   </div>
+  
+  <!-- Modal montado al final del template para evitar saltos de layout -->
+  <FacturaDetalleModal
+    :show="showDetalle"
+    :nroFactura="detalleNroFactura"
+    @close="closeDetalle"
+  />
 </template>
 
 <script setup>
@@ -120,6 +133,7 @@ import { ref, reactive, computed, onMounted } from 'vue'
 import AppNavbar from '@/components/AppNavbar.vue'
 import AppHeader from '@/components/AppHeader.vue'
 import PaymentForms from '@/components/PaymentForms.vue'
+import FacturaDetalleModal from '@/components/FacturaDetalleModal.vue'
 import apiService from '@/services/apiService.js'
 import { useCashboxStore } from '@/stores/cashbox'
 
@@ -241,11 +255,10 @@ async function fetchPendingCollections() {
     if (payload && payload.success && Array.isArray(payload.data)) {
       const mapped = payload.data.map(item => ({
         id: item.movimiento_id,
-        number: item.nro_comprobante_origen,
+        number: item.nro_comprobante_origen, // este es el nro_factura que usaremos para ver detalle
         client: item.nombre_razon_social,
         date: new Date(item.fecha_movimiento).toLocaleString(),
         total: Number(item.monto_total)
-        // note: status removed because backend doesn't provide it
       }))
       // replace contents of reactive array
       invoices.splice(0, invoices.length, ...mapped)
@@ -266,6 +279,18 @@ function formatCurrency(value) {
     currency: 'PYG'
   }).format(value)
 }
+
+// ---------------- Ver detalle (modal) -----------------
+const showDetalle = ref(false)
+const detalleNroFactura = ref(null)
+function openDetalle(inv) {
+  // inv.number contiene el nro_comprobante_origen -> nro_factura
+  detalleNroFactura.value = inv?.number ?? null
+  if (detalleNroFactura.value) showDetalle.value = true
+}
+function closeDetalle() {
+  showDetalle.value = false
+}
 </script>
 <style scoped>
 /* Asegura que la lista sea scrollable y no crezca demasiado */
@@ -275,3 +300,4 @@ function formatCurrency(value) {
   overflow-y: auto;
 }
 </style>
+
