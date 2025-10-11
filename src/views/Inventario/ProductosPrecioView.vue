@@ -304,6 +304,7 @@ export default {
           const precioVentaNum = priceRec ? Number(priceRec.precio_venta) : null;
           return {
             producto_id: item.producto_id,
+            codigo_barras: item.codigo_barras || '',
             nombre: item.nombre || '',
             descripcion: item.descripcion || '',
             stock_disponible: item.stock_disponible ?? 0,

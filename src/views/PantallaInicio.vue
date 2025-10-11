@@ -337,18 +337,16 @@ export default {
           }
         }
         return {
-          codigo: p.producto_id ?? p.id,
+          id: p.producto_id ?? p.id,
+          codigo: p.codigo_barras || '',
           nombre: p.nombre,
           unidad_medida: p.unidad_medida_nombre ?? p.unidad_medida ?? '',
           precio: price || 0
         };
       };
 
-      let found = false;
-      let notFound = false;
-      // 1) Intentar por código de barras
       try {
-        const url = `${process.env.VUE_APP_API_BASE_URL}/api/prices/barcode/${code}?cantidad_unidades=${qty}`;
+        const url = `${process.env.VUE_APP_API_BASE_URL}/api/prices/barcode/${encodeURIComponent(code)}?cantidad_unidades=${qty}`;
         const { data: product } = await apiService.get(url);
         if (product) {
           const sel = mapToSelected(product);
@@ -359,52 +357,24 @@ export default {
           } else {
             this.selectedProduct = sel;
             this.productDescription = `${sel.nombre}`;
-            found = true;
+            this.productNotFoundForCode = '';
           }
+        } else {
+          this.productNotFoundForCode = code;
+          alert('Producto no encontrado');
         }
-      } catch (e1) {
-        // Si 404 continuamos al fallback; otros errores sólo se registran
-        if (e1?.response?.status !== 404) {
-          console.error('Error buscando por código de barras:', e1);
+      } catch (error) {
+        if (error?.response?.status === 404) {
+          this.productNotFoundForCode = code;
+          alert('Producto no encontrado');
+        } else {
+          console.error('Error buscando por código de barras:', error);
+          alert('Error al obtener el producto');
         }
+      } finally {
+        this.lastProductCheckedCode = code;
+        this.isCheckingProduct = false;
       }
-
-      // 2) Fallback por ID si aún no se encontró
-      if (!found) {
-        try {
-          const urlById = `${process.env.VUE_APP_API_BASE_URL}/api/prices/${code}`;
-          const { data: productById } = await apiService.get(urlById);
-          if (productById) {
-            const sel = mapToSelected(productById);
-            if (!sel.precio || sel.precio <= 0) {
-              const msg = `El producto "${sel.nombre}" no tiene un precio de venta asignado.\n\n¿Deseas ir a la pantalla de Gestión de Precios para asignarlo ahora?`;
-              const irGestionPrecios = window.confirm(msg);
-              if (irGestionPrecios) this.$router.push({ name: 'ProductosPrecio' });
-            } else {
-              this.selectedProduct = sel;
-              this.productDescription = `${sel.nombre}`;
-              found = true;
-            }
-          } else {
-            notFound = true;
-          }
-        } catch (e2) {
-          if (e2?.response?.status === 404) {
-            notFound = true;
-          } else {
-            console.error('Error al obtener el producto por ID:', e2);
-            alert('Error al obtener el producto');
-          }
-        }
-      }
-
-      if (!found && notFound) {
-        // Avisar una sola vez para este código hasta que el usuario cambie el valor
-        this.productNotFoundForCode = code;
-        alert('Producto no encontrado');
-      }
-      this.lastProductCheckedCode = code;
-      this.isCheckingProduct = false;
     },
     toggleBuscarProducto() {
       this.mostrarSelectorProducto = !this.mostrarSelectorProducto;
@@ -419,8 +389,13 @@ export default {
       document.body.style.overflow = '';
     },
     onProductoSeleccionado(prod) {
-      // Tomar el ID del producto y buscarlo (fallback por ID en buscarProducto cubre este caso)
-      this.productCode = String(prod?.producto_id ?? prod?.id ?? '');
+      // Tomar el código de barras del producto y buscarlo
+      const barcode = String(prod?.codigo_barras ?? '').trim();
+      if (!barcode) {
+        alert('El producto seleccionado no tiene código de barras asociado.');
+        return;
+      }
+      this.productCode = barcode;
       this.cerrarSelectorProducto();
       this.$nextTick(() => this.buscarProducto());
     },
@@ -434,7 +409,12 @@ export default {
         alert('La cantidad debe ser mayor a 0');
         return;
       }
+      if (!this.selectedProduct.id) {
+        alert('El producto seleccionado no tiene un identificador válido.');
+        return;
+      }
       const productoNuevo = {
+        producto_id: this.selectedProduct.id,
         codigo: this.selectedProduct.codigo,
         nombre: this.selectedProduct.nombre,
         cantidad: this.productQuantity,
@@ -479,7 +459,7 @@ export default {
         const payload = {
           cabecera: cab,
           detalles: this.productos.map(p => ({
-            producto_id: p.codigo,
+            producto_id: p.producto_id,
             cantidad:    p.cantidad
           }))
         };
@@ -555,7 +535,7 @@ export default {
           observaciones: this.cabecera.observaciones,
           tipo_entrega: this.cabecera.tipo_entrega
         };
-        const detalles = this.productos.map(p => ({ producto_id: p.codigo, cantidad: p.cantidad }));
+    const detalles = this.productos.map(p => ({ producto_id: p.producto_id, cantidad: p.cantidad }));
         await apiService.post(
           `${process.env.VUE_APP_API_BASE_URL}/api/orders/pending`,
           { cabecera: cab, detalles }
