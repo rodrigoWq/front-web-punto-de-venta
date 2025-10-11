@@ -221,7 +221,8 @@ export default {
       cabecera: {
         referencia: '',
         observaciones: '',
-        tipo_entrega: 'domicilio'
+        tipo_entrega: 'domicilio',
+        fecha_entrega: ''
       },
       productos: [],
       paginaActual: 1,
@@ -430,52 +431,82 @@ export default {
     },
     async confirmarVenta() {
       try {
-        // 1) Traer datos del cliente según RUC/CI
-        const { data: cliente } = await apiService.get(
-          `${process.env.VUE_APP_API_BASE_URL}/api/clients/search/${this.rucCliente}`
-        );
+        // 1) Traer datos del cliente según RUC/CI (si existe)
+        let cliente = null;
+        try {
+          const respCliente = await apiService.get(
+            `${process.env.VUE_APP_API_BASE_URL}/api/clients/search/${this.rucCliente}`
+          );
+          cliente = respCliente?.data ?? null;
+        } catch (errorCliente) {
+          if (errorCliente?.response?.status !== 404) {
+            throw errorCliente;
+          }
+        }
 
-        // 2) Determinar tipo_documento y nro_documento según reglas
-        const tieneRuc = !!(cliente && cliente.ruc);
-        const tieneCi  = !!(cliente && cliente.ci);
-        const tipo_documento = tieneRuc ? 'RUC' : (tieneCi ? 'CI' : 'RUC');
-        const nro_documento  = tieneRuc
-          ? cliente.ruc
-          : (tieneCi ? cliente.ci : (cliente?.nro_documento || this.rucCliente));
+        const nro_documento = this.rucCliente
+          || cliente?.nro_documento
+          || cliente?.ruc
+          || cliente?.ci
+          || '';
+        const nombre_cliente = this.clienteNombre
+          || cliente?.nombre_completo
+          || cliente?.nombre_fantasia
+          || '';
+        const telefono = cliente?.telefono ?? '';
+        const direccion = cliente?.direccion ?? '';
+        const email = cliente?.email ?? '';
+        const fecha_entrega = this.resolveFechaEntrega();
 
-        // 3) Determinar credito_contado desde condiciones_pago
-        const condiciones = (cliente?.condiciones_pago || 'Contado').toString().trim().toLowerCase();
-        const credito_contado = ['credito', 'crédito'].includes(condiciones) ? 'CREDITO' : 'CONTADO';
+        const nombreFinal = nombre_cliente || 'Cliente sin nombre';
+        const documentoFinal = nro_documento || 'S/D';
 
-        // 4) Cabecera para venta
         const cab = {
-          nro_documento,
-          tipo_documento,
-          credito_contado,
-          tipo_moneda: 'PYG'
+          nombre_cliente: nombreFinal,
+          nro_documento: documentoFinal,
+          telefono,
+          direccion,
+          email,
+          fecha_entrega,
+          tipo_entrega: this.cabecera.tipo_entrega
         };
 
-        // 5) Payload final (detalles se mantiene igual)
-        const payload = {
-          cabecera: cab,
-          detalles: this.productos.map(p => ({
+        const detalles = this.productos
+          .map(p => ({
             producto_id: p.producto_id,
-            cantidad:    p.cantidad
+            cantidad: Number(p.cantidad) || 0
           }))
-        };
+          .filter(item => item.cantidad > 0);
 
-        // 6) Envío a /api/sales
-        console.log('Payload venta:', payload);
-        const resp = await apiService.post(`${process.env.VUE_APP_API_BASE_URL}/api/sales`, payload);
-        console.log('[PantallaInicio] /api/sales resp.data:', resp?.data);
-        // 7) Venta registrada: limpiar el formulario para una nueva carga (sin redirigir)
-        alert('Venta registrada correctamente.');
+        if (!detalles.length) {
+          alert('Agregá al menos un producto antes de confirmar.');
+          return;
+        }
+
+        const payload = { cabecera: cab, detalles };
+
+        console.log('Payload pedido:', payload);
+        const resp = await apiService.post(
+          `${process.env.VUE_APP_API_BASE_URL}/api/orders/pending`,
+          payload
+        );
+        const resultado = resp?.data;
+        if (!resultado?.ok) {
+          throw new Error('El backend devolvió una respuesta inesperada.');
+        }
+        console.log('[PantallaInicio] /api/orders/pending resp.data:', resultado);
+        const pedidoId = resultado?.data?.pedido_id;
+        const mensaje = pedidoId
+          ? `Pedido #${pedidoId} registrado correctamente en estado pendiente.`
+          : 'Pedido registrado correctamente en estado pendiente.';
+        alert(mensaje);
         // Limpiar estado local
         this.productos = [];
         this.paginaActual = 1;
         this.cabecera.referencia = '';
         this.cabecera.observaciones = '';
         this.cabecera.tipo_entrega  = 'domicilio';
+        this.cabecera.fecha_entrega = '';
         this.productCode     = '';
         this.productQuantity = 1;
         this.productDescription = '';
@@ -484,7 +515,7 @@ export default {
         this.clienteNombre   = '';
       } catch (error) {
         console.error('Error al confirmar venta:', error);
-        alert('Error al registrar la venta');
+        alert('Error al registrar el pedido');
       }
     },
     eliminarProducto(index) {
@@ -501,6 +532,7 @@ export default {
     this.cabecera.referencia = '';
     this.cabecera.observaciones = '';
     this.cabecera.tipo_entrega = 'domicilio';
+  this.cabecera.fecha_entrega = '';
     this.productCode = '';
     this.productQuantity = 1;
     this.productDescription = '';
@@ -525,17 +557,26 @@ export default {
           );
           clienteData = data;
         }
+        const nombreCab = nombre || clienteData?.nombre_completo || clienteData?.nombre_fantasia || '';
+        const documentoCab = nroDocumento || clienteData?.nro_documento || clienteData?.ruc || clienteData?.ci || '';
         const cab = {
-          nombre_cliente: nombre || (clienteData?.nombre_completo ?? ''),
-          nro_documento: nroDocumento || (clienteData?.nro_documento ?? ''),
+          nombre_cliente: nombreCab || 'Cliente sin nombre',
+          nro_documento: documentoCab || 'S/D',
           referencia,
           telefono: clienteData?.telefono ?? '',
           direccion: clienteData?.direccion ?? '',
           email: clienteData?.email ?? '',
+          fecha_entrega: this.resolveFechaEntrega(),
           observaciones: this.cabecera.observaciones,
           tipo_entrega: this.cabecera.tipo_entrega
         };
-    const detalles = this.productos.map(p => ({ producto_id: p.producto_id, cantidad: p.cantidad }));
+        const detalles = this.productos
+          .map(p => ({ producto_id: p.producto_id, cantidad: Number(p.cantidad) || 0 }))
+          .filter(item => item.cantidad > 0);
+        if (!detalles.length) {
+          alert('Agregá al menos un producto antes de poner la venta en espera.');
+          return;
+        }
         await apiService.post(
           `${process.env.VUE_APP_API_BASE_URL}/api/orders/pending`,
           { cabecera: cab, detalles }
@@ -548,6 +589,7 @@ export default {
         this.cabecera.referencia = '';
         this.cabecera.observaciones = '';
         this.cabecera.tipo_entrega = 'domicilio';
+  this.cabecera.fecha_entrega = '';
         this.showPendingModal = false;
         this.productCode     = '';
         this.productQuantity = 1;
@@ -624,6 +666,16 @@ export default {
     redondearHaciaArriba(valor) {
       if (valor === null || valor === undefined || isNaN(valor)) return 0;
       return Math.round(Number(valor));
+    },
+    resolveFechaEntrega() {
+      const raw = this.cabecera?.fecha_entrega;
+      if (raw instanceof Date && !isNaN(raw)) {
+        return raw.toISOString().slice(0, 10);
+      }
+      if (typeof raw === 'string' && raw.trim()) {
+        return raw.trim();
+      }
+      return new Date().toISOString().slice(0, 10);
     }
   },
   mounted() {

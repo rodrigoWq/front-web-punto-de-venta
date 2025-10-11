@@ -5,6 +5,7 @@ import LoginView from '../views/LoginView.vue';
 import FacturaView from '../views/Factura.vue'; // Importa la pantalla de Factura
 import NotaDeRemision from '../views/NotaDeRemision.vue'; // Importa la pantalla de NotaDeRemision
 import ListarComprobantes from '../views/ListarComprobantes.vue'; // Importa la pantalla de ListarComprobantes
+import GestionPedidos from '../views/GestionPedidos.vue';
 import UserManagement from '../views/UserManagement.vue'; // Importa UserManagement
 import RegistrarProveedor from '@/components/RegistrarProveedorModal.vue';
 import RegistrarProductoModal from '@/components/RegistrarProductoModal.vue';
@@ -166,6 +167,11 @@ const routes = [
     path: '/listar-comprobantes',
     name: 'ListarComprobantes',
     component: ListarComprobantes
+  },
+  {
+    path: '/gestion-pedidos',
+    name: 'GestionPedidos',
+    component: GestionPedidos
   },
   {
     path: '/listar-notas-remision',
