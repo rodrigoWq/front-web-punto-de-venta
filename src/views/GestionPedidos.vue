@@ -27,11 +27,12 @@
               <th>Estado</th>
               <th>Creado en</th>
               <th>Actualizado en</th>
+              <th>Acciones</th>
             </tr>
           </thead>
           <tbody>
             <tr v-if="!pedidosFiltrados.length">
-              <td colspan="6" class="text-center py-4">
+              <td colspan="7" class="text-center py-4">
                 No se encontraron pedidos.
               </td>
             </tr>
@@ -49,6 +50,32 @@
               </td>
               <td>{{ formatearFecha(pedido.creado_en) }}</td>
               <td>{{ formatearFecha(pedido.actualizado_en) }}</td>
+              <td>
+                <button
+                  type="button"
+                  class="btn btn-primary btn-sm me-2"
+                  @click="verDetalle(pedido.pedido_id)"
+                >
+                  <i class="bi bi-eye me-1"></i>
+                  Ver Detalle
+                </button>
+                <button
+                  type="button"
+                  class="btn btn-warning btn-sm me-2"
+                  @click="editarPedido(pedido.pedido_id)"
+                >
+                  <i class="bi bi-pencil me-1"></i>
+                  Editar
+                </button>
+                <button
+                  type="button"
+                  class="btn btn-danger btn-sm"
+                  @click="cancelarPedido(pedido.pedido_id)"
+                >
+                  <i class="bi bi-x-circle me-1"></i>
+                  Cancelar
+                </button>
+              </td>
             </tr>
           </tbody>
         </table>
@@ -60,6 +87,13 @@
         @page-changed="cambiarPagina"
       />
     </div>
+
+    <!-- Modal de Detalle de Pedido -->
+    <PedidoDetalleModal
+      :open="modalDetalleAbierto"
+      :pedidoId="pedidoSeleccionadoId"
+      @close="cerrarModalDetalle"
+    />
   </div>
 </template>
 
@@ -68,6 +102,7 @@ import AppNavbar from '../components/AppNavbar.vue';
 import AppHeader from '../components/AppHeader.vue';
 import AppFilter from '../components/AppFilter.vue';
 import AppPagination from '../components/AppPagination.vue';
+import PedidoDetalleModal from '../components/PedidoDetalleModal.vue';
 import apiService from '../services/apiService.js';
 
 export default {
@@ -76,7 +111,8 @@ export default {
     AppNavbar,
     AppHeader,
     AppFilter,
-    AppPagination
+    AppPagination,
+    PedidoDetalleModal
   },
   data() {
     return {
@@ -84,7 +120,9 @@ export default {
       searchInput: '',
       paginaActual: 1,
       itemsPorPagina: 10,
-      cargando: false
+      cargando: false,
+      modalDetalleAbierto: false,
+      pedidoSeleccionadoId: null
     };
   },
   computed: {
@@ -135,6 +173,74 @@ export default {
     },
     cambiarPagina(page) {
       this.paginaActual = page;
+    },
+    verDetalle(pedidoId) {
+      this.pedidoSeleccionadoId = pedidoId;
+      this.modalDetalleAbierto = true;
+    },
+    cerrarModalDetalle() {
+      this.modalDetalleAbierto = false;
+      this.pedidoSeleccionadoId = null;
+    },
+    async editarPedido(pedidoId) {
+      try {
+        // Cargar los detalles completos del pedido
+        const { data: pedido } = await apiService.get(
+          `${process.env.VUE_APP_API_BASE_URL}/api/orders/pending/${pedidoId}`
+        );
+        
+        // Navegar a PantallaInicio en modo edición
+        this.$router.push({
+          name: 'Inicio',
+          query: {
+            modo: 'edicion',
+            pedidoId: pedido.pedido_id,
+            clienteNombre: pedido.nombre_cliente || '',
+            clienteDocumento: pedido.nro_documento || '',
+            clienteTelefono: pedido.telefono || '',
+            clienteDireccion: pedido.direccion || '',
+            clienteEmail: pedido.email || '',
+            // Serializar productos como JSON en query
+            productos: JSON.stringify(pedido.detalles || [])
+          }
+        });
+      } catch (error) {
+        console.error('Error al cargar pedido para edición:', error);
+        alert('No se pudo cargar el pedido. Por favor, intente nuevamente.');
+      }
+    },
+    async cancelarPedido(pedidoId) {
+      // Confirmación con advertencia
+      const confirmado = window.confirm(
+        `⚠️ ADVERTENCIA\n\n¿Estás seguro de que deseas CANCELAR el pedido #${pedidoId}?\n\nEsta acción cambiará el estado del pedido a "cancelado".`
+      );
+      
+      if (!confirmado) return;
+
+      try {
+        // Realizar petición de cancelación
+        const { data } = await apiService.post(
+          `${process.env.VUE_APP_API_BASE_URL}/api/orders/pending/${pedidoId}/cancel`
+        );
+        
+        if (data?.ok) {
+          // Actualizar el estado del pedido en la lista local
+          const pedidoIndex = this.pedidos.findIndex(p => p.pedido_id === pedidoId);
+          if (pedidoIndex !== -1) {
+            this.pedidos[pedidoIndex].estado = data.data.estado || 'cancelado';
+          }
+          
+          alert(`✅ Pedido #${pedidoId} cancelado correctamente.`);
+          
+          // Recargar la lista completa para asegurar sincronización
+          await this.cargarPedidos();
+        } else {
+          throw new Error('Respuesta inesperada del servidor');
+        }
+      } catch (error) {
+        console.error('Error al cancelar pedido:', error);
+        alert('❌ Error al cancelar el pedido. Por favor, intente nuevamente.');
+      }
     },
     formatearMonto(monto) {
       const numero = Number(monto);

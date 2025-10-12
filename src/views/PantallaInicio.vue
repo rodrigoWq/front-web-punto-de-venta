@@ -4,6 +4,13 @@
     <AppNavbar @venta-retomada="cargarPedido" />
     <!-- Contenido Principal -->
     <div class="container mt-4 flex-grow-1">
+      <!-- Indicador de Modo Edición -->
+      <div v-if="modoEdicion" class="alert alert-info alert-dismissible fade show mb-3" role="alert">
+        <i class="bi bi-pencil-square me-2"></i>
+        <strong>Modo Edición:</strong> Estás editando el Pedido #{{ pedidoIdEdicion }}
+        <button type="button" class="btn-close" @click="cancelarEdicion" aria-label="Close"></button>
+      </div>
+
       <!-- Formulario de Producto -->
       <div class="card p-2 mb-3 compact-form">
           <!-- Fila de Cliente (arriba) -->
@@ -154,9 +161,9 @@
       </h4>
       <!-- Reemplazo en la sección de Total y Acciones -->
       <div class="button-container">
-        <button type="button" class="btn btn-warning" @click="openPendingModal">Poner Venta en Espera</button>
-        <button type="button" class="btn btn-danger" @click="cancelarVenta">Cancelar Venta</button>
-        <button type="button" class="btn btn-success" @click="confirmarVenta">Confirmar Venta</button>
+        <button v-if="!modoEdicion" type="button" class="btn btn-warning" @click="openPendingModal">Poner Venta en Espera</button>
+        <button type="button" class="btn btn-danger" @click="cancelarVenta">{{ modoEdicion ? 'Cancelar Edición' : 'Cancelar Venta' }}</button>
+        <button type="button" class="btn btn-success" @click="confirmarVenta">{{ modoEdicion ? 'Confirmar Edición' : 'Confirmar Venta' }}</button>
       </div>
 
     </div>
@@ -238,7 +245,13 @@ export default {
       // Guardas para búsqueda de producto
       isCheckingProduct: false,
       productNotFoundForCode: '',
-      lastProductCheckedCode: ''
+      lastProductCheckedCode: '',
+      // Modo edición
+      modoEdicion: false,
+      pedidoIdEdicion: null,
+      clienteTelefono: '',
+      clienteDireccion: '',
+      clienteEmail: ''
     };
   },
   computed: {
@@ -431,7 +444,52 @@ export default {
     },
     async confirmarVenta() {
       try {
-        // 1) Traer datos del cliente según RUC/CI (si existe)
+        // Validar productos
+        const detalles = this.productos
+          .map(p => ({
+            producto_id: p.producto_id,
+            cantidad: Number(p.cantidad) || 0
+          }))
+          .filter(item => item.cantidad > 0);
+
+        if (!detalles.length) {
+          alert('Agregá al menos un producto antes de confirmar.');
+          return;
+        }
+
+        // ====== MODO EDICIÓN ======
+        if (this.modoEdicion && this.pedidoIdEdicion) {
+          const payload = {
+            descripcion: "Cobro tras edición",
+            moneda: "PYG",
+            idempotency_key: "",
+            cabecera: {
+              nombre_cliente: this.clienteNombre || 'Cliente sin nombre',
+              telefono: this.clienteTelefono || '',
+              direccion: this.clienteDireccion || '',
+              email: this.clienteEmail || ''
+            },
+            detalles
+          };
+
+          console.log('Payload edición pedido:', payload);
+          const resp = await apiService.post(
+            `${process.env.VUE_APP_API_BASE_URL}/api/orders/pending/${this.pedidoIdEdicion}`,
+            payload
+          );
+          const resultado = resp?.data;
+          if (!resultado?.ok) {
+            throw new Error('El backend devolvió una respuesta inesperada.');
+          }
+          console.log('[PantallaInicio] Edición exitosa:', resultado);
+          alert(`Pedido #${this.pedidoIdEdicion} editado correctamente.`);
+          
+          // Volver a GestionPedidos
+          this.$router.push({ name: 'GestionPedidos' });
+          return;
+        }
+
+        // ====== MODO CREACIÓN (código original) ======
         let cliente = null;
         try {
           const respCliente = await apiService.get(
@@ -471,18 +529,6 @@ export default {
           tipo_entrega: this.cabecera.tipo_entrega
         };
 
-        const detalles = this.productos
-          .map(p => ({
-            producto_id: p.producto_id,
-            cantidad: Number(p.cantidad) || 0
-          }))
-          .filter(item => item.cantidad > 0);
-
-        if (!detalles.length) {
-          alert('Agregá al menos un producto antes de confirmar.');
-          return;
-        }
-
         const payload = { cabecera: cab, detalles };
 
         console.log('Payload pedido:', payload);
@@ -500,22 +546,12 @@ export default {
           ? `Pedido #${pedidoId} registrado correctamente en estado pendiente.`
           : 'Pedido registrado correctamente en estado pendiente.';
         alert(mensaje);
+        
         // Limpiar estado local
-        this.productos = [];
-        this.paginaActual = 1;
-        this.cabecera.referencia = '';
-        this.cabecera.observaciones = '';
-        this.cabecera.tipo_entrega  = 'domicilio';
-        this.cabecera.fecha_entrega = '';
-        this.productCode     = '';
-        this.productQuantity = 1;
-        this.productDescription = '';
-        this.selectedProduct = null;
-        this.rucCliente      = '';
-        this.clienteNombre   = '';
+        this.limpiarFormulario();
       } catch (error) {
         console.error('Error al confirmar venta:', error);
-        alert('Error al registrar el pedido');
+        alert(this.modoEdicion ? 'Error al editar el pedido' : 'Error al registrar el pedido');
       }
     },
     eliminarProducto(index) {
@@ -524,22 +560,44 @@ export default {
       }
     },
     cancelarVenta() {
-      const confirmado = window.confirm('¿Seguro que deseas cancelar la venta y limpiar todos los campos?');
-    if (!confirmado) return;
-    // Limpia todos los inputs y estados locales de la pantalla
-    this.productos = [];
-    this.paginaActual = 1;
-    this.cabecera.referencia = '';
-    this.cabecera.observaciones = '';
-    this.cabecera.tipo_entrega = 'domicilio';
-  this.cabecera.fecha_entrega = '';
-    this.productCode = '';
-    this.productQuantity = 1;
-    this.productDescription = '';
-    this.selectedProduct = null;
-    this.rucCliente = '';
-    this.clienteNombre = '';
-    this.showPendingModal = false;
+      const mensaje = this.modoEdicion
+        ? '¿Seguro que deseas cancelar la edición y volver a la lista de pedidos?'
+        : '¿Seguro que deseas cancelar la venta y limpiar todos los campos?';
+      const confirmado = window.confirm(mensaje);
+      if (!confirmado) return;
+      
+      // Si estamos en modo edición, volver a GestionPedidos
+      if (this.modoEdicion) {
+        this.$router.push({ name: 'GestionPedidos' });
+      }
+      
+      this.limpiarFormulario();
+    },
+    cancelarEdicion() {
+      // Método específico para el botón X del alert
+      this.$router.push({ name: 'GestionPedidos' });
+    },
+    limpiarFormulario() {
+      // Limpia todos los inputs y estados locales de la pantalla
+      this.productos = [];
+      this.paginaActual = 1;
+      this.cabecera.referencia = '';
+      this.cabecera.observaciones = '';
+      this.cabecera.tipo_entrega = 'domicilio';
+      this.cabecera.fecha_entrega = '';
+      this.productCode = '';
+      this.productQuantity = 1;
+      this.productDescription = '';
+      this.selectedProduct = null;
+      this.rucCliente = '';
+      this.clienteNombre = '';
+      this.showPendingModal = false;
+      // Resetear modo edición
+      this.modoEdicion = false;
+      this.pedidoIdEdicion = null;
+      this.clienteTelefono = '';
+      this.clienteDireccion = '';
+      this.clienteEmail = '';
     },
     cambiarPagina(page) {
       this.paginaActual = page;
@@ -682,6 +740,33 @@ export default {
     this.userName = localStorage.getItem("user_name") || '';
     this.mostrarReloj();
     this._timeInterval = setInterval(this.mostrarReloj, 1000);
+    
+    // Verificar si venimos desde edición de pedido
+    if (this.$route.query.modo === 'edicion') {
+      this.modoEdicion = true;
+      this.pedidoIdEdicion = this.$route.query.pedidoId;
+      this.clienteNombre = this.$route.query.clienteNombre || '';
+      this.rucCliente = this.$route.query.clienteDocumento || '';
+      this.clienteTelefono = this.$route.query.clienteTelefono || '';
+      this.clienteDireccion = this.$route.query.clienteDireccion || '';
+      this.clienteEmail = this.$route.query.clienteEmail || '';
+      
+      // Cargar productos desde JSON
+      try {
+        const productosParam = JSON.parse(this.$route.query.productos || '[]');
+        this.productos = productosParam.map(detalle => ({
+          producto_id: detalle.producto_id,
+          codigo: detalle.codigo_barras || detalle.codigo || '',
+          nombre: detalle.nombre_producto || detalle.nombre || '',
+          cantidad: detalle.cantidad || 0,
+          unidad_medida: detalle.unidad_medida || '',
+          precio: detalle.precio_unitario || detalle.precio || 0
+        }));
+      } catch (error) {
+        console.error('Error al parsear productos:', error);
+        this.productos = [];
+      }
+    }
   },
   beforeUnmount() {
     clearInterval(this._timeInterval);

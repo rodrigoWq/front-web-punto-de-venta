@@ -21,9 +21,14 @@
                 <i class="bi bi-truck"></i> Proveedores
               </router-link>
             </li>
+            <!--<li class="nav-item" v-if="$route.path === '/pantalla-inicio'">
+              <a class="nav-link" href="#" data-bs-toggle="modal" data-bs-target="#onHoldSalesModal" @click.prevent="onShowOnHoldSales">
+                <i class="bi bi-hourglass-split"></i> Pedidos
+              </a>
+            </li> --><!-- Comentado para evitar confusión con "Pedidos 2" -->
             <li class="nav-item">
               <router-link class="nav-link" to="/gestion-pedidos">
-                <i class="bi bi-list-ul"></i> Pedidos
+                <i class="bi bi-list-ul"></i> Pedidos 
               </router-link>
             </li>
             <li class="nav-item admin-only">
