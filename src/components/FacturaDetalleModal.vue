@@ -88,6 +88,15 @@
     </template>
 
     <template #footer>
+      <button 
+        class="btn btn-outline-warning" 
+        @click="volverAPedido"
+        :disabled="loadingVolverPedido"
+      >
+        <span v-if="loadingVolverPedido" class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+        <i v-else class="bi bi-arrow-counterclockwise me-1"></i>
+        Volver a Pedido
+      </button>
       <button class="btn btn-outline-secondary" @click="$emit('close')">
         Cerrar
       </button>
@@ -103,13 +112,15 @@ import apiService from '@/services/apiService'
 
 const props = defineProps({
   show: { type: Boolean, default: false },
-  nroFactura: { type: String, default: null }
+  nroFactura: { type: String, default: null },
+  movimientoId: { type: Number, default: null }
 })
-const emit = defineEmits(['close'])
+const emit = defineEmits(['close', 'pedido-convertido'])
 
 const loading = ref(false)
 const error = ref('')
 const factura = ref(null)
+const loadingVolverPedido = ref(false)
 
 watch(
   () => [props.show, props.nroFactura],
@@ -154,6 +165,46 @@ const totalIva = computed(() => {
   return factura.value.detalles.reduce((acc, d) => acc + (d.iva || 0), 0)
 })
 const totalConIva = computed(() => totalSinIva.value + totalIva.value)
+
+// Función para volver a pedido
+async function volverAPedido() {
+  if (!props.movimientoId) {
+    alert('No se puede determinar el ID de movimiento')
+    return
+  }
+  
+  const confirmacion = confirm('¿Está seguro que desea volver esta factura a pedido?')
+  if (!confirmacion) return
+
+  loadingVolverPedido.value = true
+  
+  try {
+    const payload = {
+      movimiento_id: props.movimientoId,
+      accion: 'EDITAR'
+    }
+    
+    console.log('Payload -> /api/cashbox/collect-sale (Volver a Pedido):', payload)
+    
+    const response = await apiService.post('/api/cashbox/collect-sale', payload)
+    
+    console.log('Respuesta volver a pedido:', response?.data)
+    
+    if (response?.data?.ok) {
+      const { pedido_id, status, subestado } = response.data.data
+      alert(`Factura convertida a pedido exitosamente.\nPedido ID: ${pedido_id}\nEstado: ${status}\nSubestado: ${subestado}`)
+      emit('pedido-convertido') // Notificar al padre para recargar la lista
+      emit('close')
+    } else {
+      alert('Error: La operación no se completó correctamente')
+    }
+  } catch (err) {
+    console.error('Error al volver a pedido:', err)
+    alert('Error al procesar la solicitud. Revisa la consola para más detalles.')
+  } finally {
+    loadingVolverPedido.value = false
+  }
+}
 </script>
 
 <style scoped>

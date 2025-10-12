@@ -12,120 +12,130 @@
       </template>
     </AppHeader>
 
-    <div class="row mt-4">
-      <!-- 1) Facturas Pendientes -->
-      <div class="col-12 col-md-4">
-        <div class="card p-3 h-100">
-          <h5><i class="bi bi-receipt me-2"></i>Facturas Pendientes</h5>
-          <p class="text-muted">Seleccione las facturas a cobrar</p>
+    <!-- Listado horizontal de cobros pendientes -->
+    <div class="card p-3 mt-4">
+      <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between mb-3 gap-2">
+        <div class="d-flex align-items-center gap-2">
+          <i class="bi bi-receipt fs-5"></i>
+          <h5 class="mb-0">Facturas Pendientes</h5>
+        </div>
+        <div class="ms-md-auto" style="max-width: 360px; width: 100%;">
           <input
             v-model="searchTerm"
             type="text"
-            class="form-control mb-3"
+            class="form-control"
             placeholder="Buscar por número o cliente..."
           />
-          <div
-            class="list-group list-group-flush"
-            style="max-height: 400px; overflow-y: auto;"
-          >
-            <div
-              v-for="inv in filteredInvoices"
-              :key="inv.id"
-              class="list-group-item"
-            >
-              <div class="d-flex justify-content-between align-items-start">
-                <div>
-                  <div>{{ inv.number }}</div>
-                  <div><small>{{ inv.client }}</small></div>
-                  <div><small class="text-muted">{{ inv.date }}</small></div>
-                </div>
-                <div class="text-end">
-                  <div class="fw-bold">{{ formatCurrency(inv.total) }}</div>
-                  <span
-                    class="badge"
-                    :class="inv.status === 'Pendiente' ? 'bg-danger' : 'bg-secondary'"
-                    >{{ inv.status }}</span
+        </div>
+      </div>
+
+      <div class="table-responsive">
+        <table class="table table-hover align-middle">
+          <thead class="table-light">
+            <tr>
+              <th style="min-width: 160px;">N° de Comprobante</th>
+              <th>Cliente</th>
+              <th style="min-width: 160px;">Fecha</th>
+              <th class="text-end" style="min-width: 120px;">Monto Total</th>
+              <th class="text-center" style="min-width: 120px;">Estado</th>
+              <th class="text-end" style="min-width: 340px;">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="inv in filteredInvoices" :key="inv.id">
+              <td class="fw-semibold">{{ inv.number }}</td>
+              <td>
+                <div>{{ inv.client }}</div>
+              </td>
+              <td><small class="text-muted">{{ inv.date }}</small></td>
+              <td class="text-end fw-bold">{{ formatCurrency(inv.total) }}</td>
+              <td class="text-center">
+                <span class="badge bg-danger">Pendiente</span>
+              </td>
+              <td class="text-end">
+                <div class="d-inline-flex gap-2">
+                  <button
+                    class="btn btn-outline-primary btn-sm"
+                    title="Ver detalle"
+                    @click="openDetalle(inv)"
                   >
+                    <i class="bi bi-eye me-1"></i>Ver detalle
+                  </button>
+                  <button
+                    class="btn btn-success btn-sm"
+                    title="Confirmar cobro"
+                    @click="openPaymentModal(inv)"
+                  >
+                    <i class="bi bi-check2-circle me-1"></i>Confirmar
+                  </button>
+                  <button
+                    class="btn btn-outline-danger btn-sm"
+                    title="Cancelar factura"
+                    @click="cancelarFactura(inv)"
+                  >
+                    <i class="bi bi-x-circle me-1"></i>Cancelar
+                  </button>
                 </div>
-              </div>
-              <button
-                class="btn btn-dark w-100 mt-2"
-                :disabled="isInvoiceSelected(inv) || hasSelection"
-                @click="addInvoice(inv)"
-              >
-                {{ isInvoiceSelected(inv) ? 'Agregada' : 'Agregar' }}
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- 2) Facturas Seleccionadas -->
-      <div class="col-12 col-md-4">
-        <div class="card p-3 h-100">
-          <h5><i class="bi bi-check2-square me-2"></i>Facturas Seleccionadas</h5>
-          <p class="text-muted">Facturas que va a cobrar</p>
-          <div
-            class="list-group list-group-flush mb-3"
-            style="max-height: 400px; overflow-y: auto;"
-          >
-            <div
-              v-for="inv in selectedInvoices"
-              :key="inv.id"
-              class="list-group-item d-flex justify-content-between align-items-center"
-            >
-              <div>
-                <div>{{ inv.number }}</div>
-                <div><small class="text-muted">{{ inv.client }}</small></div>
-              </div>
-              <div class="d-flex align-items-center">
-                <button
-                  class="btn btn-outline-secondary btn-sm me-2"
-                  title="Ver detalle"
-                  @click="openDetalle(inv)"
-                >
-                  <i class="bi bi-eye"></i>
-                </button>
-                <button
-                  class="btn btn-outline-danger btn-sm"
-                  @click="removeInvoice(inv)"
-                >
-                  <i class="bi bi-trash"></i>
-                </button>
-              </div>
-            </div>
-          </div>
-          <div class="d-flex justify-content-end fw-bold">
-            Total a Cobrar:
-            <span class="text-success ms-2">{{ formatCurrency(totalToCharge) }}</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- 3) Formas de Pago -->
-      <div class="col-12 col-md-4">
-        <PaymentForms
-          :total="totalToCharge"
-          :types="paymentTypes"
-          v-model:payments="payments"
-        />
-        <button 
-          class="btn btn-dark w-100 mt-3"
-          :disabled="!canAddPayment"
-          @click="submitCobro"
-        >
-          <i class="bi bi-check2-circle me-1"></i>Registrar Cobro
-        </button>
+              </td>
+            </tr>
+            <tr v-if="filteredInvoices.length === 0">
+              <td colspan="6" class="text-center text-muted py-4">No hay facturas pendientes</td>
+            </tr>
+          </tbody>
+        </table>
       </div>
     </div>
   </div>
-  
-  <!-- Modal montado al final del template para evitar saltos de layout -->
+
+  <!-- Modal de Detalle -->
   <FacturaDetalleModal
     :show="showDetalle"
     :nroFactura="detalleNroFactura"
+    :movimientoId="detalleMovimientoId"
     @close="closeDetalle"
+    @pedido-convertido="handlePedidoConvertido"
   />
+
+  <!-- Modal para Confirmar Cobro (sin AppModal) -->
+  <teleport to="body">
+    <div
+      v-if="showPaymentModal"
+      class="modal fade show"
+      style="display: block;"
+      id="paymentModal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="paymentModalLabel"
+      @keydown.esc.prevent="closePaymentModal"
+    >
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="paymentModalLabel">Confirmar Cobro</h5>
+            <button type="button" class="btn-close" aria-label="Close" @click="closePaymentModal"></button>
+          </div>
+          <div class="modal-body">
+            <PaymentForms
+              :total="totalToCharge"
+              :types="paymentTypes"
+              v-model:payments="payments"
+            />
+          </div>
+          <div class="modal-footer">
+            <button class="btn btn-outline-secondary" @click="closePaymentModal">Cancelar</button>
+            <button class="btn btn-success" :disabled="!canAddPayment" @click="submitCobro">
+              <i class="bi bi-check2-circle me-1"></i>Registrar Cobro
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div
+      v-if="showPaymentModal"
+      class="modal-backdrop fade show"
+      @click="closePaymentModal"
+    ></div>
+  </teleport>
 </template>
 
 <script setup>
@@ -134,6 +144,7 @@ import AppNavbar from '@/components/AppNavbar.vue'
 import AppHeader from '@/components/AppHeader.vue'
 import PaymentForms from '@/components/PaymentForms.vue'
 import FacturaDetalleModal from '@/components/FacturaDetalleModal.vue'
+// Nota: Modal inline via <teleport>, no usamos AppModal
 import apiService from '@/services/apiService.js'
 import { useCashboxStore } from '@/stores/cashbox'
 
@@ -143,8 +154,6 @@ const searchTerm = ref('')
 const invoices = reactive([])
 const selectedInvoices = reactive([])
 
-//  ➕ Esto indica si ya hay al menos 1 factura seleccionada
-const hasSelection = computed(() => selectedInvoices.length > 0)
 
 // Formas de pago
 const payments = ref([])
@@ -158,15 +167,7 @@ const filteredInvoices = computed(() =>
   })
 )
 
-// Selección de facturas
-function isInvoiceSelected(inv) {
-  return selectedInvoices.some(i => i.id === inv.id)
-}
-function addInvoice(inv) {
-  if (!isInvoiceSelected(inv)) {
-    selectedInvoices.push(inv)
-  }
-}
+
 
 // Cálculo de totales
 const totalToCharge = computed(() =>
@@ -177,10 +178,6 @@ const totalToCharge = computed(() =>
 
 
 
-function removeInvoice(inv) {
-  const idx = selectedInvoices.findIndex(i => i.id === inv.id)
-  if (idx !== -1) selectedInvoices.splice(idx, 1)
-}
 
 const canAddPayment = computed(() =>
   payments.value.length > 0
@@ -192,6 +189,17 @@ const hasCredito = computed(() =>
 )
 
 const cashboxStore = useCashboxStore()
+
+// Modal de pago
+const showPaymentModal = ref(false)
+function openPaymentModal(inv) {
+  // asegurar que solo haya una factura seleccionada
+  selectedInvoices.splice(0, selectedInvoices.length, inv)
+  showPaymentModal.value = true
+}
+function closePaymentModal() {
+  showPaymentModal.value = false
+}
 
 async function submitCobro() {
   if (selectedInvoices.length === 0) {
@@ -283,21 +291,69 @@ function formatCurrency(value) {
 // ---------------- Ver detalle (modal) -----------------
 const showDetalle = ref(false)
 const detalleNroFactura = ref(null)
+const detalleMovimientoId = ref(null)
 function openDetalle(inv) {
   // inv.number contiene el nro_comprobante_origen -> nro_factura
   detalleNroFactura.value = inv?.number ?? null
+  detalleMovimientoId.value = inv?.id ?? null
   if (detalleNroFactura.value) showDetalle.value = true
 }
 function closeDetalle() {
   showDetalle.value = false
 }
+
+// Handler para cuando se convierte a pedido
+async function handlePedidoConvertido() {
+  // Recargar la lista de facturas pendientes
+  await fetchPendingCollections()
+  // Actualizar el estado de la caja si es necesario
+  if (cashboxStore && typeof cashboxStore.fetchCurrentOpen === 'function') {
+    await cashboxStore.fetchCurrentOpen()
+  }
+}
+
+// Función para cancelar factura
+async function cancelarFactura(inv) {
+  const confirmacion = confirm(`¿Está seguro que desea CANCELAR la factura ${inv.number}?\n\nEsta acción no se puede deshacer.`)
+  
+  if (!confirmacion) return
+
+  try {
+    const payload = {
+      movimiento_id: inv.id,
+      accion: 'CANCELAR'
+    }
+
+    console.log('Payload -> /api/cashbox/collect-sale (Cancelar):', payload)
+
+    const response = await apiService.post('/api/cashbox/collect-sale', payload)
+    
+    console.log('Respuesta cancelar factura:', response?.data)
+
+    if (response?.data?.ok) {
+      alert(`Factura ${inv.number} cancelada exitosamente.`)
+      // Recargar la lista de facturas pendientes
+      await fetchPendingCollections()
+      // Actualizar el estado de la caja
+      if (cashboxStore && typeof cashboxStore.fetchCurrentOpen === 'function') {
+        await cashboxStore.fetchCurrentOpen()
+      }
+    } else {
+      alert('Error: No se pudo cancelar la factura.')
+    }
+  } catch (err) {
+    console.error('Error al cancelar factura:', err)
+    alert('Error al cancelar la factura. Revisa la consola para más detalles.')
+  }
+}
 </script>
 <style scoped>
-/* Asegura que la lista sea scrollable y no crezca demasiado */
-.list-group {
-  /* max-height ya definido inline, opcional moverlo aquí */
-  max-height: 200px;
-  overflow-y: auto;
+/* Tabla responsive con filas cómodas */
+.table td, .table th {
+  vertical-align: middle;
+}
+.table-responsive {
+  overflow-x: auto;
 }
 </style>
 
