@@ -161,9 +161,13 @@
       </h4>
       <!-- Reemplazo en la sección de Total y Acciones -->
       <div class="button-container">
-        <button v-if="!modoEdicion" type="button" class="btn btn-warning" @click="openPendingModal">Poner Venta en Espera</button>
-        <button type="button" class="btn btn-danger" @click="cancelarVenta">{{ modoEdicion ? 'Cancelar Edición' : 'Cancelar Venta' }}</button>
-        <button type="button" class="btn btn-success" @click="confirmarVenta">{{ modoEdicion ? 'Confirmar Edición' : 'Confirmar Venta' }}</button>
+        <button v-if="!modoEdicion && !modoRetomar" type="button" class="btn btn-warning" @click="ponerVentaEnEspera">Poner Venta en Espera</button>
+        <button type="button" class="btn btn-danger" @click="cancelarVenta">
+          {{ modoEdicion ? 'Cancelar Edición' : (modoRetomar ? 'Cancelar' : 'Cancelar Venta') }}
+        </button>
+        <button type="button" class="btn btn-success" @click="confirmarVenta">
+          {{ modoEdicion ? 'Confirmar Edición' : (modoRetomar ? 'Completar Pedido' : 'Confirmar Venta') }}
+        </button>
       </div>
 
     </div>
@@ -179,14 +183,6 @@
     </div>
 
   </div>
-  <PendingSaleModal
-    v-if="showPendingModal"
-    :initialReferencia="cabecera.referencia"
-    :initialNombre="clienteNombre"
-    :initialNroDocumento="rucCliente"
-    @close="showPendingModal = false"
-    @submit="handlePendingSubmit"
-  />
   
   <!-- Modal Registrar Cliente reutilizable -->
   <RegistrarClienteModal
@@ -205,7 +201,6 @@ import AppTable from '../components/AppTable.vue';
 import AppNavbar from '../components/AppNavbar.vue';
 import AppPagination from '../components/AppPagination.vue';
 import apiService from '../services/apiService.js';
-import PendingSaleModal from '../components/PendingSaleModal.vue';
 import ClientesView from './ClientesView.vue';
 import ProductosPrecioView from '@/views/Inventario/ProductosPrecioView.vue';
 import RegistrarClienteModal from '@/components/RegistrarClienteModal.vue';
@@ -213,7 +208,7 @@ import RegistrarClienteModal from '@/components/RegistrarClienteModal.vue';
 
 export default {
   name: "PantallaInicio",
-  components: { AppTable, AppNavbar, AppPagination, PendingSaleModal, ClientesView, ProductosPrecioView, RegistrarClienteModal },
+  components: { AppTable, AppNavbar, AppPagination, ClientesView, ProductosPrecioView, RegistrarClienteModal },
   data() {
     return {
       productCode: '',
@@ -249,6 +244,9 @@ export default {
       // Modo edición
       modoEdicion: false,
       pedidoIdEdicion: null,
+      // Modo retomar
+      modoRetomar: false,
+      pedidoIdRetomar: null,
       clienteTelefono: '',
       clienteDireccion: '',
       clienteEmail: ''
@@ -457,6 +455,39 @@ export default {
           return;
         }
 
+        // ====== MODO RETOMAR ======
+        if (this.modoRetomar && this.pedidoIdRetomar) {
+          const payload = {
+            descripcion: "Completar pedido retomado",
+            moneda: "PYG",
+            idempotency_key: "",
+            cabecera: {
+              nombre_cliente: this.clienteNombre || 'Cliente sin nombre',
+              telefono: this.clienteTelefono || '',
+              direccion: this.clienteDireccion || '',
+              email: this.clienteEmail || ''
+            },
+            confirmar: true, // En modo retomar confirmamos para completar el pedido
+            detalles
+          };
+
+          console.log('Payload retomar pedido:', payload);
+          const resp = await apiService.post(
+            `${process.env.VUE_APP_API_BASE_URL}/api/orders/pending/${this.pedidoIdRetomar}`,
+            payload
+          );
+          const resultado = resp?.data;
+          if (!resultado?.ok) {
+            throw new Error('El backend devolvió una respuesta inesperada.');
+          }
+          console.log('[PantallaInicio] Pedido completado:', resultado);
+          alert(`Pedido #${this.pedidoIdRetomar} completado correctamente.`);
+          
+          // Volver a GestionPedidos
+          this.$router.push({ name: 'GestionPedidos' });
+          return;
+        }
+
         // ====== MODO EDICIÓN ======
         if (this.modoEdicion && this.pedidoIdEdicion) {
           const payload = {
@@ -469,6 +500,7 @@ export default {
               direccion: this.clienteDireccion || '',
               email: this.clienteEmail || ''
             },
+            confirmar: false, // En modo edición siempre es false (solo pedidos pendientes)
             detalles
           };
 
@@ -529,7 +561,7 @@ export default {
           tipo_entrega: this.cabecera.tipo_entrega
         };
 
-        const payload = { cabecera: cab, detalles };
+        const payload = { cabecera: cab, detalles, confirmar: true };
 
         console.log('Payload pedido:', payload);
         const resp = await apiService.post(
@@ -543,15 +575,18 @@ export default {
         console.log('[PantallaInicio] /api/orders/pending resp.data:', resultado);
         const pedidoId = resultado?.data?.pedido_id;
         const mensaje = pedidoId
-          ? `Pedido #${pedidoId} registrado correctamente en estado pendiente.`
-          : 'Pedido registrado correctamente en estado pendiente.';
+          ? `Pedido #${pedidoId} registrado correctamente`
+          : 'Pedido registrado correctamente';
         alert(mensaje);
         
         // Limpiar estado local
         this.limpiarFormulario();
       } catch (error) {
         console.error('Error al confirmar venta:', error);
-        alert(this.modoEdicion ? 'Error al editar el pedido' : 'Error al registrar el pedido');
+        const mensajeError = this.modoRetomar 
+          ? 'Error al completar el pedido' 
+          : (this.modoEdicion ? 'Error al editar el pedido' : 'Error al registrar el pedido');
+        alert(mensajeError);
       }
     },
     eliminarProducto(index) {
@@ -562,19 +597,25 @@ export default {
     cancelarVenta() {
       const mensaje = this.modoEdicion
         ? '¿Seguro que deseas cancelar la edición y volver a la lista de pedidos?'
-        : '¿Seguro que deseas cancelar la venta y limpiar todos los campos?';
+        : (this.modoRetomar 
+          ? '¿Seguro que deseas cancelar y volver a la lista de pedidos?'
+          : '¿Seguro que deseas cancelar la venta y limpiar todos los campos?');
       const confirmado = window.confirm(mensaje);
       if (!confirmado) return;
       
-      // Si estamos en modo edición, volver a GestionPedidos
-      if (this.modoEdicion) {
+      // Si estamos en modo edición o retomar, volver a GestionPedidos
+      if (this.modoEdicion || this.modoRetomar) {
         this.$router.push({ name: 'GestionPedidos' });
       }
       
       this.limpiarFormulario();
     },
     cancelarEdicion() {
-      // Método específico para el botón X del alert
+      // Método específico para el botón X del alert de edición
+      this.$router.push({ name: 'GestionPedidos' });
+    },
+    cancelarRetomar() {
+      // Método específico para el botón X del alert de retomar
       this.$router.push({ name: 'GestionPedidos' });
     },
     limpiarFormulario() {
@@ -595,6 +636,9 @@ export default {
       // Resetear modo edición
       this.modoEdicion = false;
       this.pedidoIdEdicion = null;
+      // Resetear modo retomar
+      this.modoRetomar = false;
+      this.pedidoIdRetomar = null;
       this.clienteTelefono = '';
       this.clienteDireccion = '';
       this.clienteEmail = '';
@@ -602,61 +646,83 @@ export default {
     cambiarPagina(page) {
       this.paginaActual = page;
     },
-    openPendingModal() {
-      this.showPendingModal = true;
-    },
-    async handlePendingSubmit({ referencia, nombre, nroDocumento }) {
-    // Validación ya hecha en el hijo
+    async ponerVentaEnEspera() {
       try {
-        let clienteData = null;
-        if (nroDocumento) {
-          const { data } = await apiService.get(
-            `${process.env.VUE_APP_API_BASE_URL}/api/clients/search/${nroDocumento}`
-          );
-          clienteData = data;
-        }
-        const nombreCab = nombre || clienteData?.nombre_completo || clienteData?.nombre_fantasia || '';
-        const documentoCab = nroDocumento || clienteData?.nro_documento || clienteData?.ruc || clienteData?.ci || '';
-        const cab = {
-          nombre_cliente: nombreCab || 'Cliente sin nombre',
-          nro_documento: documentoCab || 'S/D',
-          referencia,
-          telefono: clienteData?.telefono ?? '',
-          direccion: clienteData?.direccion ?? '',
-          email: clienteData?.email ?? '',
-          fecha_entrega: this.resolveFechaEntrega(),
-          observaciones: this.cabecera.observaciones,
-          tipo_entrega: this.cabecera.tipo_entrega
-        };
+        // Validar productos
         const detalles = this.productos
-          .map(p => ({ producto_id: p.producto_id, cantidad: Number(p.cantidad) || 0 }))
+          .map(p => ({
+            producto_id: p.producto_id,
+            cantidad: Number(p.cantidad) || 0
+          }))
           .filter(item => item.cantidad > 0);
+
         if (!detalles.length) {
           alert('Agregá al menos un producto antes de poner la venta en espera.');
           return;
         }
-        await apiService.post(
+
+        // Obtener información del cliente
+        let cliente = null;
+        try {
+          const respCliente = await apiService.get(
+            `${process.env.VUE_APP_API_BASE_URL}/api/clients/search/${this.rucCliente}`
+          );
+          cliente = respCliente?.data ?? null;
+        } catch (errorCliente) {
+          if (errorCliente?.response?.status !== 404) {
+            throw errorCliente;
+          }
+        }
+
+        const nro_documento = this.rucCliente
+          || cliente?.nro_documento
+          || cliente?.ruc
+          || cliente?.ci
+          || '';
+        const nombre_cliente = this.clienteNombre
+          || cliente?.nombre_completo
+          || cliente?.nombre_fantasia
+          || '';
+        const telefono = cliente?.telefono ?? '';
+        const direccion = cliente?.direccion ?? '';
+        const email = cliente?.email ?? '';
+        const fecha_entrega = this.resolveFechaEntrega();
+
+        const nombreFinal = nombre_cliente || 'Cliente sin nombre';
+        const documentoFinal = nro_documento || 'S/D';
+
+        const cab = {
+          nombre_cliente: nombreFinal,
+          nro_documento: documentoFinal,
+          telefono,
+          direccion,
+          email,
+          fecha_entrega,
+          tipo_entrega: this.cabecera.tipo_entrega
+        };
+
+        const payload = { cabecera: cab, detalles, confirmar: false };
+
+        console.log('Payload venta en espera:', payload);
+        const resp = await apiService.post(
           `${process.env.VUE_APP_API_BASE_URL}/api/orders/pending`,
-          { cabecera: cab, detalles }
+          payload
         );
-        console.log('Venta puesta en espera:', cab, detalles);
-        alert('Venta puesta en espera correctamente.');
-        // limpiar estado
-        this.productos = [];
-        this.paginaActual = 1;
-        this.cabecera.referencia = '';
-        this.cabecera.observaciones = '';
-        this.cabecera.tipo_entrega = 'domicilio';
-  this.cabecera.fecha_entrega = '';
-        this.showPendingModal = false;
-        this.productCode     = '';
-        this.productQuantity = 1;
-        this.productDescription = '';
-        this.selectedProduct = null;
-        this.rucCliente      = '';
-        this.clienteNombre   = '';
+        const resultado = resp?.data;
+        if (!resultado?.ok) {
+          throw new Error('El backend devolvió una respuesta inesperada.');
+        }
+        console.log('[PantallaInicio] Venta puesta en espera:', resultado);
+        const pedidoId = resultado?.data?.pedido_id;
+        const mensaje = pedidoId
+          ? `Pedido #${pedidoId} puesto en espera correctamente.`
+          : 'Venta puesta en espera correctamente.';
+        alert(mensaje);
+        
+        // Limpiar estado local
+        this.limpiarFormulario();
       } catch (error) {
-        console.error(error);
+        console.error('Error al poner venta en espera:', error);
         alert('Error al poner la venta en espera.');
       }
     },
@@ -757,9 +823,36 @@ export default {
         this.productos = productosParam.map(detalle => ({
           producto_id: detalle.producto_id,
           codigo: detalle.codigo_barras || detalle.codigo || '',
-          nombre: detalle.nombre_producto || detalle.nombre || '',
+          nombre: detalle.producto_nombre || detalle.nombre || '',
           cantidad: detalle.cantidad || 0,
-          unidad_medida: detalle.unidad_medida || '',
+          unidad_medida: detalle.unidad_medida_nombre || '',
+          precio: detalle.precio_unitario || detalle.precio || 0
+        }));
+      } catch (error) {
+        console.error('Error al parsear productos:', error);
+        this.productos = [];
+      }
+    }
+    
+    // Verificar si venimos desde retomar pedido
+    if (this.$route.query.modo === 'retomar') {
+      this.modoRetomar = true;
+      this.pedidoIdRetomar = this.$route.query.pedidoId;
+      this.clienteNombre = this.$route.query.clienteNombre || '';
+      this.rucCliente = this.$route.query.clienteDocumento || '';
+      this.clienteTelefono = this.$route.query.clienteTelefono || '';
+      this.clienteDireccion = this.$route.query.clienteDireccion || '';
+      this.clienteEmail = this.$route.query.clienteEmail || '';
+      
+      // Cargar productos desde JSON
+      try {
+        const productosParam = JSON.parse(this.$route.query.productos || '[]');
+        this.productos = productosParam.map(detalle => ({
+          producto_id: detalle.producto_id,
+          codigo: detalle.codigo_barras || detalle.codigo || '',
+          nombre: detalle.producto_nombre || detalle.nombre || '',
+          cantidad: detalle.cantidad || 0,
+          unidad_medida: detalle.unidad_medida_nombre || '',
           precio: detalle.precio_unitario || detalle.precio || 0
         }));
       } catch (error) {

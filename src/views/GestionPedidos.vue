@@ -53,23 +53,40 @@
               <td>
                 <button
                   type="button"
-                  class="btn btn-primary btn-sm me-2"
+                  class="btn btn-outline-primary btn-sm me-2"
                   @click="verDetalle(pedido.pedido_id)"
                 >
                   <i class="bi bi-eye me-1"></i>
                   Ver Detalle
                 </button>
+                
+                <!-- Botón Retomar: deshabilitado si no es pendiente -->
                 <button
                   type="button"
-                  class="btn btn-warning btn-sm me-2"
+                  class="btn btn-outline-retomar btn-sm me-2"
+                  :disabled="!esPendiente(pedido.estado)"
+                  @click="retomarPedido(pedido.pedido_id)"
+                >
+                  <i class="bi bi-arrow-clockwise me-1"></i>
+                  Retomar
+                </button>
+                
+                <!-- Botón Editar: deshabilitado si no es pendiente -->
+                <button
+                  type="button"
+                  class="btn btn-outline-warning btn-sm me-2"
+                  :disabled="!esPendiente(pedido.estado)"
                   @click="editarPedido(pedido.pedido_id)"
                 >
                   <i class="bi bi-pencil me-1"></i>
                   Editar
                 </button>
+                
+                <!-- Botón Cancelar: deshabilitado si no es pendiente -->
                 <button
                   type="button"
-                  class="btn btn-danger btn-sm"
+                  class="btn btn-outline-danger btn-sm"
+                  :disabled="!esPendiente(pedido.estado)"
                   @click="cancelarPedido(pedido.pedido_id)"
                 >
                   <i class="bi bi-x-circle me-1"></i>
@@ -182,6 +199,36 @@ export default {
       this.modalDetalleAbierto = false;
       this.pedidoSeleccionadoId = null;
     },
+    esPendiente(estado) {
+      return (estado || '').toLowerCase() === 'pendiente';
+    },
+    async retomarPedido(pedidoId) {
+      try {
+        // Cargar los detalles completos del pedido
+        const { data: pedido } = await apiService.get(
+          `${process.env.VUE_APP_API_BASE_URL}/api/orders/pending/${pedidoId}`
+        );
+        
+        // Navegar a PantallaInicio en modo retomar (como nueva venta)
+        this.$router.push({
+          name: 'Inicio',
+          query: {
+            modo: 'retomar',
+            pedidoId: pedido.pedido_id,
+            clienteNombre: pedido.nombre_cliente || '',
+            clienteDocumento: pedido.nro_documento || '',
+            clienteTelefono: pedido.telefono || '',
+            clienteDireccion: pedido.direccion || '',
+            clienteEmail: pedido.email || '',
+            // Serializar productos como JSON en query
+            productos: JSON.stringify(pedido.detalles || [])
+          }
+        });
+      } catch (error) {
+        console.error('Error al retomar pedido:', error);
+        alert('No se pudo cargar el pedido. Por favor, intente nuevamente.');
+      }
+    },
     async editarPedido(pedidoId) {
       try {
         // Cargar los detalles completos del pedido
@@ -286,5 +333,28 @@ h2 {
 .badge {
   font-size: 0.9rem;
   padding: 0.5rem 0.75rem;
+}
+
+.btn-outline-retomar {
+  background-color: transparent;
+  color: #ff9800;
+  border: 1px solid #ff9800;
+  transition: all 0.2s ease;
+}
+
+.btn-outline-retomar:hover:not(:disabled) {
+  background-color: #ff9800;
+  border-color: #ff9800;
+  color: white;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 5px rgba(255, 152, 0, 0.3);
+}
+
+.btn-outline-retomar:disabled {
+  background-color: transparent;
+  border-color: #ccc;
+  color: #ccc;
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 </style>
