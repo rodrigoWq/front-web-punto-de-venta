@@ -130,15 +130,37 @@ watch(
     error.value = ''
     factura.value = null
     try {
-      const { data } = await apiService.get('/api/sales/detail', { nro_factura: nro })
-      if (!data?.ok || !data?.data) throw new Error('Respuesta inválida')
-      // Normalizar el shape para el modal
-      const cab = data.data.cabecera || {}
-      const detalles = data.data.detalles_productos || []
+      // Usar el nuevo endpoint con nro_comprobante_origen
+      const { data } = await apiService.get(`/api/orders/pending/${nro}`)
+      
+      console.log('Respuesta detalle pedido/factura:', data)
+      
+      if (!data) throw new Error('Respuesta vacía')
+      
+      // Mapear la respuesta del nuevo endpoint al formato esperado por el modal
       factura.value = {
-        nro_factura: cab.nro_factura,
-        cabecera: cab,
-        detalles
+        nro_factura: nro, // Usamos el nro_comprobante_origen como nro_factura
+        cabecera: {
+          fecha_emision: data.fecha_hora || data.creado_en,
+          nombre_razon_social: data.nombre_cliente,
+          tipo_documento: 'RUC/CI',
+          nro_documento: data.nro_documento,
+          credito_contado: 'CONTADO', // Asumimos contado por defecto
+          total_sin_iva: data.total_sin_iva,
+          total_iva: data.iva,
+          total_iva_incluido: data.total_neto
+        },
+        detalles: (data.detalles || []).map(detalle => ({
+          codigo_producto: detalle.codigo_barras,
+          codigo_barras: detalle.codigo_barras,
+          nombre_producto: detalle.producto_nombre || detalle.nombre_producto,
+          descripcion: '', // No viene en la respuesta
+          cantidad: detalle.cantidad,
+          unidad_medida: detalle.unidad_medida_nombre || '',
+          precio_unitario_bruto: detalle.precio,
+          iva: 0, // Calcular si es necesario
+          descuento: 0
+        }))
       }
     } catch (e) {
       error.value = 'No se pudo cargar el detalle de la factura.'
