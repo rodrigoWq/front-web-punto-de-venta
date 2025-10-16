@@ -184,6 +184,7 @@ export default {
     return {
       // ≡ SIN CAMBIOS
       products: [],
+      allProducts: [], // Cache de todos los productos para filtrar
       currentPage: 1,
       itemsPerPage: 10,
       priceFilter: 'all',
@@ -193,6 +194,8 @@ export default {
       editingProduct: null,
       productModalInstance: null,
       priceModalInstance: null,
+      loading: false,
+      totalPagesBackend: 1,
 
       // ≡ (estructura de datos para precio)
       modalData: {
@@ -206,8 +209,8 @@ export default {
   computed: {
     // Filtro unificado (nombre / descripción / categoría / unidad) + categoría + estado de precio
     filteredProducts() {
-      // Copia base
-      let filtered = Array.isArray(this.products) ? this.products : [];
+      // Usar allProducts en lugar de products para tener todos los datos cargados
+      let filtered = Array.isArray(this.allProducts) ? this.allProducts : [];
 
       // Normalizar término de búsqueda
       const term = (this.searchTerm || '').trim().toLowerCase();
@@ -252,7 +255,7 @@ export default {
 
     uniqueCategories() {
       const set = new Set();
-      this.products.forEach(p => {
+      this.allProducts.forEach(p => {
         const cat = p.categoria || p.categoria_nombre;
         if (cat) set.add(cat);
       });
@@ -277,50 +280,91 @@ export default {
 
     /* ---------- CRUD Productos ---------- */
     async fetchProducts() {                                                   
+      this.loading = true;
       try {
-        const { data } = await apiService.get(this.api('/api/prices'));
-        const list = Array.isArray(data) ? data : (data ? [data] : []);
-
-        // Helper para seleccionar el precio vigente principal
-        const pickCurrentPrice = (arr = []) => {
-          if (!Array.isArray(arr) || !arr.length) return null;
-          const now = new Date();
-          const qty = 1; // Vista lista asume cantidad 1
-          let candidates = arr.filter(p => {
-            const desde = p?.vigencia_desde ? new Date(p.vigencia_desde) : null;
-            if (!desde || isNaN(desde.getTime())) return false;
-            const hasta = p?.vigencia_hasta ? new Date(p.vigencia_hasta) : null;
-            const inDate = desde <= now && (!hasta || hasta >= now);
-            const cantidadOK = (p.cantidad_desde == null || p.cantidad_desde <= qty) && (p.cantidad_hasta == null || p.cantidad_hasta >= qty);
-            return inDate && cantidadOK;
-          });
-          if (!candidates.length) candidates = [...arr];
-          candidates.sort((a,b) => new Date(b.vigencia_desde) - new Date(a.vigencia_desde));
-            return candidates[0] || null;
-        };
-
-        this.products = list.map(item => {
-          const priceRec = pickCurrentPrice(item.precios_vigentes || []);
-          const precioVentaNum = priceRec ? Number(priceRec.precio_venta) : null;
-          return {
-            producto_id: item.producto_id,
-            codigo_barras: item.codigo_barras || '',
-            nombre: item.nombre || '',
-            descripcion: item.descripcion || '',
-            stock_disponible: item.stock_disponible ?? 0,
-            categoria: item.categoria || item.categoria_nombre || '',
-            unidad_medida: item.unidad_medida || item.unidad_medida_nombre || '',
-            precio_venta: (Number.isFinite(precioVentaNum) && precioVentaNum > 0) ? precioVentaNum : null,
-            precio_ultima_compra: item.precio_ultima_compra ?? null,
-            vigencia_desde: priceRec?.vigencia_desde || null,
-            vigencia_hasta: priceRec?.vigencia_hasta || null,
-            _precios_vigentes: item.precios_vigentes || []
-          };
-        });
+        this.allProducts = [];
+        
+        // Primero obtenemos la primera página para saber cuántas páginas hay
+        const firstResponse = await apiService.get(this.api('/api/prices?page=1'));
+        const firstData = Array.isArray(firstResponse.data) 
+          ? firstResponse.data 
+          : (Array.isArray(firstResponse.data?.data) ? firstResponse.data.data : []);
+        
+        this.totalPagesBackend = firstResponse.data?.pagination?.totalPages || 1;
+        
+        // Mapear la primera página
+        const mappedFirstPage = this.mapProducts(firstData);
+        this.allProducts.push(...mappedFirstPage);
+        
+        // Cargar todas las demás páginas
+        if (this.totalPagesBackend > 1) {
+          const pagePromises = [];
+          for (let page = 2; page <= this.totalPagesBackend; page++) {
+            pagePromises.push(
+              apiService.get(this.api(`/api/prices?page=${page}`))
+                .then(response => {
+                  const data = Array.isArray(response.data) 
+                    ? response.data 
+                    : (Array.isArray(response.data?.data) ? response.data.data : []);
+                  return this.mapProducts(data);
+                })
+            );
+          }
+          
+          const allPages = await Promise.all(pagePromises);
+          for (const pageProducts of allPages) {
+            this.allProducts.push(...pageProducts);
+          }
+        }
+        
+        this.products = [...this.allProducts];
+        console.log('[ProductosPrecioView] Total de productos cargados:', this.allProducts.length);
       } catch (err) {
         console.error('Error fetching products:', err);
         this.products = [];
+        this.allProducts = [];
+      } finally {
+        this.loading = false;
       }
+    },
+    
+    mapProducts(list) {
+      // Helper para seleccionar el precio vigente principal
+      const pickCurrentPrice = (arr = []) => {
+        if (!Array.isArray(arr) || !arr.length) return null;
+        const now = new Date();
+        const qty = 1; // Vista lista asume cantidad 1
+        let candidates = arr.filter(p => {
+          const desde = p?.vigencia_desde ? new Date(p.vigencia_desde) : null;
+          if (!desde || isNaN(desde.getTime())) return false;
+          const hasta = p?.vigencia_hasta ? new Date(p.vigencia_hasta) : null;
+          const inDate = desde <= now && (!hasta || hasta >= now);
+          const cantidadOK = (p.cantidad_desde == null || p.cantidad_desde <= qty) && (p.cantidad_hasta == null || p.cantidad_hasta >= qty);
+          return inDate && cantidadOK;
+        });
+        if (!candidates.length) candidates = [...arr];
+        candidates.sort((a,b) => new Date(b.vigencia_desde) - new Date(a.vigencia_desde));
+        return candidates[0] || null;
+      };
+
+      return list.map(item => {
+        const priceRec = pickCurrentPrice(item.precios_vigentes || []);
+        const precioVentaNum = priceRec ? Number(priceRec.precio_venta) : null;
+        return {
+          producto_id: item.producto_id,
+          codigo_barras: item.codigo_barras || '',
+          nombre: item.nombre || '',
+          descripcion: item.descripcion || '',
+          stock_disponible: item.stock_disponible ?? 0,
+          categoria: item.categoria || item.categoria_nombre || '',
+          unidad_medida: item.unidad_medida || item.unidad_medida_nombre || '',
+          precio_venta: (Number.isFinite(precioVentaNum) && precioVentaNum > 0) ? precioVentaNum : null,
+          precio_ultima_compra: item.precio_ultima_compra ?? null,
+          vigencia_desde: priceRec?.vigencia_desde || null,
+          vigencia_hasta: priceRec?.vigencia_hasta || null,
+          _precios_vigentes: item.precios_vigentes || []
+        };
+      });
     },
 
     async openProductModal(product = null) {                                   
