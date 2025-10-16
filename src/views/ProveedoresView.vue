@@ -84,8 +84,9 @@ export default {
       return this.selectorMode ? base : [...base, 'Acciones'];
     },
     providersFiltered() {
+      const providersArray = Array.isArray(this.providers) ? this.providers : [];
       const search = this.searchInput.toLowerCase();
-      return this.providers.filter(provider =>
+      return providersArray.filter(provider =>
         provider.nombre.toLowerCase().includes(search)
       );
     },
@@ -105,9 +106,11 @@ export default {
       try {
         const url = `${process.env.VUE_APP_API_BASE_URL}/api/providers/`;
         const response = await apiService.get(url);
-        this.providers = response.data;
+        // Asegúrate de que siempre asignes un array
+        this.providers = Array.isArray(response.data) ? response.data : (response.data?.data || []);
       } catch (error) {
         console.error('Error al cargar proveedores:', error);
+        this.providers = []; // Asigna un array vacío en caso de error
       }
     },
     changePage(page) {

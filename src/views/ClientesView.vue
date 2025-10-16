@@ -133,7 +133,9 @@ export default {
         : ['Nombre Completo', 'RUC', 'Teléfono', 'Email', 'Condiciones de Pago', 'Acciones'];
     },
     clientesFiltrados() {
-      return this.clientes.filter(cliente => {
+      // Asegúrate de que clientes sea un array
+      const clientesArray = Array.isArray(this.clientes) ? this.clientes : [];
+      return clientesArray.filter(cliente => {
         const search = this.searchInput.toLowerCase();
         const nombre = (cliente.nombre_completo || '').toLowerCase();
         const ruc = (cliente.ruc || '').toLowerCase();
@@ -165,9 +167,11 @@ export default {
     async cargarClientes() {
       try {
         const response = await apiService.get(`${process.env.VUE_APP_API_BASE_URL}/api/clients`);
-        this.clientes = response.data;
+        // Asegúrate de que siempre asignes un array
+        this.clientes = Array.isArray(response.data) ? response.data : (response.data?.data || []);
       } catch (error) {
         console.error('Error al cargar los clientes:', error);
+        this.clientes = []; // Asigna un array vacío en caso de error
       }
     },
     abrirModalCrear() {

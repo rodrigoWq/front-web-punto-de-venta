@@ -26,7 +26,7 @@
                 type="text"
                 class="form-control"
                 style="max-width: 350px"
-                placeholder="Buscar por nombre, código o categoría..."
+                placeholder="Buscar por nombre..."
               />
               <select 
                 v-model="selectedCategory"
@@ -44,12 +44,12 @@
               </select>
             </div>
             <button 
-              class="btn btn-outline-secondary d-flex align-items-center"
-              @click="loadProducts"
-              :disabled="loading"
+              class="btn btn-outline-danger d-flex align-items-center"
+              @click="clearFilters"
+              :disabled="!searchTerm && !selectedCategory"
             >
-              <i class="bi bi-arrow-clockwise me-2"></i> 
-              {{ loading ? 'Cargando...' : 'Actualizar' }}
+              <i class="bi bi-arrow-counterclockwise me-2"></i> 
+              Limpiar Filtros
             </button>
           </div>
 
@@ -158,14 +158,28 @@ const products = ref([])
 const categories = ref([])
 const selectedCategory = ref('')
 const loading = ref(false)
+const currentPage = ref(1)
+const totalPages = ref(1)
+const pagination = ref({})
+//const itemsPerPage = ref(10)
 
 // Cargar productos desde el backend (con opción para silenciar alertas)
 async function loadProducts(options = {}) {
-  const { suppressAlert = false } = options || {}
+  const { suppressAlert = false, page = 1 } = options || {}
   loading.value = true
   try {
-    const response = await apiService.get('/api/products')
-    const data = Array.isArray(response.data) ? response.data : []
+    const response = await apiService.get(`/api/products?page=${page}`)
+    // La respuesta tiene estructura { data: [...], pagination: {...} }
+    const data = Array.isArray(response.data) 
+      ? response.data 
+      : (Array.isArray(response.data?.data) ? response.data.data : [])
+    
+    // Capturar información de paginación del backend
+    if (response.data?.pagination) {
+      pagination.value = response.data.pagination
+      totalPages.value = response.data.pagination.totalPages || 1
+      currentPage.value = response.data.pagination.page || 1
+    }
     
     // Mapear respuesta del backend a formato del template
     products.value = data.map(item => ({
@@ -192,7 +206,7 @@ async function loadProducts(options = {}) {
     const uniqueCategories = [...new Set(data.map(item => item.categoria_nombre).filter(Boolean))]
     categories.value = uniqueCategories.map(name => ({ name }))
     
-    console.log('[ProductosView] Productos cargados:', products.value.length)
+    console.log('[ProductosView] Productos cargados:', products.value.length, 'Página:', currentPage.value, 'Total de páginas:', totalPages.value)
   } catch (error) {
     console.error('Error cargando productos:', error)
     if (!suppressAlert) {
@@ -221,7 +235,8 @@ async function deleteProduct(id) {
 }
 
 const filteredProducts = computed(() => {
-  let filtered = products.value
+  const productsArray = Array.isArray(products.value) ? products.value : []
+  let filtered = productsArray
   
   // Filtrar por término de búsqueda
   if (searchTerm.value) {
@@ -261,27 +276,29 @@ async function onProductRegistered() {
   editingProduct.value = null
 }
 
- const currentPage  = ref(1)
- const itemsPerPage = ref(10)       // 4 filas por página
-
- // recalcular total de páginas
- const totalPages = computed(() =>
-   Math.ceil(filteredProducts.value.length / itemsPerPage.value)
- )
-
- function changePage(page) {
-   if (page < 1 || page > totalPages.value) return
-   currentPage.value = page
+function changePage(page) {
+  if (page < 1 || page > totalPages.value) return
+  loadProducts({ suppressAlert: true, page })
 }
 
- // slice de productos mostrados en la página actual
- const pagedProducts = computed(() => {
-   const start = (currentPage.value - 1) * itemsPerPage.value
-   return filteredProducts.value.slice(start, start + itemsPerPage.value)
- })
+// Limpiar todos los filtros
+function clearFilters() {
+  searchTerm.value = ''
+  selectedCategory.value = ''
+  currentPage.value = 1
+}
 
- // reset de página al cambiar filtro/búsqueda
- watch([searchTerm, selectedCategory], () => { currentPage.value = 1 })
+// Los productos ya vienen paginados del backend, pero aplicamos filtros locales
+const pagedProducts = computed(() => {
+  return filteredProducts.value
+})
+
+// reset de página al cambiar filtro/búsqueda
+watch([searchTerm, selectedCategory], () => { 
+  currentPage.value = 1
+  // Nota: Los filtros se aplican localmente en el computed filteredProducts
+  // La paginación del backend es independiente
+})
 
  // Cargar datos al montar el componente
  onMounted(() => {
