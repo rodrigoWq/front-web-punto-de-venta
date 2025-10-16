@@ -31,69 +31,80 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-if="!pedidosFiltrados.length">
-              <td colspan="7" class="text-center py-4">
-                No se encontraron pedidos.
-              </td>
-            </tr>
-            <tr
-              v-for="pedido in pedidosFiltradosPaginados"
-              :key="pedido.pedido_id"
-            >
-              <td>{{ pedido.pedido_id }}</td>
-              <td>{{ pedido.nombre_cliente || '—' }}</td>
-              <td>{{ formatearMonto(pedido.total_neto) }}</td>
-              <td>
-                <span :class="['badge', badgeClass(pedido.estado)]">
-                  {{ pedido.estado || '—' }}
-                </span>
-              </td>
-              <td>{{ formatearFecha(pedido.creado_en) }}</td>
-              <td>{{ formatearFecha(pedido.actualizado_en) }}</td>
-              <td>
-                <button
-                  type="button"
-                  class="btn btn-outline-primary btn-sm me-2"
-                  @click="verDetalle(pedido.pedido_id)"
-                >
-                  <i class="bi bi-eye me-1"></i>
-                  Ver Detalle
-                </button>
-                
-                <!-- Botón Retomar: deshabilitado si no es pendiente -->
-                <button
-                  type="button"
-                  class="btn btn-outline-retomar btn-sm me-2"
-                  :disabled="!esPendiente(pedido.estado)"
-                  @click="retomarPedido(pedido.pedido_id)"
-                >
-                  <i class="bi bi-arrow-clockwise me-1"></i>
-                  Retomar
-                </button>
-                
-                <!-- Botón Editar: deshabilitado si no es pendiente -->
-                <button
-                  type="button"
-                  class="btn btn-outline-warning btn-sm me-2"
-                  :disabled="!esPendiente(pedido.estado)"
-                  @click="editarPedido(pedido.pedido_id)"
-                >
-                  <i class="bi bi-pencil me-1"></i>
-                  Editar
-                </button>
-                
-                <!-- Botón Cancelar: deshabilitado si no es pendiente -->
-                <button
-                  type="button"
-                  class="btn btn-outline-danger btn-sm"
-                  :disabled="!esPendiente(pedido.estado)"
-                  @click="cancelarPedido(pedido.pedido_id)"
-                >
-                  <i class="bi bi-x-circle me-1"></i>
-                  Cancelar
-                </button>
-              </td>
-            </tr>
+            <template v-if="cargando">
+              <tr>
+                <td colspan="7" class="text-center py-4">
+                  Cargando pedidos...
+                </td>
+              </tr>
+            </template>
+            <template v-else-if="!pedidos.length">
+              <tr>
+                <td colspan="7" class="text-center py-4">
+                  No se encontraron pedidos.
+                </td>
+              </tr>
+            </template>
+            <template v-else>
+              <tr
+                v-for="pedido in pedidos"
+                :key="pedido.pedido_id"
+              >
+                <td>{{ pedido.pedido_id }}</td>
+                <td>{{ pedido.nombre_cliente || '—' }}</td>
+                <td>{{ formatearMonto(pedido.total_neto) }}</td>
+                <td>
+                  <span :class="['badge', badgeClass(pedido.estado)]">
+                    {{ pedido.estado || '—' }}
+                  </span>
+                </td>
+                <td>{{ formatearFecha(pedido.creado_en) }}</td>
+                <td>{{ formatearFecha(pedido.actualizado_en) }}</td>
+                <td>
+                  <button
+                    type="button"
+                    class="btn btn-outline-primary btn-sm me-2"
+                    @click="verDetalle(pedido.pedido_id)"
+                  >
+                    <i class="bi bi-eye me-1"></i>
+                    Ver Detalle
+                  </button>
+                  
+                  <!-- Botón Retomar: deshabilitado si no es pendiente -->
+                  <button
+                    type="button"
+                    class="btn btn-outline-retomar btn-sm me-2"
+                    :disabled="!esPendiente(pedido.estado)"
+                    @click="retomarPedido(pedido.pedido_id)"
+                  >
+                    <i class="bi bi-arrow-clockwise me-1"></i>
+                    Retomar
+                  </button>
+                  
+                  <!-- Botón Editar: deshabilitado si no es pendiente -->
+                  <button
+                    type="button"
+                    class="btn btn-outline-warning btn-sm me-2"
+                    :disabled="!esPendiente(pedido.estado)"
+                    @click="editarPedido(pedido.pedido_id)"
+                  >
+                    <i class="bi bi-pencil me-1"></i>
+                    Editar
+                  </button>
+                  
+                  <!-- Botón Cancelar: deshabilitado si no es pendiente -->
+                  <button
+                    type="button"
+                    class="btn btn-outline-danger btn-sm"
+                    :disabled="!esPendiente(pedido.estado)"
+                    @click="cancelarPedido(pedido.pedido_id)"
+                  >
+                    <i class="bi bi-x-circle me-1"></i>
+                    Cancelar
+                  </button>
+                </td>
+              </tr>
+            </template>
           </tbody>
         </table>
       </div>
@@ -139,57 +150,54 @@ export default {
       itemsPorPagina: 10,
       cargando: false,
       modalDetalleAbierto: false,
-      pedidoSeleccionadoId: null
+      pedidoSeleccionadoId: null,
+      totalPaginas: 1,
+      totalPedidos: 0
     };
   },
-  computed: {
-    pedidosFiltrados() {
-      const term = (this.searchInput || '').trim().toLowerCase();
-      if (!term) return this.pedidos;
-      return this.pedidos.filter(pedido => {
-        const id = String(pedido.pedido_id || '').toLowerCase();
-        const nombre = (pedido.nombre_cliente || '').toLowerCase();
-        const estado = (pedido.estado || '').toLowerCase();
-        return (
-          id.includes(term) ||
-          nombre.includes(term) ||
-          estado.includes(term)
-        );
-      });
-    },
-    pedidosFiltradosPaginados() {
-      const start = (this.paginaActual - 1) * this.itemsPorPagina;
-      return this.pedidosFiltrados.slice(start, start + this.itemsPorPagina);
-    },
-    totalPaginas() {
-      return Math.max(1, Math.ceil(this.pedidosFiltrados.length / this.itemsPorPagina));
-    }
-  },
   watch: {
-    searchInput() {
+    async searchInput() {
       this.paginaActual = 1;
-    },
-    pedidosFiltrados() {
-      if (this.paginaActual > this.totalPaginas) {
-        this.paginaActual = this.totalPaginas;
-      }
+      await this.cargarPedidos({ page: 1 });
     }
   },
   methods: {
-    async cargarPedidos() {
+    async cargarPedidos({ page = this.paginaActual } = {}) {
       this.cargando = true;
       try {
-        const { data } = await apiService.get(`${process.env.VUE_APP_API_BASE_URL}/api/orders/pending`);
+        const params = {
+          limit: this.itemsPorPagina,
+          page
+        };
+        const term = (this.searchInput || '').trim();
+        if (term) {
+          params.search = term;
+        }
+
+        const { data } = await apiService.get('/api/orders/pending', params);
+
         this.pedidos = Array.isArray(data?.pedidos) ? data.pedidos : [];
+
+        const paginaDesdeRespuesta = Number(data?.pagina_actual || data?.pagination?.page || page) || 1;
+        this.paginaActual = paginaDesdeRespuesta;
+
+        const totalPaginasRespuesta = Number(data?.total_paginas || data?.pagination?.totalPages || 1) || 1;
+        this.totalPaginas = Math.max(1, totalPaginasRespuesta);
+
+        this.totalPedidos = Number(data?.total_pedidos || data?.pagination?.total || this.pedidos.length) || this.pedidos.length;
       } catch (error) {
         console.error('Error al cargar pedidos:', error);
         this.pedidos = [];
+        this.totalPaginas = 1;
+        this.totalPedidos = 0;
       } finally {
         this.cargando = false;
       }
     },
-    cambiarPagina(page) {
+    async cambiarPagina(page) {
+      if (page === this.paginaActual) return;
       this.paginaActual = page;
+      await this.cargarPedidos({ page });
     },
     verDetalle(pedidoId) {
       this.pedidoSeleccionadoId = pedidoId;
@@ -206,7 +214,7 @@ export default {
       try {
         // Cargar los detalles completos del pedido
         const { data: pedido } = await apiService.get(
-          `${process.env.VUE_APP_API_BASE_URL}/api/orders/pending/${pedidoId}`
+          `/api/orders/pending/${pedidoId}`
         );
         
         // Navegar a PantallaInicio en modo retomar (como nueva venta)
@@ -233,7 +241,7 @@ export default {
       try {
         // Cargar los detalles completos del pedido
         const { data: pedido } = await apiService.get(
-          `${process.env.VUE_APP_API_BASE_URL}/api/orders/pending/${pedidoId}`
+          `/api/orders/pending/${pedidoId}`
         );
         
         // Navegar a PantallaInicio en modo edición
@@ -267,7 +275,7 @@ export default {
       try {
         // Realizar petición de cancelación
         const { data } = await apiService.post(
-          `${process.env.VUE_APP_API_BASE_URL}/api/orders/pending/${pedidoId}/cancel`
+          `/api/orders/pending/${pedidoId}/cancel`
         );
         
         if (data?.ok) {
@@ -280,7 +288,10 @@ export default {
           alert(`✅ Pedido #${pedidoId} cancelado correctamente.`);
           
           // Recargar la lista completa para asegurar sincronización
-          await this.cargarPedidos();
+          const paginaParaActualizar = this.pedidos.length === 1 && this.paginaActual > 1
+            ? this.paginaActual - 1
+            : this.paginaActual;
+          await this.cargarPedidos({ page: paginaParaActualizar });
         } else {
           throw new Error('Respuesta inesperada del servidor');
         }
@@ -312,7 +323,7 @@ export default {
     }
   },
   mounted() {
-    this.cargarPedidos();
+    this.cargarPedidos({ page: this.paginaActual });
   }
 };
 </script>
