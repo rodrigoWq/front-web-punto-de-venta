@@ -44,28 +44,37 @@ export default {
     async fetchRoles() {
       try {
         const res = await apiService.get('/api/roles')
-        this.roles = res.data || []
+        // Manejar diferentes estructuras de respuesta
+        const data = Array.isArray(res.data) 
+          ? res.data 
+          : (Array.isArray(res.data?.data) ? res.data.data : [])
+        
+        this.roles = data || []
+        console.log('[RolesView] Roles cargados:', this.roles.length)
       } catch (err) {
         console.error('Error cargando roles:', err)
+        this.roles = []
       }
     },
     async fetchAllPermissions() {
       try {
         const res = await apiService.get('/api/permissions')
-        const lista =
-          res.data?.data?.data ||
-          res.data?.data ||
-          res.data ||
-          []
-        this.allPermissions = Array.isArray(lista)
+        // Manejar diferentes estructuras de respuesta
+        let lista = Array.isArray(res.data) 
+          ? res.data 
+          : (Array.isArray(res.data?.data) ? res.data.data : [])
+        
+        this.allPermissions = lista
           ? lista.map(p => ({
               permiso_id:    p.permiso_id ?? p.id_permiso,
               nombre_permiso: p.nombre_permiso,
               descripcion:    p.descripcion
             }))
           : []
+        console.log('[RolesView] Permisos cargados:', this.allPermissions.length)
       } catch (err) {
         console.error('Error cargando permisos globales:', err)
+        this.allPermissions = []
       }
     },
 

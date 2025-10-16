@@ -246,6 +246,7 @@
         filtroRol: 'all',
         filtroEstado: 'all',
         usuarios: [], // Datos de usuarios
+        allUsuarios: [], // Cache de todos los usuarios para filtrar
         roles: [],
         currentPage: 1,
         itemsPerPage: 10,
@@ -281,21 +282,29 @@
     },
     computed: {
       usuariosFiltrados() {
-        let filtered = this.usuarios;
+        let filtered = Array.isArray(this.allUsuarios) ? this.allUsuarios : [];
+        
+        // Filtrar por nombre
         if (this.filtroNombre && this.filtroNombre.trim() !== '') {
           filtered = filtered.filter(user => user.nombre.toLowerCase().includes(this.filtroNombre.toLowerCase()));
         }
+        
+        // Filtrar por rol
         if (this.filtroRol !== 'all') {
           filtered = filtered.filter(user => user.rol === this.filtroRol);
         }
+        
+        // Filtrar por estado (activo/inactivo)
         if (this.filtroEstado !== 'all') {
           filtered = filtered.filter(user => user.status === this.filtroEstado);
         }
+        
         return filtered.slice((this.currentPage - 1) * this.itemsPerPage, this.currentPage * this.itemsPerPage);
       },
       totalPages() {
-        let filtered = this.usuarios;
-        if (this.filtroNombre.trim()) {
+        let filtered = Array.isArray(this.allUsuarios) ? this.allUsuarios : [];
+        
+        if (this.filtroNombre && this.filtroNombre.trim() !== '') {
           filtered = filtered.filter(u => u.nombre.toLowerCase().includes(this.filtroNombre.toLowerCase()));
         }
         if (this.filtroRol !== 'all') {
@@ -362,17 +371,28 @@
       getUsuarios() {
         apiService.get('/api/auth/users')
           .then(response => {
+            // Manejar diferentes estructuras de respuesta
+            const data = Array.isArray(response.data) 
+              ? response.data 
+              : (Array.isArray(response.data?.data) ? response.data.data : []);
+            
             // Mapear cada objeto recibido al formato que espera la interfaz
-            this.usuarios = response.data.map(u => ({
+            const mappedUsuarios = data.map(u => ({
               id: u.usuario_id,
               nombre: u.nombre,
               rol: u.nombre_rol,
               status: u.activo ? 'active' : 'inactive'
               // (si más adelante necesitas teléfono, lo agregas con u.telefono)
             }));
+            
+            // Almacenar en allUsuarios para filtrar localmente
+            this.allUsuarios = mappedUsuarios;
+            this.usuarios = [...mappedUsuarios];
           })
           .catch(error => {
             console.error('Error al cargar usuarios:', error);
+            this.allUsuarios = [];
+            this.usuarios = [];
           });
       },
       abrirModalResetPassword(usuario) {
