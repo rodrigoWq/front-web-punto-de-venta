@@ -29,7 +29,7 @@
         <tr v-for="(comprobante, index) in comprobantesFiltradosPaginados" :key="index">
           <td>{{ comprobante.nro_nota_remision || 'N/A' }}</td>
           <td>{{ comprobante.nombre_razon_social || 'N/A' }}</td>
-          <td>{{ comprobante.fecha_emision ? comprobante.fecha_emision.split('T')[0] : 'N/A' }}</td>
+          <td>{{ formatearFecha(comprobante.fecha_emision) }}</td>
           <td>{{ comprobante.estado }}</td>
           <td>Nota de Remisión</td>
           <td>
@@ -134,6 +134,15 @@
           let parteDecimal = partes[1] ? ',' + partes[1] : '';
           parteEntera = parteEntera.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
           return parteEntera + parteDecimal;
+        },
+        formatearFecha(fecha) {
+          if (!fecha) return 'N/A';
+          // Convierte de formato ISO (YYYY-MM-DD) o (YYYY-MM-DDTHH:MM:SS) a DD/MM/YYYY
+          const fechaObj = new Date(fecha);
+          const dia = String(fechaObj.getDate()).padStart(2, '0');
+          const mes = String(fechaObj.getMonth() + 1).padStart(2, '0');
+          const anio = fechaObj.getFullYear();
+          return `${dia}/${mes}/${anio}`;
         },
         async anularComprobante(comprobante) {
           if (!confirm('¿Está seguro de que desea anular esta nota de remisión?')) return;

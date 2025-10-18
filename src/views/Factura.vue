@@ -29,7 +29,12 @@
           <div class="row g-3 mb-3">
               <div class="col-md-6">
                   <label for="fecha_emision" class="form-label">Fecha de Emisión</label>
-                  <input type="date" v-model="factura.fechaEmision" class="form-control" :readonly="readOnly && !fromDeliveryNote">
+                  <input 
+                    type="date" 
+                    :value="fechaEmisionISO" 
+                    @input="actualizarFechaEmision($event.target.value)"
+                    class="form-control" 
+                    :readonly="readOnly && !fromDeliveryNote">
               </div>
               <div class="col-md-6">
                   <label for="timbrado" class="form-label">Timbrado</label>
@@ -286,6 +291,24 @@ export default {
         nombre: provider.nombre
       });
       this.cerrarSelectorProveedor();
+    },
+    actualizarFechaEmision(isoDate) {
+      // Recibe fecha en formato ISO (YYYY-MM-DD) del input date
+      this.factura.fechaEmision = isoDate;
+    },
+    formatearFechaParaMostrar(isoDate) {
+      // Convierte de YYYY-MM-DD a DD/MM/YYYY para mostrar
+      if (!isoDate) return '';
+      const [year, month, day] = isoDate.split('-');
+      return `${day}/${month}/${year}`;
+    },
+    obtenerFechaHoy() {
+      // Retorna la fecha de hoy en formato YYYY-MM-DD
+      const hoy = new Date();
+      const year = hoy.getFullYear();
+      const month = String(hoy.getMonth() + 1).padStart(2, '0');
+      const day = String(hoy.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
     },
     async autocompletarProducto() {
       if (!this.productoData.codigo_producto) return;
@@ -557,9 +580,16 @@ export default {
       // Cargar la factura existente si hay un id
       this.readOnly = true;
       await this.cargarFacturaDesdeParams();
+    } else {
+      // Nueva factura: establecer fecha de hoy por defecto
+      this.factura.fechaEmision = this.obtenerFechaHoy();
     }
   },
   computed: {
+    fechaEmisionISO() {
+      // Retorna la fecha actual o una cadena vacía
+      return this.factura.fechaEmision || '';
+    },
     montoTotal () {
 
       return this.factura.productos.reduce((suma, p) => {
@@ -596,6 +626,11 @@ export default {
           this.fromDeliveryNoteID = queryData.nro_documento; // Guardar el ID de la nota de remisión
           this.factura.ruc = queryData.ruc || this.factura.ruc;
           this.factura.razonSocial = queryData.razonSocial || this.factura.razonSocial;
+          
+          // Establecer fecha de hoy cuando viene de nota de remisión
+          if (!this.factura.fechaEmision) {
+            this.factura.fechaEmision = this.obtenerFechaHoy();
+          }
 
           console.log('Factura después de asignar RUC y Razón Social:', this.factura);
 
@@ -613,6 +648,10 @@ export default {
           this.factura.calcularTotales();
         } else {
           this.readOnly = false;
+          // Establecer fecha de hoy para nueva factura
+          if (!this.factura.fechaEmision) {
+            this.factura.fechaEmision = this.obtenerFechaHoy();
+          }
         }
       } catch (error) {
         console.error('Error al procesar los datos de la factura:', error);

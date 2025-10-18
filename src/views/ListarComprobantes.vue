@@ -30,7 +30,7 @@
         <tr v-for="(comprobante, index) in comprobantesFiltradosPaginados" :key="index">
           <td>{{ comprobante.nro_comprobante || 'N/A' }}</td>
           <td>{{ comprobante.nombre_razon_social || 'N/A' }}</td>
-          <td>{{ comprobante.fecha_emision ? comprobante.fecha_emision.split('T')[0] : 'N/A' }}</td>
+          <td>{{ formatearFecha(comprobante.fecha_emision) }}</td>
           <td>{{ formatearMonto(Math.trunc(comprobante.total_iva_incluido) || Math.trunc(comprobante.total_sin_iva)) || 'N/A' }}</td>
           <td>{{ comprobante.estado }}</td>
 
@@ -112,6 +112,15 @@ export default {
     formatearMonto(monto) {
       if (monto === undefined || monto === null) return "0";
       return Number(Math.round(monto)).toLocaleString('es-PY', { minimumFractionDigits: 0 });
+    },
+    formatearFecha(fecha) {
+      if (!fecha) return 'N/A';
+      // Convierte de formato ISO (YYYY-MM-DD) o (YYYY-MM-DDTHH:MM:SS) a DD/MM/YYYY
+      const fechaObj = new Date(fecha);
+      const dia = String(fechaObj.getDate()).padStart(2, '0');
+      const mes = String(fechaObj.getMonth() + 1).padStart(2, '0');
+      const anio = fechaObj.getFullYear();
+      return `${dia}/${mes}/${anio}`;
     },
     actualizarListaComprobantes() {
       this.paginaActual = 1;
