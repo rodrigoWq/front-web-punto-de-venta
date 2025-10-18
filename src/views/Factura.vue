@@ -1,12 +1,72 @@
 <template>
   <AppNavbar />
-  <div class="container mt-5">
-      <h1 class="text-center">Formulario de Carga de Factura</h1>
-      <form @submit.prevent="guardarFactura">
-          <!-- Información de factura -->
-          <div class="row g-3 mb-3">
-            <div class="col-md-6">
-              <label class="form-label">Proveedor</label>
+  <div class="invoice-wrapper">
+    <div class="invoice-paper">
+      <header class="invoice-header">
+        <div class="invoice-header__brand">
+          <span class="brand-badge">Formulario interno</span>
+          <h1 class="invoice-title">Factura de Compra</h1>
+          <p class="invoice-description">
+            Complete los datos tal como aparecen en el comprobante físico para mantener el registro contable.
+          </p>
+        </div>
+        <div class="invoice-header__meta">
+          <div class="meta-grid">
+            <div class="meta-field">
+              <label for="fecha_emision_top" class="form-label">Fecha de Emisión</label>
+              <input
+                id="fecha_emision_top"
+                type="date"
+                :value="fechaEmisionISO"
+                @input="actualizarFechaEmision($event.target.value)"
+                class="form-control"
+                :readonly="readOnly && !fromDeliveryNote"
+              />
+            </div>
+            <div class="meta-field">
+              <label for="timbrado_top" class="form-label">Timbrado</label>
+              <input
+                id="timbrado_top"
+                type="text"
+                v-model="factura.timbrado"
+                class="form-control"
+                placeholder="Número de timbrado"
+                :readonly="readOnly && !fromDeliveryNote"
+              />
+            </div>
+            <div class="meta-field">
+              <label for="nro_factura_top" class="form-label">N° de Factura</label>
+              <input
+                id="nro_factura_top"
+                type="text"
+                v-model="factura.nroFactura"
+                class="form-control"
+                placeholder="Número de factura"
+                :readonly="readOnly && !fromDeliveryNote"
+              />
+            </div>
+            <div class="meta-field">
+              <label for="condicion_venta_top" class="form-label">Condición de Venta</label>
+              <select
+                id="condicion_venta_top"
+                v-model="factura.condicionVenta"
+                class="form-control"
+                :readonly="readOnly"
+              >
+                <option value="CONTADO">Contado</option>
+                <option value="CREDITO">Crédito</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <form class="invoice-form" @submit.prevent="guardarFactura">
+        <section class="invoice-section">
+          <h3 class="section-heading">Datos del proveedor</h3>
+          <div class="section-grid">
+            <div class="form-field">
+              <label class="form-label">RUC / Proveedor</label>
               <div class="input-group">
                 <ProviderSelect
                   ref="providerSelect"
@@ -17,167 +77,237 @@
                   :bare="true"
                   :noList="true"
                 />
-                <button type="button" class="btn btn-outline-primary btn-sm px-3" @click="toggleBuscarProveedor" :disabled="readOnly && !fromDeliveryNote">Buscar</button>
+                <button
+                  type="button"
+                  class="btn btn-outline-primary btn-sm px-3"
+                  @click="toggleBuscarProveedor"
+                  :disabled="readOnly && !fromDeliveryNote"
+                >
+                  Buscar
+                </button>
               </div>
             </div>
-            <div class="col-md-6">
-                <label for="razon_social" class="form-label">Nombre o Razón Social</label>
-                <input type="text" v-model="factura.razonSocial" class="form-control" placeholder="Nombre o razón social" :readonly="readOnly">
+            <div class="form-field">
+              <label for="razon_social" class="form-label">Nombre o Razón Social</label>
+              <input
+                id="razon_social"
+                type="text"
+                v-model="factura.razonSocial"
+                class="form-control"
+                placeholder="Nombre o razón social"
+                :readonly="readOnly"
+              />
             </div>
           </div>
-          <!-- Información adicional -->
-          <div class="row g-3 mb-3">
-              <div class="col-md-6">
-                  <label for="fecha_emision" class="form-label">Fecha de Emisión</label>
-                  <input 
-                    type="date" 
-                    :value="fechaEmisionISO" 
-                    @input="actualizarFechaEmision($event.target.value)"
-                    class="form-control" 
-                    :readonly="readOnly && !fromDeliveryNote">
-              </div>
-              <div class="col-md-6">
-                  <label for="timbrado" class="form-label">Timbrado</label>
-                  <input type="text" v-model="factura.timbrado" class="form-control" placeholder="Número de timbrado" :readonly="readOnly && !fromDeliveryNote">
-              </div>
-          </div>
-          <div class="row g-3 mb-3">
-        <div class="col-md-6">
-          <label for="nro_factura" class="form-label">N° de Factura</label>
-          <input type="text" v-model="factura.nroFactura" class="form-control" placeholder="Número de factura" :readonly="readOnly && !fromDeliveryNote">
-        </div>
-              <div class="col-md-6">
-                  <label for="condicion_venta" class="form-label">Condición de Venta</label>
-                  <select v-model="factura.condicionVenta" class="form-control" :readonly="readOnly">
-                      <option value="CONTADO">Contado</option>
-                      <option value="CREDITO">Crédito</option>
-                  </select>
-              </div>
-          </div>
+        </section>
 
-        <!-- Detalles de Productos -->
-        <h3>Detalles de Productos</h3>
-        <div class="row g-3 mb-3">
-        <div class="col-md-2">
-          <label class="form-label">Código</label>
-          <input type="text" v-model="productoData.codigo_producto" class="form-control" placeholder="Código" @blur="autocompletarProducto" @keydown.enter.prevent="autocompletarProducto" :readonly="readOnly"/>
-        </div>
-        <div class="col-md-3">
-          <label class="form-label">Descripción</label>
-          <input type="text" v-model="productoData.descripcion" class="form-control" placeholder="Descripción" @keydown.enter.prevent readOnly />
-        </div>
-        <div class="col-md-2">
-          <label class="form-label">Cantidad</label>
-          <input type="number" v-model.number="productoData.cantidad" class="form-control" placeholder="Cantidad" @keydown.enter.prevent :readonly="readOnly"/>
-        </div>
-        <div class="col-md-2">
-          <label class="form-label">Valor Unitario</label>
-          <input type="number" v-model.number="productoData.precio_unitario_neto" class="form-control" placeholder="Valor Unitario" @keydown.enter.prevent :readonly="readOnly"/>
-        </div>
-        <div class="col-md-3">
-          <label class="form-label">Tipo de Impuesto</label>
-          <input type="text" 
-                class="form-control" 
-                :value="productoData.tipo_iva_id === 1 ? 'IVA 10%' : (productoData.tipo_iva_id === 2 ? 'IVA 5%' : 'Exenta')" 
-                readonly />
-        </div>
-
-      </div>
-
-      <div class="d-grid gap-2 mb-3">
-        <button v-if="!readOnly" type="button" class="btn btn-secondary" :disabled="fromDeliveryNote" @click="agregarProducto">
-          Agregar Producto
-        </button>
-      </div>
-
-      <SimpleRegisterModal
-        :showModal="showRegisterModal"
-        :title="registerModalTitle"
-        @close="showRegisterModal = false"
-        @register="irARegistro" />
-
-
-      <!-- Productos Agregados -->
-      <h3>Productos Agregados</h3>
-      <AppTable :headers="['Código', 'Descripción', 'Cantidad', 'Valor Unitario', 'Exenta', 'Iva 5%', 'Iva 10%', 'Acciones']">
-        <tr v-for="(producto, index) in factura.productos" :key="index">
-          <td>
-            <span>{{ producto.codigo_producto}}</span>
-          </td>
-          <td>          
-            <span>{{ producto.descripcion }}</span>
-          </td>
-          <td>
-            <input v-if="productoEditandoIndex === index" v-model.number="productoData.cantidad" type="number" class="form-control form-control-sm" />
-            <span v-else>{{ producto.cantidad }}</span>
-          </td>
-          <td>
-            <input v-if="productoEditandoIndex === index" v-model.number="productoData.precio_unitario_neto" type="number" class="form-control form-control-sm" />
-            <span v-else>{{ formateaNumero(producto.precio_unitario_neto) }}</span>
-          </td>
-          <td>
-            <span v-if="producto.tipo_iva_id === 3 || producto.tipoImpuesto === 'exenta'">
-              {{ formateaNumero(redondearHaciaArriba(producto.cantidad * producto.precio_unitario_neto)) }}
-            </span>
-            <span v-else></span>
-          </td>
-          <td>
-            <span v-if="producto.tipo_iva_id === 2">
-              {{ formateaNumero(redondearHaciaArriba(producto.cantidad * producto.precio_unitario_neto)) }}
-            </span>
-            <span v-else></span>
-          </td>
-          <td>
-            <span v-if="producto.tipo_iva_id === 1 || producto.tipo_iva_id === 10">
-              {{ formateaNumero(redondearHaciaArriba(producto.cantidad * producto.precio_unitario_neto)) }}
-            </span>
-            <span v-else></span>
-          </td>
-
-          <td>
-            <template v-if="productoEditandoIndex === index">
-              <button type="button" class="btn btn-success btn-sm me-1" @click="guardarEdicionProducto" :disabled="readOnly && !fromDeliveryNote">Guardar</button>
-              <button type="button" class="btn btn-danger btn-sm" @click="cancelarEdicion" :disabled="readOnly && !fromDeliveryNote">Cancelar</button>
-            </template>
-            <template v-else>
-              <button type="button" class="btn btn-primary btn-sm me-1" @click="editarProducto(index)" :disabled="readOnly && !fromDeliveryNote">Editar</button>
-              <button type="button" class="btn btn-danger btn-sm" @click="eliminarProducto(index)" :disabled="readOnly && !fromDeliveryNote">Eliminar</button>
-            </template>
-          </td>
-
-        </tr>
-      </AppTable>
-
-
-          <!-- Totales -->
-          <h3>Liquidación del IVA</h3>
-          <div class="row g-3">
-            <div class="col-md-6">
-              <label for="iva_5" class="form-label">Liquidación del IVA 5%</label>
-              <input type="text" class="form-control" id="iva_5" :value="formateaNumero(redondearHaciaArriba(factura.totalIva5))" placeholder="IVA 5%" readonly  />
+        <section class="invoice-section">
+          <div class="section-heading with-line">Detalle de mercaderías y/o servicios</div>
+          <div class="detail-entry">
+            <div class="detail-field code">
+              <label class="form-label">Código</label>
+              <input
+                type="text"
+                v-model="productoData.codigo_producto"
+                class="form-control"
+                placeholder="Código"
+                @blur="autocompletarProducto"
+                @keydown.enter.prevent="autocompletarProducto"
+                :readonly="readOnly"
+              />
             </div>
-            <div class="col-md-6">
-              <label for="iva_10" class="form-label">Liquidación del IVA 10%</label>
-              <input type="text" class="form-control" id="iva_10" :value="formateaNumero(redondearHaciaArriba(factura.totalIva10))" placeholder="IVA 10%" readonly  />
+            <div class="detail-field description">
+              <label class="form-label">Descripción</label>
+              <input
+                type="text"
+                v-model="productoData.descripcion"
+                class="form-control"
+                placeholder="Descripción"
+                @keydown.enter.prevent
+                readOnly
+              />
             </div>
-          </div>
-          <h3>Totales</h3>
-          <div class="row g-3">
-            <div class="col-md-6">
-              <label for="total_factura" class="form-label">Total IVA</label>
-              <input type="text" id="total_factura" class="form-control" :value="formateaNumero(redondearHaciaArriba(factura.totalFactura))" placeholder="Total Factura IVA" readonly />
+            <div class="detail-field qty">
+              <label class="form-label">Cantidad</label>
+              <input
+                type="number"
+                v-model.number="productoData.cantidad"
+                class="form-control"
+                placeholder="Cantidad"
+                @keydown.enter.prevent
+                :readonly="readOnly"
+              />
             </div>
-            <div class="col-md-6">
-              <label for="monto_total" class="form-label">Monto Total</label>
-              <input type="text" id="monto_total" class="form-control" :value="formateaNumero(redondearHaciaArriba(montoTotal))" placeholder="Monto Total" readonly />
+            <div class="detail-field price">
+              <label class="form-label">Precio Unitario</label>
+              <input
+                type="number"
+                v-model.number="productoData.precio_unitario_neto"
+                class="form-control"
+                placeholder="Valor unitario"
+                @keydown.enter.prevent
+                :readonly="readOnly"
+              />
+            </div>
+            <div class="detail-field tax">
+              <label class="form-label">Tipo de Impuesto</label>
+              <input
+                type="text"
+                class="form-control"
+                :value="productoData.tipo_iva_id === 1 ? 'IVA 10%' : (productoData.tipo_iva_id === 2 ? 'IVA 5%' : 'Exenta')"
+                readonly
+              />
             </div>
           </div>
 
-
-          <div class ="d-grid gap-2 mt-4">
-            <button v-if="!readOnly || fromDeliveryNote" type="submit" class="btn btn-success mt-4" >Guardar Factura</button>
+          <div class="detail-actions">
+            <button
+              v-if="!readOnly"
+              type="button"
+              class="btn btn-secondary"
+              :disabled="fromDeliveryNote"
+              @click="agregarProducto"
+            >
+              Agregar Producto
+            </button>
           </div>
+
+          <SimpleRegisterModal
+            :showModal="showRegisterModal"
+            :title="registerModalTitle"
+            @close="showRegisterModal = false"
+            @register="irARegistro"
+          />
+
+          <h4 class="section-subheading">Productos agregados</h4>
+          <AppTable
+            :headers="['Código', 'Descripción', 'Cantidad', 'Precio Unitario', 'Exenta', 'IVA 5%', 'IVA 10%', 'Acciones']"
+            tableClass="table table-bordered table-sm invoice-details-table"
+          >
+            <tr v-for="(producto, index) in factura.productos" :key="index">
+              <td>
+                <span>{{ producto.codigo_producto }}</span>
+              </td>
+              <td>
+                <span>{{ producto.descripcion }}</span>
+              </td>
+              <td class="col-numeric">
+                <input
+                  v-if="productoEditandoIndex === index"
+                  v-model.number="productoData.cantidad"
+                  type="number"
+                  class="form-control form-control-sm"
+                />
+                <span v-else>{{ producto.cantidad }}</span>
+              </td>
+              <td class="col-numeric">
+                <input
+                  v-if="productoEditandoIndex === index"
+                  v-model.number="productoData.precio_unitario_neto"
+                  type="number"
+                  class="form-control form-control-sm"
+                />
+                <span v-else>{{ formateaNumero(producto.precio_unitario_neto) }}</span>
+              </td>
+              <td class="col-numeric">
+                <span v-if="producto.tipo_iva_id === 3 || producto.tipoImpuesto === 'exenta'">
+                  {{ formateaNumero(redondearHaciaArriba(producto.cantidad * producto.precio_unitario_neto)) }}
+                </span>
+              </td>
+              <td class="col-numeric">
+                <span v-if="producto.tipo_iva_id === 2">
+                  {{ formateaNumero(redondearHaciaArriba(producto.cantidad * producto.precio_unitario_neto)) }}
+                </span>
+              </td>
+              <td class="col-numeric">
+                <span v-if="producto.tipo_iva_id === 1 || producto.tipo_iva_id === 10">
+                  {{ formateaNumero(redondearHaciaArriba(producto.cantidad * producto.precio_unitario_neto)) }}
+                </span>
+              </td>
+              <td class="actions-col">
+                <template v-if="productoEditandoIndex === index">
+                  <button
+                    type="button"
+                    class="btn btn-success btn-sm me-1"
+                    @click="guardarEdicionProducto"
+                    :disabled="readOnly && !fromDeliveryNote"
+                  >
+                    Guardar
+                  </button>
+                  <button
+                    type="button"
+                    class="btn btn-danger btn-sm"
+                    @click="cancelarEdicion"
+                    :disabled="readOnly && !fromDeliveryNote"
+                  >
+                    Cancelar
+                  </button>
+                </template>
+                <template v-else>
+                  <button
+                    type="button"
+                    class="btn btn-primary btn-sm me-1"
+                    @click="editarProducto(index)"
+                    :disabled="readOnly && !fromDeliveryNote"
+                  >
+                    Editar
+                  </button>
+                  <button
+                    type="button"
+                    class="btn btn-danger btn-sm"
+                    @click="eliminarProducto(index)"
+                    :disabled="readOnly && !fromDeliveryNote"
+                  >
+                    Eliminar
+                  </button>
+                </template>
+              </td>
+            </tr>
+          </AppTable>
+        </section>
+
+        <section class="invoice-section totals-section">
+          <div class="totals-grid">
+            <div>
+              <h4 class="section-subheading">Liquidación del IVA</h4>
+              <table class="table table-bordered table-sm totals-table">
+                <tbody>
+                  <tr>
+                    <th>IVA 5%</th>
+                    <td class="col-numeric">{{ formateaNumero(redondearHaciaArriba(factura.totalIva5)) }}</td>
+                  </tr>
+                  <tr>
+                    <th>IVA 10%</th>
+                    <td class="col-numeric">{{ formateaNumero(redondearHaciaArriba(factura.totalIva10)) }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div>
+              <h4 class="section-subheading">Totales</h4>
+              <table class="table table-bordered table-sm totals-table">
+                <tbody>
+                  <tr>
+                    <th>Total IVA</th>
+                    <td class="col-numeric">{{ formateaNumero(redondearHaciaArriba(factura.totalFactura)) }}</td>
+                  </tr>
+                  <tr>
+                    <th>Monto Total</th>
+                    <td class="col-numeric">{{ formateaNumero(redondearHaciaArriba(montoTotal)) }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <div class="submit-row">
+          <button v-if="!readOnly || fromDeliveryNote" type="submit" class="btn btn-success btn-lg">
+            Guardar Factura
+          </button>
+        </div>
       </form>
+
       <RegistrarProveedorModal
         v-model:showModal="showProviderModal"
         @provider-registered="onProviderRegistered"
@@ -188,7 +318,7 @@
         @product-registered="onProductRegistered"
         @close-all-register-modals="showRegisterModal = false"
       />
-      <!-- Overlay selector de proveedores -->
+
       <div v-if="mostrarSelectorProveedor" class="overlay-backdrop" @click.self="cerrarSelectorProveedor">
         <div class="overlay-panel card">
           <div class="overlay-header d-flex justify-content-between align-items-center">
@@ -205,6 +335,7 @@
           </div>
         </div>
       </div>
+    </div>
   </div>
 </template>
 
@@ -664,73 +795,272 @@ export default {
 </script>
 
 <style scoped>
-  /* Migrar el CSS de factura.css aquí */
-  body {
-      background-color: #f4f4f4;
-  }
-  
-  h1 {
-      margin-bottom: 30px;
-  }
-  
-  .modal-backdrop {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.5); /* Fondo semitransparente */
-    z-index: 1040;
+.invoice-wrapper {
+  background-color: #f4f4f4;
+  min-height: 100vh;
+  padding: 32px 16px 48px;
 }
 
+.invoice-paper {
+  max-width: 1024px;
+  margin: 0 auto;
+  background: #fff;
+  border: 1px solid #d6d6d6;
+  border-radius: 12px;
+  box-shadow: 0 12px 35px rgba(15, 23, 42, 0.12);
+  padding: 32px 36px 40px;
+}
 
-  .container {
-      background-color: #fff;
-      padding: 20px;
-      border-radius: 10px;
-      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-  }
-  
-  .form-label {
-      font-weight: bold;
-  }
-  
-  .editable-cell {
-      background-color: #eaffea;
-      border: 1px solid #5cb85c;
+.invoice-header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+  justify-content: space-between;
+  align-items: stretch;
+  padding-bottom: 24px;
+  border-bottom: 3px double #747474;
+  margin-bottom: 28px;
+}
+
+.invoice-header__brand {
+  flex: 1;
+  min-width: 240px;
+}
+
+.brand-badge {
+  display: inline-block;
+  background: linear-gradient(135deg, #ffd166, #f9a826);
+  color: #1f1f1f;
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  padding: 6px 12px;
+  border-radius: 999px;
+  letter-spacing: 0.1em;
+}
+
+.invoice-title {
+  font-size: 2rem;
+  font-weight: 700;
+  margin: 12px 0 8px;
+  letter-spacing: 1px;
+}
+
+.invoice-description {
+  color: #5f5f5f;
+  max-width: 420px;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.invoice-header__meta {
+  background: linear-gradient(180deg, #fff7cb 0%, #ffe88a 100%);
+  border: 1px solid #e3c75f;
+  border-radius: 12px;
+  padding: 18px 20px;
+  min-width: 320px;
+  max-width: 360px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+
+.meta-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px 16px;
+}
+
+.meta-field label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  color: #404040;
+  margin-bottom: 4px;
+  display: block;
+}
+
+.invoice-form {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.invoice-section {
+  padding: 0;
+}
+
+.section-heading {
+  font-size: 0.95rem;
+  text-transform: uppercase;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: #444;
+  margin-bottom: 16px;
+}
+
+.section-heading.with-line {
+  border-bottom: 2px solid #131313;
+  padding-bottom: 10px;
+  margin-bottom: 20px;
+}
+
+.section-subheading {
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #4f4f4f;
+  margin: 24px 0 12px;
+}
+
+.section-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 18px 24px;
+  border: 1px solid #d9d9d9;
+  border-radius: 10px;
+  padding: 18px;
+  background: linear-gradient(180deg, #fafafa 0%, #fefefe 100%);
+}
+
+.form-field .input-group {
+  display: flex;
+  gap: 10px;
+}
+
+.form-field .btn {
+  white-space: nowrap;
+}
+
+.detail-entry {
+  display: grid;
+  grid-template-columns: 120px minmax(180px, 1fr) 100px 160px 150px;
+  gap: 16px;
+  padding: 16px 18px;
+  border: 1px solid #d9d9d9;
+  border-radius: 10px;
+  background: #fdfdfd;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+.detail-field label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  color: #666;
+  margin-bottom: 6px;
+  display: block;
+}
+
+.detail-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 12px;
+}
+
+.invoice-details-table {
+  border-color: #8f8f8f !important;
+}
+
+.invoice-details-table thead th {
+  background: #f2f2f2;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.invoice-details-table tbody td {
+  vertical-align: middle;
+  font-size: 0.9rem;
+}
+
+.col-numeric {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.actions-col {
+  width: 180px;
+  text-align: center;
+}
+
+.totals-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 20px;
+}
+
+.totals-table th {
+  width: 50%;
+  font-weight: 600;
+  background: #f2f2f2;
+  text-transform: uppercase;
+  font-size: 0.78rem;
+  letter-spacing: 0.08em;
+}
+
+.totals-table td {
+  font-weight: 700;
+  font-size: 1rem;
+  text-align: right;
+}
+
+.submit-row {
+  display: flex;
+  justify-content: flex-end;
+  border-top: 2px solid #2b2b2b;
+  padding-top: 24px;
+}
+
+.btn-success.btn-lg {
+  min-width: 220px;
+}
+
+.overlay-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+}
+
+.overlay-panel {
+  width: 95vw;
+  max-width: 1100px;
+  max-height: 90vh;
+  overflow: hidden;
+}
+
+.overlay-header {
+  border-bottom: 1px solid #e9ecef;
+  padding: 10px 14px;
+}
+
+.overlay-body {
+  padding: 4px 12px 12px;
+  max-height: calc(90vh - 56px);
+  overflow: auto;
+}
+
+@media (max-width: 992px) {
+  .detail-entry {
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
   }
 
-  /* Overlay selector styles */
-  .overlay-backdrop {
-    position: fixed;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.5);
-    display: flex;
-    align-items: center;
+  .invoice-header__meta {
+    max-width: 100%;
+    width: 100%;
+  }
+
+  .meta-grid {
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  }
+
+  .submit-row {
     justify-content: center;
-    z-index: 2000;
   }
-  .overlay-panel {
-    width: 95vw;
-    max-width: 1100px;
-    max-height: 90vh;
-    overflow: hidden;
-  }
-  .overlay-header {
-    border-bottom: 1px solid #e9ecef;
-    padding: 10px 14px;
-  }
-  .overlay-body {
-    padding: 4px 12px 12px;
-    max-height: calc(90vh - 56px);
-    overflow: auto;
-  }
-
-    .btn-accion {
-        width: 80px; /* Ajusta el ancho deseado */
-        height: 40px; /* Ajusta el alto deseado */
-        padding: 0; /* Ajusta el relleno si es necesario */
-        font-size: 14px; /* Ajusta el tamaño de fuente */
-    }
-
+}
 </style>

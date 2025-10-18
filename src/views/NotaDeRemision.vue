@@ -1,149 +1,270 @@
 <template>
   <AppNavbar />
-  <div class="container mt-5">
-    <h1 class="text-center">Nota de Remisión</h1>
-    <form @submit.prevent="guardarNotaRemision">
-      <!-- Encabezado -->
-      <div class="row g-3 mb-3">
-        <div class="col-md-6">
-          <label class="form-label d-block">Proveedor</label>
-          <div class="input-group">
-            <ProviderSelect
-              ref="providerSelect"
-              v-model="selectedProviderInput"
-              :disabled="true"
-              :bare="true"
-              :noList="true"
-              placeholder="RUC / Nombre del proveedor"
-              @provider-selected="onProviderSelected"
-              @register="() => showProviderModal = true"
-            />
-            <button
-              type="button"
-              class="btn btn-outline-primary btn-sm px-3"
-              @click="toggleBuscarProveedor"
-              :disabled="readOnly"
-              title="Buscar proveedor"
-            >
-              Buscar
-            </button>
+  <div class="note-wrapper">
+    <div class="note-paper">
+      <header class="note-header">
+        <div class="note-header__brand">
+          <span class="note-badge">Documento auxiliar</span>
+          <h1 class="note-title">Nota de Remisión</h1>
+          <p class="note-description">
+            Completa los datos de traslado tal como aparecen en el comprobante físico para asegurar la trazabilidad.
+          </p>
+        </div>
+        <div class="note-header__meta">
+          <div class="meta-grid">
+            <div class="meta-field">
+              <label for="timbrado" class="form-label">Timbrado</label>
+              <input
+                id="timbrado"
+                type="text"
+                v-model="notaData.timbrado"
+                class="form-control"
+                placeholder="Número de timbrado"
+                :readonly="readOnly"
+              />
+            </div>
+            <div class="meta-field">
+              <label for="fecha_emision" class="form-label">Fecha de Emisión</label>
+              <input
+                id="fecha_emision"
+                type="date"
+                v-model="notaData.fecha_emision"
+                class="form-control"
+                :readonly="readOnly"
+              />
+            </div>
+            <div class="meta-field">
+              <label for="nro_nota_remision" class="form-label">N° de Nota</label>
+              <input
+                id="nro_nota_remision"
+                type="text"
+                v-model="notaData.nro_nota_remision"
+                class="form-control"
+                placeholder="001-001-0001234"
+                :readonly="readOnly"
+              />
+            </div>
           </div>
         </div>
-        <div class="col-md-6">
-          <label for="nombre_razon_social" class="form-label">Razón Social</label>
-          <input type="text" v-model="notaData.nombre_razon_social" class="form-control" placeholder="Razón Social" :readonly="readOnly">
-        </div>
-        <div class="col-md-6">
-          <label for="timbrado" class="form-label">Timbrado</label>
-          <input type="text" v-model="notaData.timbrado" class="form-control" placeholder="Número de timbrado" :readonly="readOnly">
-        </div>
-        <div class="col-md-6">
-          <label for="fecha_emision" class="form-label">Fecha de Emisión</label>
-          <input type="date" v-model="notaData.fecha_emision" class="form-control" :readonly="readOnly">
-        </div>
-      </div>
-      <div class="row g-3 mb-3">
-        <div class="col-md-6">
-          <label for="nro_nota_remision" class="form-label">N° de Nota de Remisión</label>
-          <input type="text" v-model="notaData.nro_nota_remision" class="form-control" placeholder="Número de Nota de Remisión" :readonly="readOnly">
-        </div>
-      </div>
+      </header>
 
+      <form class="note-form" @submit.prevent="guardarNotaRemision">
+        <section class="note-section">
+          <h3 class="section-heading">Datos del proveedor</h3>
+          <div class="section-grid">
+            <div class="form-field">
+              <label class="form-label">RUC / Proveedor</label>
+              <div class="input-group">
+                <ProviderSelect
+                  ref="providerSelect"
+                  v-model="selectedProviderInput"
+                  :disabled="true"
+                  :bare="true"
+                  :noList="true"
+                  placeholder="RUC / Nombre del proveedor"
+                  @provider-selected="onProviderSelected"
+                  @register="() => showProviderModal = true"
+                />
+                <button
+                  type="button"
+                  class="btn btn-outline-primary btn-sm px-3"
+                  @click="toggleBuscarProveedor"
+                  :disabled="readOnly"
+                  title="Buscar proveedor"
+                >
+                  Buscar
+                </button>
+              </div>
+            </div>
+            <div class="form-field">
+              <label for="nombre_razon_social" class="form-label">Razón Social</label>
+              <input
+                id="nombre_razon_social"
+                type="text"
+                v-model="notaData.nombre_razon_social"
+                class="form-control"
+                placeholder="Nombre o razón social"
+                :readonly="readOnly"
+              />
+            </div>
+          </div>
+        </section>
 
-      <!-- Datos de la Mercadería -->
-      <h3>Datos de la Mercadería</h3>
-      <div class="row g-3 mb-3">
-        <div class="col-md-2">
-          <label class="form-label">Código de Barra</label>
-          <input type="text" v-model="productoData.codigo_barras" class="form-control" placeholder="Código de Barra" @blur="autocompletarProducto" @keydown.enter.prevent :readonly="readOnly">
-        </div>
-        <div class="col-md-2">
-          <label class="form-label">Cantidad</label>
-          <input type="number" v-model="productoData.cantidad" class="form-control" placeholder="Cantidad" :readonly="readOnly">
-        </div>
-        <div class="col-md-2">
-          <label class="form-label">Unidad de Medida</label>
-          <input type="text" v-model="productoData.unidad_medida" class="form-control" placeholder="Unidad de medida" readonly>
-        </div>
-        <div class="col-md-4">
-          <label class="form-label">Descripción</label>
-          <input type="text" v-model="productoData.descripcion" class="form-control" placeholder="Descripción de la mercadería" readonly>
-        </div>
-        <div class="col-md-2">
-          <label class="form-label">Fecha de Vencimiento</label>
-          <input type="date" v-model="productoData.fechaVencimiento" class="form-control" :readonly="readOnly">
-        </div>
-      </div>
+        <section class="note-section">
+          <div class="section-heading with-line">Detalle de mercaderías</div>
+          <div class="detail-entry">
+            <div class="detail-field code">
+              <label class="form-label">Código de Barra</label>
+              <input
+                type="text"
+                v-model="productoData.codigo_barras"
+                class="form-control"
+                placeholder="Código de barra"
+                @blur="autocompletarProducto"
+                @keydown.enter.prevent
+                :readonly="readOnly"
+              />
+            </div>
+            <div class="detail-field qty">
+              <label class="form-label">Cantidad</label>
+              <input
+                type="number"
+                v-model="productoData.cantidad"
+                class="form-control"
+                placeholder="Cantidad"
+                :readonly="readOnly"
+              />
+            </div>
+            <div class="detail-field unit">
+              <label class="form-label">Unidad</label>
+              <input
+                type="text"
+                v-model="productoData.unidad_medida"
+                class="form-control"
+                placeholder="Unidad de medida"
+                readonly
+              />
+            </div>
+            <div class="detail-field description">
+              <label class="form-label">Descripción</label>
+              <input
+                type="text"
+                v-model="productoData.descripcion"
+                class="form-control"
+                placeholder="Descripción de la mercadería"
+                readonly
+              />
+            </div>
+            <div class="detail-field due-date">
+              <label class="form-label">Fecha de Vencimiento</label>
+              <input
+                type="date"
+                v-model="productoData.fechaVencimiento"
+                class="form-control"
+                :readonly="readOnly"
+              />
+            </div>
+          </div>
 
-      <div class="d-grid gap-2 mb-3" v-if="!readOnly">
-         <button type="button" class="btn btn-secondary" @click="agregarProducto" :disabled="readOnly">
-            Agregar Producto
-          </button>
-      </div>
+          <div class="detail-actions" v-if="!readOnly">
+            <button
+              type="button"
+              class="btn btn-secondary"
+              @click="agregarProducto"
+              :disabled="readOnly"
+            >
+              Agregar Producto
+            </button>
+          </div>
 
-      <SimpleRegisterModal
-        v-model:showModal="showRegisterModal"
-        :title="registerModalTitle"
-        @close="showRegisterModal = false"
-        @register="irARegistro" />
-
-      <!-- Tabla de productos agregados -->
-      <h3>Productos Agregados</h3>
-      <AppTable :headers="['Código de Barra','Cantidad','Unidad de Medida','Descripción','Acciones']">
-        <tr v-for="(producto, index) in productos" :key="index">
-          <td><span>{{ producto.codigo_barras }}</span></td>
-          <td><input v-if="productoEditandoIndex === index" v-model.number="productoData.cantidad" type="number" class="form-control form-control-sm" /><span v-else>{{ producto.cantidad }}</span></td>
-          <td><span>{{ producto.unidad_medida }}</span></td>
-          <td><span>{{ producto.descripcion }}</span></td>
-          <td>
-            <template v-if="productoEditandoIndex === index">
-              <button type="button" class="btn btn-success btn-sm me-1" @click="guardarEdicionProducto" :disabled="readOnly">Guardar</button>
-              <button type="button" class="btn btn-warning btn-sm me-1" @click="cancelarEdicion" :disabled="readOnly">Cancelar</button>
-            </template>
-            <template v-else>
-              <button type="button" class="btn btn-primary btn-sm me-1" @click="editarProducto(index)" :disabled="readOnly">Editar</button>
-              <button type="button" class="btn btn-danger btn-sm" @click="eliminarProducto(index)" :disabled="readOnly">Eliminar</button>
-            </template>
-          </td>
-
-        </tr>
-      </AppTable>
-
-      <div class="d-grid gap-2 mt-4">
-        <button type="submit" class="btn btn-success" :disabled="readOnly" v-if="!readOnly">Guardar Nota de Remisión </button>
-      </div>
-    </form>
-
-    <RegisterProductModal
-      v-model:showModal="showProductModal"
-      :initial-code="initialProductCode"
-      @product-registered="onProductRegistered"
-      @close-all-register-modals="showRegisterModal = false"
-    />
-
-    <RegistrarProveedorModal
-      v-model:showModal="showProviderModal"
-      @provider-registered="onProviderRegistered" 
-    />
-
-    <!-- Overlay selector de proveedores -->
-    <div v-if="mostrarSelectorProveedor" class="overlay-backdrop" @click.self="cerrarSelectorProveedor">
-      <div class="overlay-panel">
-        <div class="overlay-header d-flex justify-content-between align-items-center">
-          <h5 class="mb-0">Seleccionar Proveedor</h5>
-          <button type="button" class="btn-close" aria-label="Cerrar" @click="cerrarSelectorProveedor"></button>
-        </div>
-        <div class="overlay-body">
-          <ProveedoresView
-            :selectorMode="true"
-            :hideHeader="false"
-            :allowRegisterInSelector="true"
-            @proveedor-seleccionado="onProveedorSeleccionado"
+          <SimpleRegisterModal
+            v-model:showModal="showRegisterModal"
+            :title="registerModalTitle"
+            @close="showRegisterModal = false"
+            @register="irARegistro"
           />
+
+          <h4 class="section-subheading">Productos agregados</h4>
+          <AppTable
+            :headers="['Código de Barra', 'Cantidad', 'Unidad', 'Descripción', 'Acciones']"
+            tableClass="table table-bordered table-sm note-details-table"
+          >
+            <tr v-for="(producto, index) in productos" :key="index">
+              <td><span>{{ producto.codigo_barras }}</span></td>
+              <td class="col-numeric">
+                <input
+                  v-if="productoEditandoIndex === index"
+                  v-model.number="productoData.cantidad"
+                  type="number"
+                  class="form-control form-control-sm"
+                />
+                <span v-else>{{ producto.cantidad }}</span>
+              </td>
+              <td><span>{{ producto.unidad_medida }}</span></td>
+              <td><span>{{ producto.descripcion }}</span></td>
+              <td class="actions-col">
+                <template v-if="productoEditandoIndex === index">
+                  <button
+                    type="button"
+                    class="btn btn-success btn-sm me-1"
+                    @click="guardarEdicionProducto"
+                    :disabled="readOnly"
+                  >
+                    Guardar
+                  </button>
+                  <button
+                    type="button"
+                    class="btn btn-warning btn-sm me-1"
+                    @click="cancelarEdicion"
+                    :disabled="readOnly"
+                  >
+                    Cancelar
+                  </button>
+                </template>
+                <template v-else>
+                  <button
+                    type="button"
+                    class="btn btn-primary btn-sm me-1"
+                    @click="editarProducto(index)"
+                    :disabled="readOnly"
+                  >
+                    Editar
+                  </button>
+                  <button
+                    type="button"
+                    class="btn btn-danger btn-sm"
+                    @click="eliminarProducto(index)"
+                    :disabled="readOnly"
+                  >
+                    Eliminar
+                  </button>
+                </template>
+              </td>
+            </tr>
+          </AppTable>
+        </section>
+
+        <div class="submit-row">
+          <button
+            type="submit"
+            class="btn btn-success btn-lg"
+            :disabled="readOnly"
+            v-if="!readOnly"
+          >
+            Guardar Nota de Remisión
+          </button>
+        </div>
+      </form>
+
+      <RegisterProductModal
+        v-model:showModal="showProductModal"
+        :initial-code="initialProductCode"
+        @product-registered="onProductRegistered"
+        @close-all-register-modals="showRegisterModal = false"
+      />
+
+      <RegistrarProveedorModal
+        v-model:showModal="showProviderModal"
+        @provider-registered="onProviderRegistered"
+      />
+
+      <div v-if="mostrarSelectorProveedor" class="overlay-backdrop" @click.self="cerrarSelectorProveedor">
+        <div class="overlay-panel">
+          <div class="overlay-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Seleccionar Proveedor</h5>
+            <button type="button" class="btn-close" aria-label="Cerrar" @click="cerrarSelectorProveedor"></button>
+          </div>
+          <div class="overlay-body">
+            <ProveedoresView
+              :selectorMode="true"
+              :hideHeader="false"
+              :allowRegisterInSelector="true"
+              @proveedor-seleccionado="onProveedorSeleccionado"
+            />
+          </div>
         </div>
       </div>
     </div>
-
   </div>
 </template>
   
@@ -466,48 +587,207 @@ export default {
 
   
 <style scoped>
-  /* Estilos generales */
-  body {
-    background-color: #f8f9fa;
-    font-family: Arial, sans-serif;
-  }
-  h1 {
-    color: #343a40;
-    font-weight: bold;
-  }
-  .container {
-    background-color: #ffffff;
-    padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  }
-  .form-label {
-    font-weight: bold;
-    color: #495057;
-  }
-  h3 {
-    color: #495057;
-    border-bottom: 2px solid #6c757d;
-    padding-bottom: 5px;
-    margin-bottom: 20px;
-  }
-  input[type="text"],
-  input[type="date"],
-  input[type="number"] {
-    border-radius: 5px;
-    border: 1px solid #ced4da;
-  }
-  .modal-backdrop {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.5); /* Fondo semitransparente */
-  z-index: 1040;
+.note-wrapper {
+  background-color: #f4f4f4;
+  min-height: 100vh;
+  padding: 32px 16px 48px;
 }
 
-/* Overlay selector styles */
+.note-paper {
+  max-width: 960px;
+  margin: 0 auto;
+  background: #fff;
+  border: 1px solid #d6d6d6;
+  border-radius: 12px;
+  box-shadow: 0 12px 35px rgba(15, 23, 42, 0.12);
+  padding: 32px 36px 36px;
+}
+
+.note-header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+  justify-content: space-between;
+  align-items: stretch;
+  padding-bottom: 24px;
+  border-bottom: 3px double #747474;
+  margin-bottom: 28px;
+}
+
+.note-header__brand {
+  flex: 1;
+  min-width: 260px;
+}
+
+.note-badge {
+  display: inline-block;
+  background: linear-gradient(135deg, #a5d6ff, #4fa0ff);
+  color: #0f172a;
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  padding: 6px 12px;
+  border-radius: 999px;
+  letter-spacing: 0.1em;
+}
+
+.note-title {
+  font-size: 1.85rem;
+  font-weight: 700;
+  margin: 12px 0 8px;
+  letter-spacing: 0.08em;
+}
+
+.note-description {
+  color: #5f5f5f;
+  max-width: 420px;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.note-header__meta {
+  background: linear-gradient(180deg, #f1f7ff 0%, #e2ecfe 100%);
+  border: 1px solid #9dbdf7;
+  border-radius: 12px;
+  padding: 18px 20px;
+  min-width: 280px;
+  max-width: 340px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+
+.meta-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 14px 16px;
+}
+
+.meta-field label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  color: #3d3d3d;
+  margin-bottom: 4px;
+  display: block;
+}
+
+.note-form {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.note-section {
+  padding: 0;
+}
+
+.section-heading {
+  font-size: 0.95rem;
+  text-transform: uppercase;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: #444;
+  margin-bottom: 18px;
+}
+
+.section-heading.with-line {
+  border-bottom: 2px solid #131313;
+  padding-bottom: 10px;
+  margin-bottom: 20px;
+}
+
+.section-subheading {
+  font-size: 0.88rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #4f4f4f;
+  margin: 24px 0 12px;
+}
+
+.section-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 18px 24px;
+  border: 1px solid #d9d9d9;
+  border-radius: 10px;
+  padding: 18px;
+  background: linear-gradient(180deg, #fafafa 0%, #fefefe 100%);
+}
+
+.form-field .input-group {
+  display: flex;
+  gap: 10px;
+}
+
+.form-field .btn {
+  white-space: nowrap;
+}
+
+.detail-entry {
+  display: grid;
+  grid-template-columns: 150px 110px 110px minmax(200px, 1fr) 160px;
+  gap: 16px;
+  padding: 16px 18px;
+  border: 1px solid #d9d9d9;
+  border-radius: 10px;
+  background: #fdfdfd;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+
+.detail-field label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  color: #666;
+  margin-bottom: 6px;
+  display: block;
+}
+
+.detail-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 12px;
+}
+
+.note-details-table {
+  border-color: #8f8f8f !important;
+}
+
+.note-details-table thead th {
+  background: #f2f2f2;
+  font-size: 0.82rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.note-details-table tbody td {
+  vertical-align: middle;
+  font-size: 0.9rem;
+}
+
+.col-numeric {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.actions-col {
+  width: 180px;
+  text-align: center;
+}
+
+.submit-row {
+  display: flex;
+  justify-content: flex-end;
+  border-top: 2px solid #2b2b2b;
+  padding-top: 24px;
+}
+
+.btn-success.btn-lg {
+  min-width: 240px;
+}
+
 .overlay-backdrop {
   position: fixed;
   inset: 0;
@@ -518,24 +798,42 @@ export default {
   padding-top: 40px;
   z-index: 1050;
 }
+
 .overlay-panel {
   width: min(1100px, 96%);
   max-height: 86vh;
   background: #fff;
-  border-radius: 8px;
+  border-radius: 10px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
   overflow: hidden;
   display: flex;
   flex-direction: column;
 }
+
 .overlay-header {
   padding: 10px 14px;
   border-bottom: 1px solid #e5e7eb;
 }
+
 .overlay-body {
-  padding: 4px 12px 12px; /* top padding reducido */
+  padding: 4px 12px 12px;
   overflow: auto;
+  max-height: calc(86vh - 48px);
 }
 
+@media (max-width: 992px) {
+  .detail-entry {
+    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  }
+
+  .note-header__meta {
+    max-width: 100%;
+    width: 100%;
+  }
+
+  .submit-row {
+    justify-content: center;
+  }
+}
 </style>
   
