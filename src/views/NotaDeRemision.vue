@@ -25,12 +25,21 @@
             </div>
             <div class="meta-field">
               <label for="fecha_emision" class="form-label">Fecha de Emisión</label>
+              <!-- Editable: usar date picker; Solo lectura: mostrar dd/mm/yyyy -->
               <input
+                v-if="!readOnly"
                 id="fecha_emision"
                 type="date"
                 v-model="notaData.fecha_emision"
                 class="form-control"
-                :readonly="readOnly"
+              />
+              <input
+                v-else
+                id="fecha_emision"
+                type="text"
+                :value="formatDateDisplay(notaData.fecha_emision)"
+                class="form-control"
+                readonly
               />
             </div>
             <div class="meta-field">
@@ -40,7 +49,7 @@
                 type="text"
                 v-model="notaData.nro_nota_remision"
                 class="form-control"
-                placeholder="001-001-0001234"
+                placeholder="Número de nota de remisión"
                 :readonly="readOnly"
               />
             </div>
@@ -138,10 +147,17 @@
             <div class="detail-field due-date">
               <label class="form-label">Fecha de Vencimiento</label>
               <input
+                v-if="!readOnly"
                 type="date"
                 v-model="productoData.fechaVencimiento"
                 class="form-control"
-                :readonly="readOnly"
+              />
+              <input
+                v-else
+                type="text"
+                :value="formatDateDisplay(productoData.fechaVencimiento)"
+                class="form-control"
+                readonly
               />
             </div>
           </div>
@@ -297,6 +313,7 @@ export default {
       notaData: {
         nro_nota_remision: '',
         timbrado: '',
+        // Guardamos en formato "YYYY-MM-DD" para que el input type=date funcione.
         fecha_emision: '',
         tipo_moneda: 'PYG',
         condicionVenta: 'Contado', // se usará en "credito_contado"
@@ -339,6 +356,33 @@ export default {
     };
   },
   methods: {
+    // Devuelve la fecha actual en formato "YYYY-MM-DD" (compatible con input type=date)
+    todayISO() {
+      const d = new Date();
+      const mm = String(d.getMonth() + 1).padStart(2, '0');
+      const dd = String(d.getDate()).padStart(2, '0');
+      return `${d.getFullYear()}-${mm}-${dd}`;
+    },
+    // Convierte valores variados (ISO, YYYY-MM-DD, Date) a "dd/mm/yyyy" para display
+    formatDateDisplay(value) {
+      if (!value) return '';
+      try {
+        // Si viene como YYYY-MM-DD
+        if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value)) {
+          const [y, m, d] = value.split('-');
+          return `${d}/${m}/${y}`;
+        }
+        // Si viene como ISO o Date parseable
+        const date = new Date(value);
+        if (isNaN(date.getTime())) return '';
+        const dd = String(date.getDate()).padStart(2, '0');
+        const mm = String(date.getMonth() + 1).padStart(2, '0');
+        const yy = date.getFullYear();
+        return `${dd}/${mm}/${yy}`;
+      } catch (_) {
+        return '';
+      }
+    },
     async autocompletarProducto() {
       if (!this.productoData.codigo_barras) return;
       try {
@@ -448,6 +492,7 @@ export default {
           this.notaData = {
             nro_nota_remision: cabecera.nro_nota_remision,
             timbrado: cabecera.timbrado,
+            // Guardar como YYYY-MM-DD para el input date cuando sea editable.
             fecha_emision: cabecera.fecha_emision ? cabecera.fecha_emision.split('T')[0] : '',
             tipo_moneda: cabecera.tipo_moneda,
             condicionVenta: cabecera.credito_contado,
@@ -563,7 +608,7 @@ export default {
       this.notaData = {
       nro_nota_remision: '',
       timbrado: '',
-      fecha_emision: '',
+      fecha_emision: this.todayISO(),
       tipo_moneda: 'PYG',
       condicionVenta: 'Contado',
       nro_documento: '',
@@ -579,6 +624,9 @@ export default {
     if (this.id) {
       this.readOnly = true;
       await this.cargarNotaDeRemision(this.id);
+    } else {
+      // Nueva nota: fecha de emisión hoy por defecto
+      this.notaData.fecha_emision = this.todayISO();
     }
   }
 };
