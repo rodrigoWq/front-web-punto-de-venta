@@ -102,7 +102,7 @@
         </section>
 
         <section class="invoice-section">
-          <div class="section-heading with-line">Detalle de mercaderías y/o servicios</div>
+          <div class="section-heading with-line">Detalle de mercaderías</div>
           <div class="detail-entry">
             <div class="detail-field code">
               <label class="form-label">Código</label>

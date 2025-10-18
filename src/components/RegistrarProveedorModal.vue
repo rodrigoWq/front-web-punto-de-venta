@@ -26,22 +26,22 @@
                   <input type="text" v-model="providerData.nombre" class="form-control" placeholder="Nombre del proveedor" required />
                 </div>
                 <div class="col-md-6">
-                  <label class="form-label fw-bold">Contacto Principal</label>
+                  <label class="form-label fw-bold">Contacto Principal<span class="text-danger">*</span></label>
                   <input type="text" v-model="providerData.contacto_principal" class="form-control" placeholder="Nombre del contacto" />
                 </div>
               </div>
               
               <div class="row mb-3">
                 <div class="col-md-4">
-                  <label class="form-label fw-bold">Nro. Documento</label>
+                  <label class="form-label fw-bold">Nro. Documento<span class="text-danger"></span></label>
                   <input type="text" v-model="providerData.nro_documento" class="form-control" placeholder="Nro. de documento" />
                 </div>
                 <div class="col-md-4">
-                  <label class="form-label fw-bold">RUC</label>
+                  <label class="form-label fw-bold">RUC<span class="text-danger">*</span></label>
                   <input type="text" v-model="providerData.ruc" class="form-control" placeholder="RUC" />
                 </div>
                 <div class="col-md-4">
-                  <label class="form-label fw-bold">CI</label>
+                  <label class="form-label fw-bold">CI<span class="text-danger">*</span></label>
                   <input type="text" v-model="providerData.ci" class="form-control" placeholder="CI" />
                 </div>
               </div>
@@ -123,15 +123,15 @@
 
               <div class="row mb-3">
                 <div class="col-md-4">
-                  <label class="form-label fw-bold">Teléfono Celular</label>
+                  <label class="form-label fw-bold">Teléfono Celular <span class="text-danger">*</span></label>
                   <input type="tel" v-model="providerData.telefono_celular" class="form-control" placeholder="Teléfono celular" />
                 </div>
                 <div class="col-md-4">
-                  <label class="form-label fw-bold">Email Principal</label>
+                  <label class="form-label fw-bold">Email Principal <span class="text-danger">*</span></label>
                   <input type="email" v-model="providerData.email" class="form-control" placeholder="Email principal" />
                 </div>
                 <div class="col-md-4">
-                  <label class="form-label fw-bold">Dirección Principal</label>
+                  <label class="form-label fw-bold">Dirección Principal<span class="text-danger">*</span></label>
                   <input type="text" v-model="providerData.direccion" class="form-control" placeholder="Dirección" />
                 </div>
               </div>
