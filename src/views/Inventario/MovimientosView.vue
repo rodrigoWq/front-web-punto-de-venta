@@ -24,11 +24,25 @@
       <div class="row g-2 w-100">
   <div class="col-6 col-md-3 col-lg-2">
           <label class="form-label mb-1">Desde</label>
-          <input type="text" class="form-control form-control-sm" v-model="filters.desde" placeholder="dd/mm/yyyy" pattern="\d{2}/\d{2}/\d{4}" />
+          <input
+            type="text"
+            class="form-control form-control-sm"
+            ref="desdeInput"
+            :value="filters.desde || ''"
+            placeholder="dd/mm/yyyy"
+            readonly
+          />
         </div>
   <div class="col-6 col-md-3 col-lg-2">
           <label class="form-label mb-1">Hasta</label>
-          <input type="text" class="form-control form-control-sm" v-model="filters.hasta" placeholder="dd/mm/yyyy" pattern="\d{2}/\d{2}/\d{4}" />
+          <input
+            type="text"
+            class="form-control form-control-sm"
+            ref="hastaInput"
+            :value="filters.hasta || ''"
+            placeholder="dd/mm/yyyy"
+            readonly
+          />
         </div>
         <div class="col-12 col-md-6 col-lg-4 d-flex align-items-end">
           <div class="d-flex gap-2 w-100">
@@ -169,9 +183,12 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted, onBeforeUnmount } from 'vue'
 import AppPagination from '@/components/AppPagination.vue'
 import api from '@/services/apiService'
+import flatpickr from 'flatpickr'
+import 'flatpickr/dist/flatpickr.css'
+import { Spanish } from 'flatpickr/dist/l10n/es.js'
 
 // Estado de lista y filtros
 const movements = ref([])
@@ -187,6 +204,58 @@ const filters = reactive({
   desde: null,
   hasta: null,
 })
+
+const desdeInput = ref(null)
+const hastaInput = ref(null)
+let desdePicker = null
+let hastaPicker = null
+
+const DATE_FORMAT = 'd/m/Y'
+
+function ddmmyyyyToDate(val) {
+  const iso = convertDateToISO(val)
+  return iso ? new Date(`${iso}T00:00:00`) : null
+}
+
+function updatePickerDate(picker, value) {
+  if (!picker) return
+  if (!value) {
+    picker.clear()
+  } else {
+    const dateObj = ddmmyyyyToDate(value)
+    if (dateObj) {
+      picker.setDate(dateObj, false, DATE_FORMAT)
+    } else {
+      picker.clear()
+    }
+  }
+}
+
+function setupDatePickers() {
+  if (desdeInput.value) {
+    desdePicker = flatpickr(desdeInput.value, {
+      dateFormat: DATE_FORMAT,
+      locale: Spanish,
+      defaultDate: ddmmyyyyToDate(filters.desde),
+      allowInput: false,
+      onChange(_, dateStr) {
+        filters.desde = dateStr || null
+      }
+    })
+  }
+
+  if (hastaInput.value) {
+    hastaPicker = flatpickr(hastaInput.value, {
+      dateFormat: DATE_FORMAT,
+      locale: Spanish,
+      defaultDate: ddmmyyyyToDate(filters.hasta),
+      allowInput: false,
+      onChange(_, dateStr) {
+        filters.hasta = dateStr || null
+      }
+    })
+  }
+}
 
 function setTipo(value) {
   filters.tipo = value
@@ -286,10 +355,26 @@ function clearFilters() {
   filters.hasta = null
   filters.tipo = null
   currentPage.value = 1
+  updatePickerDate(desdePicker, null)
+  updatePickerDate(hastaPicker, null)
   fetchMovements()
 }
 
-onMounted(fetchMovements)
+onMounted(() => {
+  setupDatePickers()
+  fetchMovements()
+})
+
+onBeforeUnmount(() => {
+  if (desdePicker) {
+    desdePicker.destroy()
+    desdePicker = null
+  }
+  if (hastaPicker) {
+    hastaPicker.destroy()
+    hastaPicker = null
+  }
+})
 
 // ─── Crear nuevo movimiento (mover producto entre depósitos) ───
 const showCreateModal = ref(false)
