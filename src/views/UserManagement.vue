@@ -336,7 +336,7 @@
       getRoles() {
         apiService.get('/api/roles')
           .then(response => {
-            this.roles = response.data;
+            this.roles = response.data?.data || [];
           })
           .catch(err => console.error('Error al cargar roles:', err));
       },

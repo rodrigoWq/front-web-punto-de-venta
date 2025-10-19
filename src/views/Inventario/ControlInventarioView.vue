@@ -522,9 +522,9 @@ onMounted(async () => {
   try {
     isLoadingOptions.usuarios = true
     const { data } = await InventoryControlService.getUsers()
-    const rows = Array.isArray(data) ? data : []
+    const rows = data?.data || []
     // El backend devuelve 'nombre' para mostrar
-    usuarios.value = rows.map(u => ({ id: u.usuario_id, nombre: u.nombre }))
+    usuarios.value = Array.isArray(rows) ? rows.map(u => ({ id: u.usuario_id, nombre: u.nombre })) : []
   } catch (e) {
     // handled globally
   } finally {
