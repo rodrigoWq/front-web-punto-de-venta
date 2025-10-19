@@ -55,7 +55,7 @@
     methods: {
       async fetchCategories() {
         try {
-          const url = `${process.env.VUE_APP_API_BASE_URL}/api/categories`;
+          const url = `${process.env.VUE_APP_API_BASE_URL}/api/categories?limit=1000&offset=0`;
           const response = await apiService.get(url);
           if (
             response.data.success &&

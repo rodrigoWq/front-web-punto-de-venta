@@ -105,7 +105,7 @@
                 {{ movLabel(mov) }}
                 <span v-if="mov.comprobante">#{{ mov.comprobante }}</span>
               </span>
-            <span v-if="mov.comprobante" class="badge bg-light text-dark ms-2">Recibo: {{ mov.comprobante }}</span>
+            <span v-if="mov.comprobante" class="badge bg-light text-dark ms-2">Nro mov caja: {{ mov.id }}</span>
             <div class="text-muted small">{{ mov.descripcion }}</div>
           </div>
         </div>

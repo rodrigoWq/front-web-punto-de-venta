@@ -52,7 +52,7 @@
               <th>Descripción</th>
               <th>Comprobante</th>
               <th>Módulo</th>
-              <th>Usuario</th>
+              <th>Nombre o Razón Social</th>
               <th>Fecha</th>
             </tr>
           </thead>
