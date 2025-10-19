@@ -208,7 +208,8 @@ export default {
       this.pedidoSeleccionadoId = null;
     },
     esPendiente(estado) {
-      return (estado || '').toLowerCase() === 'pendiente';
+      const normalized = (estado || '').toLowerCase();
+      return normalized === 'pendiente' || normalized === 'completado';
     },
     async retomarPedido(pedidoId) {
       try {

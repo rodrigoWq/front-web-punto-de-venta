@@ -1,21 +1,18 @@
 <template>
-    <div class="col-md-6">
-      <label class="form-label">Unidad Medida</label>
-      <select
-        class="form-select"
-        :disabled="disabled"
-        v-model.number="internalValue"
-      >
-        <option value="" disabled>Seleccione unidad de medida</option>
-        <option
-          v-for="unit in units"
-          :key="unit.unidad_medida_id"
-          :value="unit.unidad_medida_id"
-        >
-          {{ unit.nombre }}
-        </option>
-      </select>
-    </div>
+  <select
+    class="form-select"
+    :disabled="disabled"
+    v-model.number="internalValue"
+  >
+    <option value="" disabled>Seleccione unidad de medida</option>
+    <option
+      v-for="unit in units"
+      :key="unit.unidad_medida_id"
+      :value="unit.unidad_medida_id"
+    >
+      {{ unit.nombre }}
+    </option>
+  </select>
 </template>
   
 <script>

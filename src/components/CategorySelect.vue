@@ -1,21 +1,18 @@
 <template>
-    <div class="col-md-6">
-      <label class="form-label">Categoría</label>
-      <select
-        class="form-select"
-        :disabled="disabled"
-        v-model.number="internalValue"
-      >
-        <option value="" disabled>Seleccione categoría</option>
-        <option
-          v-for="cat in categories"
-          :key="cat.categoria_id"
-          :value="cat.categoria_id"
-        >
-          {{ cat.nombre }}
-        </option>
-      </select>
-    </div>
+  <select
+    class="form-select"
+    :disabled="disabled"
+    v-model.number="internalValue"
+  >
+    <option value="" disabled>Seleccione categoría</option>
+    <option
+      v-for="cat in categories"
+      :key="cat.categoria_id"
+      :value="cat.categoria_id"
+    >
+      {{ cat.nombre }}
+    </option>
+  </select>
 </template>
   
 <script>
