@@ -68,7 +68,8 @@ export default {
     // obtener permisos detallados para mostrar en el card
     try {
       const res = await apiService.get(`/api/roles/${this.rol.rol_id}`)
-      this.permisos = res.data.permisos || []
+      // Manejar estructura: puede ser res.data.permisos o res.data.data.permisos
+      this.permisos = res.data?.permisos || res.data?.data?.permisos || []
     } catch (err) {
       console.error('Error cargando permisos del rol:', err)
     }

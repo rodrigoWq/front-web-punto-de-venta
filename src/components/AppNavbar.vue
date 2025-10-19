@@ -53,7 +53,7 @@
             </li>
             <li class="nav-item admin-only">
               <router-link class="nav-link" to="/user-management">
-                <i class="bi bi-person-gear"></i> User Management
+                <i class="bi bi-person-gear"></i> Gestion de Usuarios
               </router-link>
             </li>
           </ul>

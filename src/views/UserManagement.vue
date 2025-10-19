@@ -16,7 +16,7 @@
 
       <!-- Tabla de Usuarios -->
       <h2>Lista de Usuarios</h2>
-      <AppTable :headers="['Name', 'Role', 'Status', 'Actions']">
+      <AppTable :headers="['Nombre', 'Rol', 'Estado', 'Acciones']">
         <tr v-for="usuario in usuariosFiltrados" :key="usuario.id">
           <td>{{ usuario.nombre }}</td>
           <td>{{ usuario.rol }}</td>

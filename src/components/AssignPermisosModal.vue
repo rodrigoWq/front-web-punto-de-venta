@@ -72,8 +72,9 @@ export default {
     async loadAssigned() {
       try {
         const res = await apiService.get(`/api/roles/${this.rol.rol_id}`)
-        const assigned = res.data.permisos || []
-        const ids = assigned.map(p => p.id_permiso)
+        // Manejar estructura: puede ser res.data.permisos o res.data.data.permisos
+        const assigned = res.data?.permisos || res.data?.data?.permisos || []
+        const ids = assigned.map(p => p.id_permiso || p.permiso_id)
         this.selected = ids.slice()
         this.originalAssigned = ids.slice()
       } catch (err) {

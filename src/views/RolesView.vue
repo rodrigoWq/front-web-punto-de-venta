@@ -44,12 +44,10 @@ export default {
     async fetchRoles() {
       try {
         const res = await apiService.get('/api/roles')
-        // Manejar diferentes estructuras de respuesta
-        const data = Array.isArray(res.data) 
-          ? res.data 
-          : (Array.isArray(res.data?.data) ? res.data.data : [])
+        // Manejar estructura paginada: res.data.data
+        const data = res.data?.data || res.data || []
         
-        this.roles = data || []
+        this.roles = Array.isArray(data) ? data : []
         console.log('[RolesView] Roles cargados:', this.roles.length)
       } catch (err) {
         console.error('Error cargando roles:', err)
@@ -58,19 +56,35 @@ export default {
     },
     async fetchAllPermissions() {
       try {
-        const res = await apiService.get('/api/permissions')
-        // Manejar diferentes estructuras de respuesta
-        let lista = Array.isArray(res.data) 
-          ? res.data 
-          : (Array.isArray(res.data?.data) ? res.data.data : [])
+        // Cargar TODAS las páginas de permisos (hay 92 permisos en total)
+        let todosLosPermisos = []
+        let page = 1
+        let hasMore = true
+        const limit = 100 // cargar más por página
         
-        this.allPermissions = lista
-          ? lista.map(p => ({
-              permiso_id:    p.permiso_id ?? p.id_permiso,
-              nombre_permiso: p.nombre_permiso,
-              descripcion:    p.descripcion
-            }))
-          : []
+        while (hasMore && page <= 10) { // máximo 10 páginas como protección
+          const res = await apiService.get(`/api/permissions?page=${page}&limit=${limit}`)
+          
+          // La estructura es: { success: true, data: { data: [...], pagination: {...} } }
+          const permisos = res.data?.data?.data || []
+          const pagination = res.data?.data?.pagination || {}
+          
+          if (Array.isArray(permisos) && permisos.length > 0) {
+            todosLosPermisos = todosLosPermisos.concat(permisos)
+          }
+          
+          hasMore = pagination.hasNextPage === true
+          page++
+          
+          if (!hasMore) break
+        }
+        
+        this.allPermissions = todosLosPermisos.map(p => ({
+          permiso_id:    p.permiso_id ?? p.id_permiso,
+          nombre_permiso: p.nombre_permiso,
+          descripcion:    p.descripcion
+        }))
+        
         console.log('[RolesView] Permisos cargados:', this.allPermissions.length)
       } catch (err) {
         console.error('Error cargando permisos globales:', err)
