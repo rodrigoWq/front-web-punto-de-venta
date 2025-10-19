@@ -60,8 +60,8 @@
                   </div>
                 </div>
               </div>
-              <!-- Filtro: Con precio / Sin precio -->
-              <div class="d-flex align-items-center gap-2">
+              <!-- Filtro: Con precio / Sin precio (oculto en modo selector) -->
+              <div v-if="!selectorMode" class="d-flex align-items-center gap-2">
                 <button
                   type="button"
                   class="btn"
@@ -83,7 +83,7 @@
             <button 
               class="btn btn-outline-danger d-flex align-items-center"
               @click="clearFilters"
-              :disabled="!searchTerm && !selectedCategory && priceFilter === 'all'"
+              :disabled="!searchTerm && !selectedCategory && (!selectorMode && priceFilter === 'all')"
             >
               <i class="bi bi-arrow-counterclockwise me-2"></i> 
               Limpiar Filtros
@@ -562,7 +562,8 @@ export default {
       this.selectedCategory = ''
       this.selectedCategoryName = ''
       this.categorySearchTerm = ''
-      this.priceFilter = 'all'
+      // En modo selector, mantener el filtro de precio en 'true' (solo con precio)
+      this.priceFilter = this.selectorMode ? 'true' : 'all'
       this.currentPage = 1
       this.loadProducts({ suppressAlert: true, page: 1 })
     }
@@ -595,6 +596,10 @@ export default {
   },
 
   mounted() {
+    // Si está en modo selector, solo mostrar productos con precio
+    if (this.selectorMode) {
+      this.priceFilter = 'true';
+    }
     this.loadProducts()
     this.loadCategories()
   }
