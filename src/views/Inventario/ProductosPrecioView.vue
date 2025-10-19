@@ -12,49 +12,84 @@
       </div>
     </div>
 
-    <!-- Búsqueda + filtros -->
-    <div class="row g-3 mb-3">
-      <div class="col-md-4">
-        <input
-          v-model="searchTerm"
-          type="text"
-          class="form-control"
-          placeholder="Buscar por nombre de producto"
-        />
-      </div>
+    <!-- Buscador y filtro por categoría (como en ProductosView.vue) -->
+    <div class="row">
+      <div class="col-12">
+        <div class="card p-4">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <div class="d-flex gap-3 flex-grow-1">
+              <input
+                v-model="searchTerm"
+                type="text"
+                class="form-control"
+                style="max-width: 350px"
+                placeholder="Buscar por nombre..."
+              />
 
-      <div class="col-md-2">
-        <select v-model="categoryFilter" @change="onCategoryChange" class="form-select">
-          <option value="all">All</option>
-          <option v-for="cat in uniqueCategories" :key="cat" :value="cat">{{ cat }}</option>
-        </select>
-      </div>
+              <!-- Select con búsqueda para categorías -->
+              <div class="position-relative" style="max-width: 250px; width: 250px;">
+                <input
+                  v-model="categorySearchTerm"
+                  type="text"
+                  class="form-control"
+                  placeholder="Filtrar por categoría..."
+                  @focus="showCategoryDropdown = true"
+                  @blur="handleCategoryBlur"
+                  :disabled="loadingCategories"
+                />
 
-      <div class="col-md-auto d-flex gap-2">
-        <button
-          class="btn"
-          :class="priceFilter === 'zero' ? 'btn-success' : 'btn-outline-success'"
-          @click="priceFilter = 'zero'"
-        >
-          Sin Precio
-        </button>
-        <button
-          class="btn"
-          :class="priceFilter === 'nonzero' ? 'btn-success' : 'btn-outline-success'"
-          @click="priceFilter = 'nonzero'"
-        >
-          Con Precio
-        </button>
-      </div>
-
-      <div class="col-md-auto">
-        <button class="btn btn-outline-secondary" @click="
-          priceFilter = 'all';
-          categoryFilter = 'all';
-          searchTerm = '';
-        ">
-          Reset
-        </button>
+                <!-- Dropdown de categorías -->
+                <div
+                  v-if="showCategoryDropdown && filteredCategories.length > 0"
+                  class="category-dropdown position-absolute w-100 mt-1 bg-white border rounded shadow-sm"
+                  style="max-height: 300px; overflow-y: auto; z-index: 1000;"
+                >
+                  <div
+                    class="dropdown-item cursor-pointer px-3 py-2 hover-bg-light"
+                    @mousedown.prevent="selectCategory('', 'Todas las categorías')"
+                  >
+                    <strong>Todas las categorías</strong>
+                  </div>
+                  <div
+                    v-for="cat in filteredCategories"
+                    :key="cat.id"
+                    class="dropdown-item cursor-pointer px-3 py-2 hover-bg-light"
+                    @mousedown.prevent="selectCategory(cat.id, cat.name)"
+                  >
+                    {{ cat.name }}
+                  </div>
+                </div>
+              </div>
+              <!-- Filtro: Con precio / Sin precio -->
+              <div class="d-flex align-items-center gap-2">
+                <button
+                  type="button"
+                  class="btn"
+                  :class="priceFilter === 'true' ? 'btn-success' : 'btn-outline-success'"
+                  @click="setPriceFilter('true')"
+                >
+                  Con precio
+                </button>
+                <button
+                  type="button"
+                  class="btn"
+                  :class="priceFilter === 'false' ? 'btn-danger' : 'btn-outline-danger'"
+                  @click="setPriceFilter('false')"
+                >
+                  Sin precio
+                </button>
+              </div>
+            </div>
+            <button 
+              class="btn btn-outline-danger d-flex align-items-center"
+              @click="clearFilters"
+              :disabled="!searchTerm && !selectedCategory && priceFilter === 'all'"
+            >
+              <i class="bi bi-arrow-counterclockwise me-2"></i> 
+              Limpiar Filtros
+            </button>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -182,22 +217,34 @@ export default {
 
   data() {
     return {
-      // ≡ SIN CAMBIOS
+      // Productos y paginación
       products: [],
-      allProducts: [], // Cache de todos los productos para filtrar
       currentPage: 1,
+      totalPages: 1,
+      pagination: {},
       itemsPerPage: 10,
-      priceFilter: 'all',
+      loading: false,
+
+      // Filtros
       searchTerm: '',
-      categoryFilter: 'all',
+      categorySearchTerm: '',
+      showCategoryDropdown: false,
+      selectedCategory: '', // ID
+      selectedCategoryName: '',
+      categories: [],
+      allCategories: [],
+      loadingCategories: false,
+
+  // Filtro por precio (all | 'true' | 'false')
+  priceFilter: 'all',
+
+      // Modal de producto y precio
       showProductModal: false,
       editingProduct: null,
       productModalInstance: null,
       priceModalInstance: null,
-      loading: false,
-      totalPagesBackend: 1,
 
-      // ≡ (estructura de datos para precio)
+      // Estructura de datos para precio
       modalData: {
         productId:    null,
         nuevoPrecio:  0,
@@ -207,164 +254,171 @@ export default {
   },
 
   computed: {
-    // Filtro unificado (nombre / descripción / categoría / unidad) + categoría + estado de precio
-    filteredProducts() {
-      // Usar allProducts en lugar de products para tener todos los datos cargados
-      let filtered = Array.isArray(this.allProducts) ? this.allProducts : [];
-
-      // Normalizar término de búsqueda
-      const term = (this.searchTerm || '').trim().toLowerCase();
-      if (term) {
-        filtered = filtered.filter(p => {
-          const nombre      = (p.nombre || '').toLowerCase();
-            const desc        = (p.descripcion || '').toLowerCase();
-            const categoria   = (p.categoria || p.categoria_nombre || '').toLowerCase();
-            const unidad      = (p.unidad_medida || p.unidad_medida_nombre || '').toLowerCase();
-            return (
-              nombre.includes(term) ||
-              desc.includes(term) ||
-              categoria.includes(term) ||
-              unidad.includes(term)
-            );
-        });
-      }
-
-      // Filtro por categoría (case-insensitive)
-      if (this.categoryFilter && this.categoryFilter !== 'all') {
-        const catNeedle = this.categoryFilter.trim().toLowerCase();
-        filtered = filtered.filter(p => (p.categoria || p.categoria_nombre || '').trim().toLowerCase() === catNeedle);
-      }
-
-      // Filtro por estado de precio
-      if (this.priceFilter === 'zero') {
-        // Sin precio: no hay precio vigente (precio_venta null/undefined/NaN)
-        filtered = filtered.filter(p => !Number(p.precio_venta));
-      } else if (this.priceFilter === 'nonzero') {
-        // Con precio: precio numérico > 0
-        filtered = filtered.filter(p => Number(p.precio_venta) > 0);
-      }
-
-      return filtered;
+    // Filtra categorías por texto
+    filteredCategories() {
+      if (!this.categorySearchTerm.trim()) return this.allCategories
+      const term = this.categorySearchTerm.toLowerCase()
+      return this.allCategories.filter(cat => cat.name.toLowerCase().includes(term))
     },
 
-    // 🆕 paginación cliente
+    // La lista a mostrar (paginada por el servidor)
     pagedProducts() {
-      const start = (this.currentPage - 1) * this.itemsPerPage;
-      return this.filteredProducts.slice(start, start + this.itemsPerPage);
-    },
-
-    uniqueCategories() {
-      const set = new Set();
-      this.allProducts.forEach(p => {
-        const cat = p.categoria || p.categoria_nombre;
-        if (cat) set.add(cat);
-      });
-      return Array.from(set).sort();
-    },
-    
-
-    // 🔄 total páginas calcula sobre filteredProducts
-    totalPages() {
-      return Math.ceil(this.filteredProducts.length / this.itemsPerPage);
+      return Array.isArray(this.products) ? this.products : []
     }
   },
 
   methods: {
     seleccionarProducto(prod) {
-      // Emitir el producto seleccionado (id y nombre son suficientes para buscar detalles fuera)
-      this.$emit('producto-seleccionado', prod);
+      this.$emit('producto-seleccionado', prod)
     },
-    /* ---------- Utilidades ---------- */
-    // 🆕 Helper para construir urls
-    api(path) { return `${process.env.VUE_APP_API_BASE_URL}${path}`; },
 
-    /* ---------- CRUD Productos ---------- */
-    async fetchProducts() {                                                   
-      this.loading = true;
-      try {
-        this.allProducts = [];
-        
-        // Primero obtenemos la primera página para saber cuántas páginas hay
-        const firstResponse = await apiService.get(this.api('/api/prices?page=1'));
-        const firstData = Array.isArray(firstResponse.data) 
-          ? firstResponse.data 
-          : (Array.isArray(firstResponse.data?.data) ? firstResponse.data.data : []);
-        
-        this.totalPagesBackend = firstResponse.data?.pagination?.totalPages || 1;
-        
-        // Mapear la primera página
-        const mappedFirstPage = this.mapProducts(firstData);
-        this.allProducts.push(...mappedFirstPage);
-        
-        // Cargar todas las demás páginas
-        if (this.totalPagesBackend > 1) {
-          const pagePromises = [];
-          for (let page = 2; page <= this.totalPagesBackend; page++) {
-            pagePromises.push(
-              apiService.get(this.api(`/api/prices?page=${page}`))
-                .then(response => {
-                  const data = Array.isArray(response.data) 
-                    ? response.data 
-                    : (Array.isArray(response.data?.data) ? response.data.data : []);
-                  return this.mapProducts(data);
-                })
-            );
-          }
-          
-          const allPages = await Promise.all(pagePromises);
-          for (const pageProducts of allPages) {
-            this.allProducts.push(...pageProducts);
-          }
-        }
-        
-        this.products = [...this.allProducts];
-        console.log('[ProductosPrecioView] Total de productos cargados:', this.allProducts.length);
-      } catch (err) {
-        console.error('Error fetching products:', err);
-        this.products = [];
-        this.allProducts = [];
-      } finally {
-        this.loading = false;
+    // Mapea un producto del backend al formato de la vista
+    mapProduct(item) {
+      const pickCurrentPrice = (arr = []) => {
+        if (!Array.isArray(arr) || !arr.length) return null
+        const now = new Date()
+        const qty = 1
+        let candidates = arr.filter(p => {
+          const desde = p?.vigencia_desde ? new Date(p.vigencia_desde) : null
+          if (!desde || isNaN(desde.getTime())) return false
+          const hasta = p?.vigencia_hasta ? new Date(p.vigencia_hasta) : null
+          const inDate = desde <= now && (!hasta || hasta >= now)
+          const cantidadOK = (p.cantidad_desde == null || p.cantidad_desde <= qty) && (p.cantidad_hasta == null || p.cantidad_hasta >= qty)
+          return inDate && cantidadOK
+        })
+        if (!candidates.length) candidates = [...arr]
+        candidates.sort((a,b) => new Date(b.vigencia_desde) - new Date(a.vigencia_desde))
+        return candidates[0] || null
+      }
+
+      const priceRec = pickCurrentPrice(item.precios_vigentes || [])
+      const precioVentaNum = priceRec ? Number(priceRec.precio_venta) : null
+
+      return {
+        producto_id: item.producto_id,
+        codigo_barras: item.codigo_barras || '',
+        nombre: item.nombre || '',
+        descripcion: item.descripcion || '',
+        stock_disponible: item.stock_disponible ?? 0,
+        categoria: item.categoria || item.categoria_nombre || '',
+        categoria_id: item.categoria_id,
+        unidad_medida: item.unidad_medida || item.unidad_medida_nombre || '',
+        unidad_medida_id: item.unidad_medida_id,
+        precio_venta: (Number.isFinite(precioVentaNum) && precioVentaNum > 0) ? precioVentaNum : null,
+        precio_ultima_compra: item.precio_ultima_compra ?? null,
+        vigencia_desde: priceRec?.vigencia_desde || null,
+        vigencia_hasta: priceRec?.vigencia_hasta || null,
+        _precios_vigentes: item.precios_vigentes || [],
+        activo: item.activo,
+        tipo_iva: item.tipo_iva,
+        url_imagen: item.url_imagen || ''
       }
     },
-    
-    mapProducts(list) {
-      // Helper para seleccionar el precio vigente principal
-      const pickCurrentPrice = (arr = []) => {
-        if (!Array.isArray(arr) || !arr.length) return null;
-        const now = new Date();
-        const qty = 1; // Vista lista asume cantidad 1
-        let candidates = arr.filter(p => {
-          const desde = p?.vigencia_desde ? new Date(p.vigencia_desde) : null;
-          if (!desde || isNaN(desde.getTime())) return false;
-          const hasta = p?.vigencia_hasta ? new Date(p.vigencia_hasta) : null;
-          const inDate = desde <= now && (!hasta || hasta >= now);
-          const cantidadOK = (p.cantidad_desde == null || p.cantidad_desde <= qty) && (p.cantidad_hasta == null || p.cantidad_hasta >= qty);
-          return inDate && cantidadOK;
-        });
-        if (!candidates.length) candidates = [...arr];
-        candidates.sort((a,b) => new Date(b.vigencia_desde) - new Date(a.vigencia_desde));
-        return candidates[0] || null;
-      };
 
-      return list.map(item => {
-        const priceRec = pickCurrentPrice(item.precios_vigentes || []);
-        const precioVentaNum = priceRec ? Number(priceRec.precio_venta) : null;
-        return {
-          producto_id: item.producto_id,
-          codigo_barras: item.codigo_barras || '',
-          nombre: item.nombre || '',
-          descripcion: item.descripcion || '',
-          stock_disponible: item.stock_disponible ?? 0,
-          categoria: item.categoria || item.categoria_nombre || '',
-          unidad_medida: item.unidad_medida || item.unidad_medida_nombre || '',
-          precio_venta: (Number.isFinite(precioVentaNum) && precioVentaNum > 0) ? precioVentaNum : null,
-          precio_ultima_compra: item.precio_ultima_compra ?? null,
-          vigencia_desde: priceRec?.vigencia_desde || null,
-          vigencia_hasta: priceRec?.vigencia_hasta || null,
-          _precios_vigentes: item.precios_vigentes || []
-        };
-      });
+    // Cargar categorías (todas las páginas)
+    async loadCategories() {
+      this.loadingCategories = true
+      try {
+        const all = []
+        let page = 1
+        let hasMore = true
+        while (hasMore) {
+          const resp = await apiService.get(`/api/categories?page=${page}&limit=50`)
+          const payload = resp.data
+          let list = []
+          let pagination = null
+          if (Array.isArray(payload)) {
+            list = payload
+            hasMore = false
+          } else if (payload?.data) {
+            if (Array.isArray(payload.data)) {
+              list = payload.data
+              hasMore = false
+            } else if (Array.isArray(payload.data.data)) {
+              list = payload.data.data
+              pagination = payload.data.pagination
+              hasMore = !!pagination?.hasNextPage
+            }
+          }
+          all.push(...list)
+          if (!hasMore) break
+          page++
+          if (page > 10) {
+            console.warn('[ProductosPrecioView] Límite de páginas de categorías alcanzado')
+            break
+          }
+        }
+        this.allCategories = all.map(c => ({ id: c.categoria_id ?? c.id, name: c.nombre }))
+        this.categories = [...this.allCategories]
+      } catch (e) {
+        console.error('Error cargando categorías:', e)
+        this.allCategories = []
+        this.categories = []
+      } finally {
+        this.loadingCategories = false
+      }
+    },
+
+    selectCategory(categoryId, categoryName = '') {
+      this.selectedCategory = categoryId
+      this.selectedCategoryName = categoryName
+      this.categorySearchTerm = categoryName
+      this.showCategoryDropdown = false
+      // Reiniciar a la primera página y cargar
+      this.currentPage = 1
+      this.loadProducts({ suppressAlert: true, page: 1 })
+    },
+
+    handleCategoryBlur() {
+      setTimeout(() => { this.showCategoryDropdown = false }, 200)
+    },
+
+    // Establecer filtro de precio (toggle entre 'true' | 'false' | 'all')
+    setPriceFilter(val) {
+      this.priceFilter = (this.priceFilter === val) ? 'all' : val
+    },
+
+    // Cargar productos con filtros desde el backend
+    async loadProducts(options = {}) {
+      const { suppressAlert = false, page = 1 } = options || {}
+      this.loading = true
+      try {
+        let url = `/api/prices?page=${page}`
+        if (this.searchTerm.trim()) {
+          url += `&search=${encodeURIComponent(this.searchTerm)}`
+        }
+        if (this.selectedCategory) {
+          url += `&category_id=${this.selectedCategory}`
+        }
+        if (this.priceFilter !== 'all') {
+          url += `&hasPrices=${this.priceFilter}`
+        }
+
+        const response = await apiService.get(url)
+
+        // Manejar ambos formatos: array directo o { data, pagination }
+        const raw = response.data
+        const list = Array.isArray(raw) ? raw : (Array.isArray(raw?.data) ? raw.data : [])
+        this.products = list.map(this.mapProduct)
+
+        if (raw?.pagination) {
+          this.pagination = raw.pagination
+          this.totalPages = raw.pagination.totalPages || 1
+          this.currentPage = raw.pagination.page || 1
+        } else {
+          // Sin paginación desde el servidor: una sola página
+          this.totalPages = 1
+          this.currentPage = 1
+        }
+      } catch (error) {
+        console.error('Error cargando productos:', error)
+        if (!suppressAlert) alert('Error al cargar los productos. Revise la consola.')
+        this.products = []
+        this.totalPages = 1
+        this.currentPage = 1
+      } finally {
+        this.loading = false
+      }
     },
 
     async openProductModal(product = null) {                                   
@@ -407,34 +461,19 @@ export default {
       }
       this.showProductModal = true;                                          
     },
-    closeProductModal() {                                                     
-      this.showProductModal = false;
-    },
-    onCategoryChange() {
-      // Si elige "all", reseteamos priceFilter a "all"
-      if (this.categoryFilter === 'all') {
-        this.priceFilter = 'all';
-      }
-  this.currentPage = 1;
-    },
+    closeProductModal() { this.showProductModal = false; },
 
-    async handleProductSaved() {                                              
-      // Cerrar modal y refrescar la lista desde el backend para mantener consistencia
+    async handleProductSaved() {
       this.closeProductModal();
       this.editingProduct = null;
-      try {
-        await this.fetchProducts();
-      } catch (err) {
-        console.error('Error refrescando productos tras guardar:', err);
-      }
+      try { await this.loadProducts({ suppressAlert: true }) } catch (e) { /* noop */ }
     },
 
     async deleteProduct(product) {                                             
       if (!confirm(`¿Eliminar “${product.nombre}”?`)) return;
       try {
         await apiService.delete(`/api/products/${product.producto_id}`);
-        // Volver a cargar para asegurar estado consistente (precios, etc.)
-        await this.fetchProducts();
+        await this.loadProducts({ suppressAlert: true, page: this.currentPage });
       } catch (err) {
         console.error('Error eliminando producto:', err);
         alert('Error al eliminar el producto. Revise la consola.');
@@ -451,7 +490,7 @@ export default {
       this.priceModalInstance ??= new bootstrap.Modal(el);
       this.priceModalInstance.show();
     },
-    closePriceModal() { this.priceModalInstance?.hide(); },                   
+  closePriceModal() { this.priceModalInstance?.hide(); },                   
 
     updatePrice() {                                                           
         const { productId, nuevoPrecio, fechaVigencia } = this.modalData;
@@ -464,10 +503,7 @@ export default {
           vigencia_desde: fechaVigencia, // YYYY-MM-DD
           precio_venta: Number(nuevoPrecio)
         };
-        apiService.post(
-          this.api(`/api/prices/${productId}/prices/schedule`),
-          payload
-        )
+        apiService.post(`/api/prices/${productId}/prices/schedule`, payload)
         .then(({ data }) => {
           // Si el backend responde { ok: true } asumimos éxito
           if (data?.ok) {
@@ -503,7 +539,11 @@ export default {
     },
 
     /* ---------- Otros ---------- */
-    changePage(page) { this.currentPage = page; },                            // ≡
+    changePage(page) {
+      if (page < 1 || page > this.totalPages) return
+      this.currentPage = page
+      this.loadProducts({ suppressAlert: true, page })
+    },
 
     formatDate(date) {                                                        // ≡
       const d = new Date(date);
@@ -515,27 +555,49 @@ export default {
     formateaNumero(n) {
       if (n === null || n === undefined) return '';
       return Number(Math.round(n)).toLocaleString('es-PY', { minimumFractionDigits: 0 });
+    },
+
+    clearFilters() {
+      this.searchTerm = ''
+      this.selectedCategory = ''
+      this.selectedCategoryName = ''
+      this.categorySearchTerm = ''
+      this.priceFilter = 'all'
+      this.currentPage = 1
+      this.loadProducts({ suppressAlert: true, page: 1 })
     }
   },
 
   watch: {
-    // Reset page when filters change
-    searchTerm() { this.currentPage = 1; },
-    categoryFilter() { this.currentPage = 1; },
-    priceFilter() { this.currentPage = 1; },
-    // Asegurar que currentPage nunca exceda totalPages después de aplicar filtros
-    filteredProducts() {
-      const total = this.totalPages;
-      if (this.currentPage > total && total > 0) {
-        this.currentPage = total; // Ajustar a última página disponible
+    // Debounce para búsqueda
+    searchTerm: {
+      handler(newVal, oldVal) {
+        if (this._searchTimeout) clearTimeout(this._searchTimeout)
+        if (newVal !== oldVal) this.currentPage = 1
+        this._searchTimeout = setTimeout(() => {
+          this.loadProducts({ suppressAlert: true, page: 1 })
+        }, 500)
       }
-      if (total === 0) {
-        this.currentPage = 1; // Evitar página 0 visualmente
+    },
+    // Cuando cambia la categoría
+    selectedCategory(newVal, oldVal) {
+      if (newVal !== oldVal) {
+        this.currentPage = 1
+        this.loadProducts({ suppressAlert: true, page: 1 })
+      }
+    },
+    priceFilter(newVal, oldVal) {
+      if (newVal !== oldVal) {
+        this.currentPage = 1
+        this.loadProducts({ suppressAlert: true, page: 1 })
       }
     }
   },
 
-  mounted() { this.fetchProducts(); }                                         // ≡
+  mounted() {
+    this.loadProducts()
+    this.loadCategories()
+  }
 };
 </script>
 
@@ -546,6 +608,24 @@ export default {
 .selectable-row:hover {
   background-color: #f8f9fa;
 }
+</style>
+/* Estilos para el dropdown de categorías */
+<style scoped>
+.category-dropdown { background: white; }
+.dropdown-item {
+  transition: background-color 0.15s ease-in-out;
+  border-bottom: 1px solid #f8f9fa;
+}
+.dropdown-item:last-child { border-bottom: none; }
+.dropdown-item:hover,
+.hover-bg-light:hover { background-color: #f8f9fa; }
+.cursor-pointer { cursor: pointer; }
+
+/* Scrollbar */
+.category-dropdown::-webkit-scrollbar { width: 8px; }
+.category-dropdown::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 4px; }
+.category-dropdown::-webkit-scrollbar-thumb { background: #888; border-radius: 4px; }
+.category-dropdown::-webkit-scrollbar-thumb:hover { background: #555; }
 </style>
 /*    {
         "producto_id": 22,
