@@ -516,9 +516,27 @@ export default {
         
         if (this.editMode && this.clienteData) {
           // Modo edición: actualizar cliente existente
-          response = await apiService.put(`${process.env.VUE_APP_API_BASE_URL}/api/clients/${this.clienteData.cliente_id || this.clienteData.id}`, this.form);
+          const clienteId = this.clienteData.cliente_id || this.clienteData.id;
+          
+          // Preparar el body solo con los campos básicos requeridos
+          const body = {
+            nombre_completo: this.form.nombre_completo,
+            ci: this.form.nro_documento, // CI usa el valor de nro_documento
+            nro_documento: this.form.nro_documento,
+            ruc: this.form.ruc,
+            direccion: this.form.direccion,
+            telefono: this.form.telefono,
+            email: this.form.email,
+            nombre_fantasia: this.form.nombre_fantasia,
+            condiciones_pago: this.form.condiciones_pago
+          };
+          
+          response = await apiService.put(
+            `${process.env.VUE_APP_API_BASE_URL}/api/clients/${clienteId}`, 
+            body
+          );
         } else {
-          // Modo creación: crear nuevo cliente
+          // Modo creación: crear nuevo cliente (envía todo el form)
           response = await apiService.post(`${process.env.VUE_APP_API_BASE_URL}/api/clients`, this.form);
         }
         
