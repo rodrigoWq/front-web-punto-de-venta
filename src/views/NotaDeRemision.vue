@@ -29,9 +29,10 @@
               <input
                 v-if="!readOnly"
                 id="fecha_emision"
-                type="date"
-                v-model="notaData.fecha_emision"
+                type="text"
+                ref="fechaEmisionInput"
                 class="form-control"
+                :placeholder="DATE_PLACEHOLDER"
               />
               <input
                 v-else
@@ -148,9 +149,10 @@
               <label class="form-label">Fecha de Vencimiento</label>
               <input
                 v-if="!readOnly"
-                type="date"
-                v-model="productoData.fechaVencimiento"
+                type="text"
+                ref="fechaVencimientoInput"
                 class="form-control"
+                :placeholder="DATE_PLACEHOLDER"
               />
               <input
                 v-else
@@ -294,6 +296,9 @@ import ProviderSelect from '@/components/ProviderSelect.vue';
 import RegistrarProveedorModal from '@/components/RegistrarProveedorModal.vue';
 import RegisterProductModal from '@/components/RegistrarProductoModal.vue';
 import ProveedoresView from '@/views/ProveedoresView.vue';
+import flatpickr from 'flatpickr';
+import 'flatpickr/dist/flatpickr.css';
+import { Spanish } from 'flatpickr/dist/l10n/es.js';
 
 export default {
   name: 'NotaDeRemision',
@@ -310,6 +315,12 @@ export default {
   props: ['id'], // Recibe el id como prop
   data() {
     return {
+      DATE_PICKER_FORMAT: 'd/m/Y',
+      DATE_PLACEHOLDER: 'dd/mm/yyyy',
+      fechaEmisionPicker: null,
+      fechaVencimientoPicker: null,
+      updatingFechaEmision: false,
+      updatingFechaVencimiento: false,
       notaData: {
         nro_nota_remision: '',
         timbrado: '',
@@ -355,6 +366,16 @@ export default {
       originalProducto: null
     };
   },
+  watch: {
+    'notaData.fecha_emision'(newVal) {
+      if (this.updatingFechaEmision) return;
+      this.updatePickerDate(this.fechaEmisionPicker, newVal);
+    },
+    'productoData.fechaVencimiento'(newVal) {
+      if (this.updatingFechaVencimiento) return;
+      this.updatePickerDate(this.fechaVencimientoPicker, newVal);
+    }
+  },
   methods: {
     // Devuelve la fecha actual en formato "YYYY-MM-DD" (compatible con input type=date)
     todayISO() {
@@ -381,6 +402,110 @@ export default {
         return `${dd}/${mm}/${yy}`;
       } catch (_) {
         return '';
+      }
+    },
+    ddmmyyyyToISO(value) {
+      if (!value) return '';
+      const trimmed = value.trim();
+      if (!/^\d{2}\/\d{2}\/\d{4}$/.test(trimmed)) return '';
+      const [day, month, year] = trimmed.split('/');
+      return `${year}-${month}-${day}`;
+    },
+    isoStringToDate(iso) {
+      if (!iso) return null;
+      const match = /^\d{4}-\d{2}-\d{2}$/.exec(iso.trim());
+      if (!match) {
+        const parsed = new Date(iso);
+        return isNaN(parsed.getTime()) ? null : parsed;
+      }
+      const [year, month, day] = iso.split('-').map(Number);
+      if (!year || !month || !day) return null;
+      return new Date(year, month - 1, day);
+    },
+    initFechaEmisionPicker() {
+      const input = this.$refs.fechaEmisionInput;
+      if (!input) return;
+      this.fechaEmisionPicker = flatpickr(input, {
+        dateFormat: this.DATE_PICKER_FORMAT,
+        locale: Spanish,
+        defaultDate: this.isoStringToDate(this.notaData.fecha_emision),
+        allowInput: true,
+        onValueUpdate: (_, dateStr) => this.handleFechaEmisionInput(dateStr),
+        onClose: (_, dateStr, instance) => {
+          if (!dateStr) {
+            this.handleFechaEmisionInput(instance.input.value);
+          }
+        }
+      });
+      this.updatePickerDate(this.fechaEmisionPicker, this.notaData.fecha_emision);
+    },
+    initFechaVencimientoPicker() {
+      const input = this.$refs.fechaVencimientoInput;
+      if (!input) return;
+      this.fechaVencimientoPicker = flatpickr(input, {
+        dateFormat: this.DATE_PICKER_FORMAT,
+        locale: Spanish,
+        defaultDate: this.isoStringToDate(this.productoData.fechaVencimiento),
+        allowInput: true,
+        onValueUpdate: (_, dateStr) => this.handleFechaVencimientoInput(dateStr),
+        onClose: (_, dateStr, instance) => {
+          if (!dateStr) {
+            this.handleFechaVencimientoInput(instance.input.value);
+          }
+        }
+      });
+      this.updatePickerDate(this.fechaVencimientoPicker, this.productoData.fechaVencimiento);
+    },
+    handleFechaEmisionInput(rawValue) {
+      const trimmed = (rawValue || '').trim();
+      if (!trimmed) {
+        this.updatingFechaEmision = true;
+        this.notaData.fecha_emision = '';
+        this.$nextTick(() => {
+          this.updatingFechaEmision = false;
+        });
+        return;
+      }
+      const iso = this.ddmmyyyyToISO(trimmed);
+      if (!iso) return;
+      this.updatingFechaEmision = true;
+      this.notaData.fecha_emision = iso;
+      this.$nextTick(() => {
+        this.updatingFechaEmision = false;
+      });
+    },
+    handleFechaVencimientoInput(rawValue) {
+      const trimmed = (rawValue || '').trim();
+      if (!trimmed) {
+        this.updatingFechaVencimiento = true;
+        this.productoData.fechaVencimiento = '';
+        this.$nextTick(() => {
+          this.updatingFechaVencimiento = false;
+        });
+        return;
+      }
+      const iso = this.ddmmyyyyToISO(trimmed);
+      if (!iso) return;
+      this.updatingFechaVencimiento = true;
+      this.productoData.fechaVencimiento = iso;
+      this.$nextTick(() => {
+        this.updatingFechaVencimiento = false;
+      });
+    },
+    updatePickerDate(picker, iso) {
+      if (!picker) return;
+      if (!iso) {
+        picker.clear();
+        return;
+      }
+      const dateObj = this.isoStringToDate(iso);
+      if (!dateObj) {
+        picker.clear();
+        return;
+      }
+      const desired = this.formatDateDisplay(iso);
+      if (picker.input.value !== desired) {
+        picker.setDate(dateObj, false);
       }
     },
     async autocompletarProducto() {
@@ -627,6 +752,23 @@ export default {
     } else {
       // Nueva nota: fecha de emisión hoy por defecto
       this.notaData.fecha_emision = this.todayISO();
+    }
+
+    if (!this.readOnly) {
+      this.$nextTick(() => {
+        this.initFechaEmisionPicker();
+        this.initFechaVencimientoPicker();
+      });
+    }
+  },
+  beforeUnmount() {
+    if (this.fechaEmisionPicker) {
+      this.fechaEmisionPicker.destroy();
+      this.fechaEmisionPicker = null;
+    }
+    if (this.fechaVencimientoPicker) {
+      this.fechaVencimientoPicker.destroy();
+      this.fechaVencimientoPicker = null;
     }
   }
 };
