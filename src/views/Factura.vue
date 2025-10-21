@@ -71,9 +71,12 @@
                 <ProviderSelect
                   ref="providerSelect"
                   v-model="selectedProviderInput"
-                  :disabled="true"
+                  :disabled="readOnly && !fromDeliveryNote"
                   @provider-selected="onProviderSelected"
                   @register="openProviderModal"
+                  @input-blur="buscarProveedorPorDocumento"
+                  @input-enter="buscarProveedorPorDocumento"
+                  @keydown.enter.prevent="buscarProveedorPorDocumento"
                   :bare="true"
                   :noList="true"
                 />
@@ -106,15 +109,25 @@
           <div class="detail-entry">
             <div class="detail-field code">
               <label class="form-label">Código</label>
-              <input
-                type="text"
-                v-model="productoData.codigo_producto"
-                class="form-control"
-                placeholder="Código"
-                @blur="autocompletarProducto"
-                @keydown.enter.prevent="autocompletarProducto"
-                :readonly="readOnly"
-              />
+              <div class="input-group code-input-group">
+                <input
+                  type="text"
+                  v-model="productoData.codigo_producto"
+                  class="form-control"
+                  placeholder="Código de barra"
+                  @blur="autocompletarProducto"
+                  @keydown.enter.prevent="autocompletarProducto"
+                  :readonly="readOnly"
+                />
+                <button
+                  type="button"
+                  class="btn btn-outline-primary btn-sm px-3"
+                  @click="toggleBuscarProducto"
+                  :disabled="readOnly && !fromDeliveryNote"
+                >
+                  Buscar
+                </button>
+              </div>
             </div>
             <div class="detail-field description">
               <label class="form-label">Descripción</label>
@@ -312,6 +325,7 @@
 
       <RegistrarProveedorModal
         v-model:showModal="showProviderModal"
+        :initial-ruc="initialProviderDocument"
         @provider-registered="onProviderRegistered"
       />
       <RegisterProductModal
@@ -337,6 +351,17 @@
           </div>
         </div>
       </div>
+      <div v-if="mostrarSelectorProducto" class="overlay-backdrop" @click.self="cerrarSelectorProducto">
+        <div class="overlay-panel card">
+          <div class="overlay-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Seleccionar Producto</h5>
+            <button type="button" class="btn-close" @click="cerrarSelectorProducto"></button>
+          </div>
+          <div class="overlay-body">
+            <ProductSelector @product-selected="onProductoSeleccionado" />
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -352,6 +377,7 @@ import RegistrarProveedorModal    from '@/components/RegistrarProveedorModal.vue
 import RegisterProductModal from '@/components/RegistrarProductoModal.vue';
 import AppNavbar from '@/components/AppNavbar.vue';
 import ProveedoresView from '@/views/ProveedoresView.vue';
+import ProductSelector from '@/components/ProductSelector.vue';
 
 export default {
   name: 'FacturaView',
@@ -362,7 +388,8 @@ export default {
   ProviderSelect,
   RegistrarProveedorModal,
   RegisterProductModal,
-  ProveedoresView
+  ProveedoresView,
+  ProductSelector
   },
   props: {
     datosParaFactura: {
@@ -400,7 +427,10 @@ export default {
           },
           selectedProviderInput: '',
           productoEditandoIndex: null, // Índice para identificar el producto que se está editando
-          mostrarSelectorProveedor: false
+          mostrarSelectorProveedor: false,
+          mostrarSelectorProducto: false,
+          initialProviderDocument: '',
+          skipProviderLookupOnce: false
       };
   },
   methods: {
@@ -418,12 +448,74 @@ export default {
       this.mostrarSelectorProveedor = false;
       document.body.style.overflow = '';
     },
+    async buscarProveedorPorDocumento() {
+      if (this.readOnly && !this.fromDeliveryNote) return;
+
+      const documento = (this.selectedProviderInput || '').trim();
+      if (!documento) return;
+
+      if (this.skipProviderLookupOnce) {
+        this.skipProviderLookupOnce = false;
+        return;
+      }
+
+      try {
+        const { data } = await apiService.get(
+          `${process.env.VUE_APP_API_BASE_URL}/api/providers/document/${encodeURIComponent(documento)}`
+        );
+
+        if (data) {
+          this.onProviderSelected({
+            nro_documento: data.nro_documento || documento,
+            nombre: data.nombre || data.nombre_fantasia || ''
+          });
+          this.factura.direccion = data.direccion || this.factura.direccion;
+        } else {
+          this.abrirModalRegistroProveedor(documento);
+        }
+      } catch (error) {
+        if (error?.response?.status === 404) {
+          this.abrirModalRegistroProveedor(documento);
+        } else {
+          console.error('Error al buscar proveedor por documento:', error);
+          alert('No fue posible buscar el proveedor. Intente nuevamente.');
+        }
+      }
+    },
+    abrirModalRegistroProveedor(documento) {
+      this.initialProviderDocument = documento;
+      this.showProviderModal = true;
+    },
+    toggleBuscarProducto() {
+      if (this.readOnly && !this.fromDeliveryNote) return;
+      this.mostrarSelectorProducto = !this.mostrarSelectorProducto;
+      document.body.style.overflow = this.mostrarSelectorProducto ? 'hidden' : '';
+      this.$nextTick(() => {
+        if (this.mostrarSelectorProducto) {
+          const input = document.querySelector('.product-selector input[type="text"]');
+          if (input) input.focus();
+        }
+      });
+    },
+    cerrarSelectorProducto() {
+      this.mostrarSelectorProducto = false;
+      document.body.style.overflow = '';
+    },
     onProveedorSeleccionado(provider) {
       this.onProviderSelected({
         nro_documento: provider.nro_documento,
         nombre: provider.nombre
       });
       this.cerrarSelectorProveedor();
+    },
+    async onProductoSeleccionado(product) {
+      if (!product) return;
+      this.productoData.codigo_producto = product.code || '';
+      this.productoData.producto_id = product.id || null;
+      this.productoData.descripcion = product.name || '';
+      this.cerrarSelectorProducto();
+      await this.$nextTick();
+      this.autocompletarProducto();
     },
     actualizarFechaEmision(isoDate) {
       // Recibe fecha en formato ISO (YYYY-MM-DD) del input date
@@ -525,9 +617,11 @@ export default {
 
     onProviderSelected(prov) {
       console.log('onInput Call');
+      this.skipProviderLookupOnce = true;
       this.factura.ruc = prov.nro_documento;
       this.factura.razonSocial = prov.nombre;
       this.selectedProviderInput = prov.nro_documento;
+      this.initialProviderDocument = prov.nro_documento;
     },
 
 
@@ -569,7 +663,7 @@ export default {
         this.closeRegisterModal(); // Cerrar el modal
        },
       openProviderModal(){
-        this.selectedProviderInput='';     // oculta la “píldora”
+        this.initialProviderDocument = (this.selectedProviderInput || '').trim();
         this.showProviderModal   =true;    // abre el modal
       },
       onProviderRegistered(newProv){
@@ -580,7 +674,9 @@ export default {
         })
         this.showProviderModal=false;      // cierra el modal
         this.$nextTick(() => {
-          this.$refs.providerSelect.loadProviders();
+          if (this.$refs.providerSelect && typeof this.$refs.providerSelect.loadProviders === 'function') {
+            this.$refs.providerSelect.loadProviders();
+          }
         });
       },
       agregarProducto() {
@@ -936,13 +1032,21 @@ export default {
 
 .detail-entry {
   display: grid;
-  grid-template-columns: 120px minmax(180px, 1fr) 100px 160px 150px;
+  grid-template-columns: minmax(200px, 1fr) minmax(240px, 1.5fr) 100px 160px 150px;
   gap: 16px;
   padding: 16px 18px;
   border: 1px solid #d9d9d9;
   border-radius: 10px;
   background: #fdfdfd;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+.code-input-group .form-control {
+  min-width: 0;
+}
+
+.code-input-group .btn {
+  flex: 0 0 auto;
 }
 
 .detail-field label {

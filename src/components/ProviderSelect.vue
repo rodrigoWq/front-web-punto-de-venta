@@ -5,6 +5,8 @@
       :list="noList ? null : 'providers-list'"
       v-model="inputValue"
       @input="onInput"
+      @blur="handleBlur"
+      @keydown.enter.prevent="handleEnter"
       :readonly="disabled"
       class="form-control"
       :placeholder="placeholder || 'Buscar o crear proveedor...'"
@@ -31,6 +33,8 @@
       :list="noList ? null : 'providers-list'"
       v-model="inputValue"
       @input="onInput"
+      @blur="handleBlur"
+      @keydown.enter.prevent="handleEnter"
       :readonly="disabled"
       class="form-control"
       :placeholder="placeholder || 'Buscar o crear proveedor...'"
@@ -51,7 +55,7 @@
   
   export default {
     name: 'ProviderSelect',
-    emits: ['provider-selected', 'register', 'update:modelValue'],
+    emits: ['provider-selected', 'register', 'update:modelValue', 'input-blur', 'input-enter'],
     model: { prop: 'modelValue', event: 'update:modelValue' },
     props: {
       modelValue: { type: String, default: '' },
@@ -94,6 +98,12 @@
       }
     },
     methods: {
+      handleBlur() {
+        this.$emit('input-blur', this.inputValue);
+      },
+      handleEnter() {
+        this.$emit('input-enter', this.inputValue);
+      },
       async loadProviders() {
         try {
           const { data } = await apiService.get(

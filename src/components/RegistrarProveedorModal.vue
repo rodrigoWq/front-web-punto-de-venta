@@ -509,9 +509,19 @@ export default {
             // Nuevos campos - Direcciones estructuradas
             direcciones: []
           };
+          if (this.initialRuc) {
+            this.providerData.nro_documento = this.initialRuc;
+            this.providerData.ruc = this.initialRuc;
+          }
         }
       }
     },
+    initialRuc(newVal) {
+      if (this.showModal && !this.isEditMode) {
+        this.providerData.nro_documento = newVal || '';
+        this.providerData.ruc = newVal || '';
+      }
+    }
   },
   methods: {
     handleSave() {
