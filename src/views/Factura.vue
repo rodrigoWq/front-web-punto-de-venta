@@ -134,6 +134,7 @@
                 v-model.number="productoData.cantidad"
                 class="form-control"
                 placeholder="Cantidad"
+                min="0"
                 @keydown.enter.prevent
                 :readonly="readOnly"
               />
@@ -196,6 +197,7 @@
                   v-if="productoEditandoIndex === index"
                   v-model.number="productoData.cantidad"
                   type="number"
+                  min="0"
                   class="form-control form-control-sm"
                 />
                 <span v-else>{{ producto.cantidad }}</span>
@@ -505,7 +507,7 @@ export default {
             id_detalle: det.id_detalle,                 // lo espera el modelo
             producto_id: det.producto_id,              // idem
             codigo_producto: det.codigo_barras || det.codigo_producto || '',
-            descripcion:    det.descripcion || '',
+            descripcion:    det.nombre_producto || det.descripcion || '',
             cantidad:       Number(det.cantidad),
             precio_unitario_bruto: Number(det.precio_unitario_bruto),
             precio_unitario_neto:  Number(det.precio_unitario_neto),

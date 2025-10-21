@@ -122,6 +122,7 @@
                 v-model="productoData.cantidad"
                 class="form-control"
                 placeholder="Cantidad"
+                min="0"
                 :readonly="readOnly"
               />
             </div>
@@ -194,6 +195,7 @@
                   v-if="productoEditandoIndex === index"
                   v-model.number="productoData.cantidad"
                   type="number"
+                  min="0"
                   class="form-control form-control-sm"
                 />
                 <span v-else>{{ producto.cantidad }}</span>
