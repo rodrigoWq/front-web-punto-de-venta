@@ -170,10 +170,13 @@
                   <div class="col-md-6">
                     <label for="vigencia" class="form-label">Fecha de Vigencia</label>
                     <input
-                      type="date"
+                      ref="vigenciaInput"
+                      type="text"
                       id="vigencia"
                       class="form-control"
                       v-model="modalData.fechaVigencia"
+                      placeholder="dd/mm/aaaa"
+                      autocomplete="off"
                       required
                     />
                   </div>
@@ -196,12 +199,17 @@
 
 
 <script>
-import AppPagination  from '../../components/AppPagination.vue'; // Importa la paginación
+import AppPagination     from '../../components/AppPagination.vue'; // Importa la paginación
 import RegistrarProducto from '../../components/RegistrarProductoModal.vue';
           // 
 import apiService        from '../../services/apiService.js'; // Importa el servicio API
                   // 
 import * as bootstrap    from 'bootstrap';                                    // 
+import flatpickr         from 'flatpickr';
+import 'flatpickr/dist/flatpickr.css';
+import { Spanish }       from 'flatpickr/dist/l10n/es.js';
+
+const DISPLAY_DATE_FORMAT = 'd/m/Y';
 
 export default {
   name: 'ProductosView',                                                      // 
@@ -243,12 +251,13 @@ export default {
       editingProduct: null,
       productModalInstance: null,
       priceModalInstance: null,
+      vigenciaPicker: null,
 
       // Estructura de datos para precio
       modalData: {
         productId:    null,
         nuevoPrecio:  0,
-        fechaVigencia: this.formatDate(new Date())
+        fechaVigencia: this.formatDateDisplay(new Date())
       }
     };
   },
@@ -482,13 +491,21 @@ export default {
 
     /* ---------- Precio ---------- */
     openPriceModal(product) {                                                 
-      this.modalData.productId      = product.producto_id;
-      this.modalData.nuevoPrecio    = product.precio_venta ?? 0;
-      this.modalData.fechaVigencia  = this.formatDate(new Date());
+      this.modalData.productId     = product.producto_id;
+      this.modalData.nuevoPrecio   = product.precio_venta ?? 0;
+
+      const baseDate = product?.vigencia_desde || new Date();
+      const displayDate = this.formatDateDisplay(baseDate) || this.formatDateDisplay(new Date());
+      this.modalData.fechaVigencia = displayDate;
 
       const el = document.getElementById('updatePriceModal');
       this.priceModalInstance ??= new bootstrap.Modal(el);
-      this.priceModalInstance.show();
+
+      this.$nextTick(() => {
+        this.ensureVigenciaPicker();
+        this.syncVigenciaPicker();
+        this.priceModalInstance.show();
+      });
     },
   closePriceModal() { this.priceModalInstance?.hide(); },                   
 
@@ -498,9 +515,14 @@ export default {
           console.error('No productId for price update');
           return;
         }
+        const vigenciaISO = this.convertDisplayToISO(fechaVigencia);
+        if (!vigenciaISO) {
+          alert('Seleccione una fecha de vigencia válida.');
+          return;
+        }
         const payload = {
           cantidad_desde: 1, // Por ahora fijo según requerimiento
-          vigencia_desde: fechaVigencia, // YYYY-MM-DD
+          vigencia_desde: vigenciaISO, // YYYY-MM-DD
           precio_venta: Number(nuevoPrecio)
         };
         apiService.post(`/api/prices/${productId}/prices/schedule`, payload)
@@ -511,16 +533,16 @@ export default {
             const today = this.formatDate(new Date());
             const prod = this.products.find(p => p.producto_id === productId);
             if (prod) {
-              if (fechaVigencia <= today) {
+              if (vigenciaISO <= today) {
                 prod.precio_venta = Number(nuevoPrecio);
-                prod.vigencia_desde = fechaVigencia;
+                prod.vigencia_desde = vigenciaISO;
                 prod.vigencia_hasta = null;
               }
               // Agregar al historial local
               if (Array.isArray(prod._precios_vigentes)) {
                 prod._precios_vigentes.unshift({
                   precio_venta: String(nuevoPrecio),
-                  vigencia_desde: fechaVigencia + 'T00:00:00.000Z',
+                  vigencia_desde: vigenciaISO + 'T00:00:00.000Z',
                   vigencia_hasta: null,
                   cantidad_desde: 1,
                   cantidad_hasta: null
@@ -551,6 +573,55 @@ export default {
       const mm   = (`0${d.getMonth()+1}`).slice(-2);
       const dd   = (`0${d.getDate()}`).slice(-2);
       return `${yyyy}-${mm}-${dd}`;
+    },
+    formatDateDisplay(date) {
+      const d = new Date(date);
+      if (Number.isNaN(d.getTime())) return '';
+      const dd = (`0${d.getDate()}`).slice(-2);
+      const mm = (`0${d.getMonth()+1}`).slice(-2);
+      const yyyy = d.getFullYear();
+      return `${dd}/${mm}/${yyyy}`;
+    },
+    convertDisplayToISO(displayDate) {
+      if (!displayDate || !/^\d{2}\/\d{2}\/\d{4}$/.test(displayDate)) return null;
+      const [day, month, year] = displayDate.split('/');
+      return `${year}-${month}-${day}`;
+    },
+    parseDisplayDate(displayDate) {
+      const iso = this.convertDisplayToISO(displayDate);
+      return iso ? new Date(`${iso}T00:00:00`) : null;
+    },
+    ensureVigenciaPicker() {
+      if (this.vigenciaPicker) return;
+      this.initVigenciaPicker();
+    },
+    initVigenciaPicker() {
+      const input = this.$refs.vigenciaInput;
+      if (!input) return;
+      if (this.vigenciaPicker) {
+        this.vigenciaPicker.destroy();
+      }
+      this.vigenciaPicker = flatpickr(input, {
+        dateFormat: DISPLAY_DATE_FORMAT,
+        locale: Spanish,
+        defaultDate: this.parseDisplayDate(this.modalData.fechaVigencia),
+        allowInput: true,
+        onChange: (_, dateStr) => {
+          this.modalData.fechaVigencia = dateStr || '';
+        }
+      });
+    },
+    syncVigenciaPicker() {
+      if (!this.vigenciaPicker) {
+        this.initVigenciaPicker();
+      }
+      if (!this.vigenciaPicker) return;
+      const dateObj = this.parseDisplayDate(this.modalData.fechaVigencia);
+      if (dateObj) {
+        this.vigenciaPicker.setDate(dateObj, false, DISPLAY_DATE_FORMAT);
+      } else {
+        this.vigenciaPicker.clear();
+      }
     },
     formateaNumero(n) {
       if (n === null || n === undefined) return '';
@@ -602,6 +673,16 @@ export default {
     }
     this.loadProducts()
     this.loadCategories()
+    this.$nextTick(() => {
+      this.initVigenciaPicker();
+    })
+  },
+
+  beforeUnmount() {
+    if (this.vigenciaPicker) {
+      this.vigenciaPicker.destroy();
+      this.vigenciaPicker = null;
+    }
   }
 };
 </script>
