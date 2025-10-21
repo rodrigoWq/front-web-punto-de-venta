@@ -100,9 +100,9 @@
           <thead class="table-light">
             <tr>
               <th class="col-nombre">Nombre</th>
-              <th class="text-end col-price">Precio Actual</th>
-              <th class="col-categoria">Categoría</th>
               <th class="text-end col-price-compra">Precio última compra</th>
+              <th class="col-categoria">Categoría</th>
+              <th class="text-end col-price">Precio de Venta</th>
               <th v-if="!selectorMode" class="text-end col-actions">Acciones</th>
             </tr>
           </thead>
@@ -114,9 +114,9 @@
               @click="selectorMode && seleccionarProducto(prod)"
             >
               <td class="col-nombre">{{ prod.nombre }}</td>
-              <td class="text-end col-price">{{ prod.precio_venta ? formateaNumero(prod.precio_venta) : 'Sin precio' }}</td>
-              <td class="col-categoria">{{ prod.categoria }}</td>
               <td class="text-end col-price-compra">{{ prod.precio_ultima_compra ? formateaNumero(prod.precio_ultima_compra) : 'Sin precio' }}</td>
+              <td class="col-categoria">{{ prod.categoria }}</td>
+              <td class="text-end col-price">{{ prod.precio_venta ? formateaNumero(prod.precio_venta) : 'Sin precio' }}</td>
               <td v-if="!selectorMode" class="text-end col-actions">
                 <div class="d-inline-flex flex-nowrap gap-1 actions-wrapper">
                   <button class="btn btn-success btn-sm" @click="openPriceModal(prod)">$ Precio Venta</button>
