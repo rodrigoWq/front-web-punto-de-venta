@@ -68,12 +68,14 @@
                 <ProviderSelect
                   ref="providerSelect"
                   v-model="selectedProviderInput"
-                  :disabled="true"
+                  :disabled="readOnly"
                   :bare="true"
                   :noList="true"
                   placeholder="RUC / Nombre del proveedor"
                   @provider-selected="onProviderSelected"
-                  @register="() => showProviderModal = true"
+                  @register="openProviderModal"
+                  @input-blur="buscarProveedorPorDocumento"
+                  @input-enter="buscarProveedorPorDocumento"
                 />
                 <button
                   type="button"
@@ -105,20 +107,32 @@
           <div class="detail-entry">
             <div class="detail-field code">
               <label class="form-label">Código de Barra</label>
-              <input
-                type="text"
-                v-model="productoData.codigo_barras"
-                class="form-control"
-                placeholder="Código de barra"
-                @blur="autocompletarProducto"
-                @keydown.enter.prevent
-                :readonly="readOnly"
-              />
+              <div class="input-group code-input-group">
+                <input
+                  type="text"
+                  v-model="productoData.codigo_barras"
+                  class="form-control"
+                  placeholder="Código de barra"
+                  @blur="autocompletarProducto"
+                  @keydown.enter.prevent="autocompletarProducto"
+                  :readonly="readOnly"
+                />
+                <button
+                  type="button"
+                  class="btn btn-outline-primary btn-sm px-3"
+                  @click="toggleBuscarProducto"
+                  :disabled="readOnly"
+                  title="Buscar producto"
+                >
+                  Buscar
+                </button>
+              </div>
             </div>
             <div class="detail-field qty">
               <label class="form-label">Cantidad</label>
               <input
                 type="number"
+                ref="cantidadInput"
                 v-model="productoData.cantidad"
                 class="form-control"
                 placeholder="Cantidad"
@@ -265,6 +279,7 @@
 
       <RegistrarProveedorModal
         v-model:showModal="showProviderModal"
+        :initial-ruc="initialProviderDocument"
         @provider-registered="onProviderRegistered"
       />
 
@@ -284,6 +299,17 @@
           </div>
         </div>
       </div>
+        <div v-if="mostrarSelectorProducto" class="overlay-backdrop" @click.self="cerrarSelectorProducto">
+          <div class="overlay-panel card">
+            <div class="overlay-header d-flex justify-content-between align-items-center">
+              <h5 class="mb-0">Seleccionar Producto</h5>
+              <button type="button" class="btn-close" @click="cerrarSelectorProducto"></button>
+            </div>
+            <div class="overlay-body">
+              <ProductSelector @product-selected="onProductoSeleccionado" />
+            </div>
+          </div>
+        </div>
     </div>
   </div>
 </template>
@@ -298,6 +324,7 @@ import ProviderSelect from '@/components/ProviderSelect.vue';
 import RegistrarProveedorModal from '@/components/RegistrarProveedorModal.vue';
 import RegisterProductModal from '@/components/RegistrarProductoModal.vue';
 import ProveedoresView from '@/views/ProveedoresView.vue';
+import ProductSelector from '@/components/ProductSelector.vue';
 import flatpickr from 'flatpickr';
 import 'flatpickr/dist/flatpickr.css';
 import { Spanish } from 'flatpickr/dist/l10n/es.js';
@@ -311,7 +338,8 @@ export default {
     ProviderSelect,
     RegistrarProveedorModal,
     RegisterProductModal,
-    ProveedoresView
+    ProveedoresView,
+    ProductSelector
   
   },
   props: ['id'], // Recibe el id como prop
@@ -353,6 +381,7 @@ export default {
       showRegisterModal: false,
       showProviderModal: false,
       mostrarSelectorProveedor: false,
+      mostrarSelectorProducto: false,
       registerModalTitle: '',
       nuevoProducto: {
         codigo: '',
@@ -365,7 +394,9 @@ export default {
       productos: [],
       notasDeRemision: [],
       productoEditandoIndex: null,
-      originalProducto: null
+      originalProducto: null,
+      initialProviderDocument: '',
+      skipProviderLookupOnce: false
     };
   },
   watch: {
@@ -571,6 +602,47 @@ export default {
         });
       }
     },
+    async buscarProveedorPorDocumento() {
+      if (this.readOnly) return;
+      const documento = (this.selectedProviderInput || '').trim();
+      if (!documento) return;
+
+      if (this.skipProviderLookupOnce) {
+        this.skipProviderLookupOnce = false;
+        return;
+      }
+
+      try {
+        const { data } = await apiService.get(
+          `${process.env.VUE_APP_API_BASE_URL}/api/providers/document/${documento}`
+        );
+
+        if (data) {
+          this.onProviderSelected({
+            nro_documento: data.nro_documento || documento,
+            nombre: data.nombre || data.nombre_razon_social || data.nombre_fantasia || '',
+            direccion: data.direccion || ''
+          });
+        } else {
+          this.abrirModalRegistroProveedor(documento);
+        }
+      } catch (error) {
+        if (error.response && error.response.status === 404) {
+          this.abrirModalRegistroProveedor(documento);
+          return;
+        }
+        console.error('Error al buscar el proveedor por documento:', error);
+      }
+    },
+    abrirModalRegistroProveedor(documento = '') {
+      this.initialProviderDocument = documento;
+      this.showProviderModal = true;
+    },
+    openProviderModal() {
+      if (this.readOnly) return;
+      const documento = (this.selectedProviderInput || '').trim();
+      this.abrirModalRegistroProveedor(documento);
+    },
     cerrarSelectorProveedor() {
       this.mostrarSelectorProveedor = false;
       document.body.style.overflow = '';
@@ -578,6 +650,36 @@ export default {
     onProveedorSeleccionado(prov) {
       this.onProviderSelected(prov);
       this.cerrarSelectorProveedor();
+    },
+    toggleBuscarProducto() {
+      if (this.readOnly) return;
+      this.mostrarSelectorProducto = !this.mostrarSelectorProducto;
+      document.body.style.overflow = this.mostrarSelectorProducto ? 'hidden' : '';
+    },
+    cerrarSelectorProducto() {
+      this.mostrarSelectorProducto = false;
+      document.body.style.overflow = '';
+    },
+    onProductoSeleccionado(producto) {
+      if (!producto) return;
+
+      const codigo = producto.code || producto.codigo_barras || producto.codigo_producto || producto.codigo || producto.barcode || '';
+
+      this.productoData.id = producto.producto_id || producto.id || null;
+      this.productoData.codigo_producto = producto.codigo_producto || codigo;
+      this.productoData.codigo_barras = codigo;
+      this.productoData.descripcion = producto.name || producto.nombre || producto.descripcion || this.productoData.descripcion;
+      this.productoData.unidad_medida = producto.unit || producto.unidad_medida_nombre || producto.unidad_medida || producto.unidad || this.productoData.unidad_medida;
+      if (producto.iva) {
+        this.productoData.iva = producto.iva;
+      }
+
+      this.cerrarSelectorProducto();
+
+      this.$nextTick(() => {
+        const cantidadInput = this.$refs.cantidadInput || document.querySelector('.detail-field.qty input');
+        if (cantidadInput) cantidadInput.focus();
+      });
     },
     cancelarEdicion() {
       // Si quieres revertir el producto en el array:
@@ -589,12 +691,6 @@ export default {
       this.productoEditandoIndex = null;
       this.limpiarCamposProducto();
       this.originalProducto = null;  // ya no se necesita la copia
-    },
-    onProveedorRegistered(nuevoProv) {
-      // Asignas los datos a la nota actual
-      this.notaData.ruc = nuevoProv.ruc;
-      this.notaData.razonSocial = nuevoProv.razonSocial;
-      // Si deseas guardar teléfono en algún lugar, puedes hacerlo también
     },
     registrarProducto() {
       //NotaDeRemisionService.guardarProducto(this.nuevoProducto); // Implementa esta función en el servicio mock
@@ -702,9 +798,16 @@ export default {
       }
     },
     onProviderSelected(prov) {
-      this.notaData.nro_documento        = prov.nro_documento;
-      this.notaData.nombre_razon_social  = prov.nombre;
-      this.selectedProviderInput = prov.nro_documento;
+      if (!prov) return;
+      const documento = `${prov.nro_documento || ''}`.trim();
+      this.skipProviderLookupOnce = true;
+      this.selectedProviderInput = documento;
+      this.notaData.nro_documento = documento;
+      this.notaData.nombre_razon_social = prov.nombre || prov.nombre_razon_social || '';
+      if (prov.direccion) {
+        this.notaData.direccion = prov.direccion;
+      }
+      this.initialProviderDocument = documento;
     },
     editarProducto(index) {
 
@@ -724,11 +827,14 @@ export default {
       this.productoEditandoIndex = null;
     },
     onProviderRegistered(nuevoProv) {
-      this.selectedProviderInput        = nuevoProv.nro_documento || '';
-      this.notaData.nombre_razon_social = nuevoProv.nombre       || '';
-      this.showProviderModal            = false;
+      this.showProviderModal = false;
+      if (nuevoProv) {
+        this.onProviderSelected(nuevoProv);
+      }
       this.$nextTick(() => {
-        this.$refs.providerSelect.loadProviders();
+        if (this.$refs.providerSelect && typeof this.$refs.providerSelect.loadProviders === 'function') {
+          this.$refs.providerSelect.loadProviders();
+        }
       });
     },
     resetNota() {
@@ -743,6 +849,8 @@ export default {
       direccion: '',
       pendiente: false
     };
+    this.selectedProviderInput = '';
+    this.initialProviderDocument = '';
     this.productos = [];
     }
   },
@@ -786,7 +894,7 @@ export default {
 }
 
 .note-paper {
-  max-width: 960px;
+  max-width: 1120px;
   margin: 0 auto;
   background: #fff;
   border: 1px solid #d6d6d6;
@@ -918,7 +1026,12 @@ export default {
 
 .detail-entry {
   display: grid;
-  grid-template-columns: 150px 110px 110px minmax(200px, 1fr) 160px;
+  grid-template-columns:
+    minmax(190px, 1.2fr)
+    minmax(120px, 0.8fr)
+    minmax(140px, 0.9fr)
+    minmax(280px, 2fr)
+    minmax(150px, 1fr);
   gap: 16px;
   padding: 16px 18px;
   border: 1px solid #d9d9d9;
@@ -1015,7 +1128,7 @@ export default {
 
 @media (max-width: 992px) {
   .detail-entry {
-    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   }
 
   .note-header__meta {
