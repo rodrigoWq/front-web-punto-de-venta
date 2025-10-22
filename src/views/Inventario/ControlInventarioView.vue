@@ -756,25 +756,14 @@ async function finalizarCarga() {
 }
 
 // Formatear fecha para Paraguay (GMT-3)
-// El backend puede enviar fechas ISO o fechas lógicas.
-// Para Paraguay usamos zona horaria America/Asuncion (GMT-3)
+// El backend envía fechas en formato ISO: "2025-10-21T00:00:00.000Z"
+// Debemos extraer solo la parte de la fecha y formatearla sin conversión de zona horaria
 function formatDate(dateStr) {
   if (!dateStr) return ''
   
   try {
-    // Si es una fecha ISO completa, usar formateo con zona horaria de Paraguay
-    if (dateStr.includes('T') || dateStr.includes('Z')) {
-      const date = new Date(dateStr)
-      return new Intl.DateTimeFormat('es-PY', {
-        timeZone: 'America/Asuncion',
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric'
-      }).format(date)
-    }
-    
-    // Si es solo fecha (YYYY-MM-DD), formatear directamente
-    const match = String(dateStr).trim().match(/^(\d{4})-(\d{2})-(\d{2})/)
+    // Extraer la parte de la fecha (YYYY-MM-DD) antes de la 'T' o 'Z'
+    const match = String(dateStr).match(/^(\d{4})-(\d{2})-(\d{2})/)
     if (match) {
       const [, y, m, d] = match
       return `${d}/${m}/${y}` // dd/MM/yyyy
