@@ -11,40 +11,66 @@
                 <i class="bi bi-search"></i> Buscar productos
               </a>
             </li>
-            <li class="nav-item">
-              <router-link class="nav-link" to="/clientes">
-                <i class="bi bi-people"></i> Clientes
-              </router-link>
-            </li>
-            <li class="nav-item">
-              <router-link class="nav-link" to="/listar-proveedores">
-                <i class="bi bi-truck"></i> Proveedores
-              </router-link>
+            <li class="nav-item dropdown">
+              <a
+                class="nav-link dropdown-toggle"
+                href="#"
+                role="button"
+                data-bs-toggle="dropdown"
+                aria-expanded="false"
+              >
+                <i class="bi bi-bag-check"></i> Ventas
+              </a>
+              <ul class="dropdown-menu dropdown-menu-dark">
+                <li>
+                  <router-link class="dropdown-item" to="/clientes">
+                    <i class="bi bi-people"></i> Clientes
+                  </router-link>
+                </li>
+                <li>
+                  <router-link class="dropdown-item" to="/gestion-pedidos">
+                    <i class="bi bi-list-ul"></i> Pedidos
+                  </router-link>
+                </li>
+              </ul>
             </li>
             <!--<li class="nav-item" v-if="$route.path === '/pantalla-inicio'">
               <a class="nav-link" href="#" data-bs-toggle="modal" data-bs-target="#onHoldSalesModal" @click.prevent="onShowOnHoldSales">
                 <i class="bi bi-hourglass-split"></i> Pedidos
               </a>
             </li> --><!-- Comentado para evitar confusión con "Pedidos 2" -->
-            <li class="nav-item">
-              <router-link class="nav-link" to="/gestion-pedidos">
-                <i class="bi bi-list-ul"></i> Pedidos 
-              </router-link>
-            </li>
             <li class="nav-item admin-only">
               <router-link class="nav-link" to="/inventario">
                 <i class="bi bi-box-seam"></i> Inventario
               </router-link>
             </li>
-            <li class="nav-item">
-              <router-link class="nav-link" to="/listar-comprobantes">
-                <i class="bi bi-receipt"></i> Facturas
-              </router-link>
-            </li>
-            <li class="nav-item">
-              <router-link class="nav-link" to="/listar-notas-remision">
-                <i class="bi bi-file-text"></i> Notas de Remisión
-              </router-link>
+            <li class="nav-item dropdown">
+              <a
+                class="nav-link dropdown-toggle"
+                href="#"
+                role="button"
+                data-bs-toggle="dropdown"
+                aria-expanded="false"
+              >
+                <i class="bi bi-basket"></i> Compras
+              </a>
+              <ul class="dropdown-menu dropdown-menu-dark">
+                <li>
+                  <router-link class="dropdown-item" to="/listar-comprobantes">
+                    <i class="bi bi-receipt"></i> Facturas
+                  </router-link>
+                </li>
+                <li>
+                  <router-link class="dropdown-item" to="/listar-notas-remision">
+                    <i class="bi bi-file-text"></i> Notas de Remisión
+                  </router-link>
+                </li>
+                <li>
+                  <router-link class="dropdown-item" to="/listar-proveedores">
+                    <i class="bi bi-truck"></i> Proveedores
+                  </router-link>
+                </li>
+              </ul>
             </li>
             <li class="nav-item">
               <router-link class="nav-link" to="/caja">
@@ -313,6 +339,41 @@ export default {
     margin-right: 10px;
   }
   
+  .navbar-nav .dropdown-menu {
+    background-color: #2c3237;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    min-width: 14rem;
+  }
+
+  .navbar-nav .dropdown-item {
+    color: #ffffff;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .navbar-nav .dropdown-item:hover,
+  .navbar-nav .dropdown-item:focus {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: #ffffff;
+  }
+
+  .navbar-nav .dropdown:hover > .dropdown-menu,
+  .navbar-nav .dropdown:focus-within > .dropdown-menu {
+    display: block;
+    margin-top: 0.35rem;
+  }
+
+  .navbar-nav .dropdown:hover > .nav-link,
+  .navbar-nav .dropdown:focus-within > .nav-link {
+    color: #ffffff;
+  }
+
+  .navbar-nav .dropdown-toggle::after {
+    margin-left: 0.35rem;
+  }
+
   .navbar-text.comercial-graciela {
     font-size: 1.1rem;
     font-weight: 600;
