@@ -82,7 +82,7 @@ import PaymentForms from '@/components/PaymentForms.vue'
 import apiService from '@/services/apiService.js'
 
 //const router = useRouter()
-const categories = ['Ventas Varios', 'Donaciones', 'Devoluciones','Otros Ingresos']
+const categories = ['Reposición en caja para Pago a Proveedores', 'Reposición por diferencia en caja', 'Devoluciones','Otros Ingresos']
 const paymentTypes = ['Efectivo', 'Tarjeta', 'Cheque', 'Transferencia']
 
 const form = reactive({

@@ -34,6 +34,10 @@ import CategoriaView from '@/views/Inventario/CategoriaView.vue';
 import UnidadMedidaView from '@/views/Inventario/UnidadMedidaView.vue';
 // Vista de impresión (carga perezosa)
 const FacturaPrint = () => import('@/views/FacturaPrint.vue');
+const ClientesCreditoView = () => import('@/views/ClientesCredito/ClientesCreditoView.vue');
+const ClienteCreditoAsignarView = () => import('@/views/ClientesCredito/ClienteCreditoAsignarView.vue');
+const ClienteCreditoDetalleView = () => import('@/views/ClientesCredito/ClienteCreditoDetalleView.vue');
+const ClienteCreditoCrearView = () => import('@/views/ClientesCredito/ClienteCreditoCrearView.vue');
 
 const routes = [
   {
@@ -128,6 +132,28 @@ const routes = [
     path: '/clientes',
     name: 'Clientes',
     component: ClientesView
+  },
+  {
+    path: '/clientes/creditos',
+    name: 'ClientesCredito',
+    component: ClientesCreditoView
+  },
+  {
+    path: '/clientes/creditos/nuevo',
+    name: 'ClienteCreditoCrear',
+    component: ClienteCreditoCrearView
+  },
+  {
+    path: '/clientes/:id/creditos/nuevo',
+    name: 'ClienteCreditoAsignar',
+    component: ClienteCreditoAsignarView,
+    props: true
+  },
+  {
+    path: '/clientes/creditos/:id',
+    name: 'ClienteCreditoDetalle',
+    component: ClienteCreditoDetalleView,
+    props: true
   },
   {
     // Permitimos IDs alfanuméricos con guiones (ej: FAC-120-19999-4) para que el refresh (F5)

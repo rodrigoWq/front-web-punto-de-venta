@@ -102,7 +102,7 @@ async function searchClient() {
   const doc = clientDoc.value.trim()
   if (!doc) return
   try {
-    const url = `/api/clients/credit/${encodeURIComponent(doc)}`
+    const url = `/api/clients/credit/invoices/${encodeURIComponent(doc)}`
     const resp = await apiService.get(url)
     const data = resp?.data || {}
     const facturas = Array.isArray(data.facturas) ? data.facturas : []
