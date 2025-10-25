@@ -157,6 +157,24 @@
             </div>
 
             <div v-if="!statementLoading" class="mt-4">
+              <div class="row g-3 mb-4">
+                <div class="col-md-6">
+                  <div class="border rounded p-3 h-100">
+                    <h6 class="fw-bold mb-2">Pendientes</h6>
+                    <p class="mb-1">Cantidad: {{ estadoCuentaResumen.pendientes.cantidad }}</p>
+                    <p class="mb-1">Monto total: {{ formatCurrency(estadoCuentaResumen.pendientes.monto_total) }}</p>
+                    <p class="mb-0">Saldo pendiente: {{ formatCurrency(estadoCuentaResumen.pendientes.saldo_pendiente) }}</p>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="border rounded p-3 h-100">
+                    <h6 class="fw-bold mb-2">Pagadas</h6>
+                    <p class="mb-1">Cantidad: {{ estadoCuentaResumen.pagadas.cantidad }}</p>
+                    <p class="mb-1">Monto pagado: {{ formatCurrency(estadoCuentaResumen.pagadas.monto_pagado) }}</p>
+                    <p class="mb-0">Monto total: {{ formatCurrency(estadoCuentaResumen.pagadas.monto_total) }}</p>
+                  </div>
+                </div>
+              </div>
               <h6>Pendientes</h6>
               <AppTable :headers="statementHeaders">
                 <template v-if="!estadoCuenta.pendientes.length">
@@ -256,6 +274,18 @@ const estadoCuenta = reactive({
   pendientes: [],
   pagadas: []
 });
+const estadoCuentaResumen = reactive({
+  pendientes: {
+    cantidad: 0,
+    monto_total: 0,
+    saldo_pendiente: 0
+  },
+  pagadas: {
+    cantidad: 0,
+    monto_pagado: 0,
+    monto_total: 0
+  }
+});
 const statementLoading = ref(false);
 const statementError = ref('');
 const statementSection = ref(null);
@@ -304,6 +334,25 @@ function assignCredito(raw) {
   credito.monto_total_formatted = formatCurrency(credito.monto_total_credito);
   credito.actualizado_en_display = toDisplayDate(credito.actualizado_en);
   nuevoLimite.value = credito.limite_credito;
+}
+
+function assignStatementResumen(raw = {}) {
+  const resumen = raw ?? {};
+  const pendientes = resumen.pendientes ?? {};
+  estadoCuentaResumen.pendientes.cantidad = Number(pendientes.cantidad ?? 0);
+  estadoCuentaResumen.pendientes.monto_total = Number(pendientes.monto_total ?? 0);
+  estadoCuentaResumen.pendientes.saldo_pendiente = Number(pendientes.saldo_pendiente ?? 0);
+
+  const pagadas = resumen.pagadas ?? {};
+  estadoCuentaResumen.pagadas.cantidad = Number(pagadas.cantidad ?? 0);
+  estadoCuentaResumen.pagadas.monto_pagado = Number(pagadas.monto_pagado ?? pagadas.monto_total ?? 0);
+  estadoCuentaResumen.pagadas.monto_total = Number(pagadas.monto_total ?? 0);
+}
+
+function resetStatementData() {
+  estadoCuenta.pendientes = [];
+  estadoCuenta.pagadas = [];
+  assignStatementResumen();
 }
 
 function buildUpdatePayload() {
@@ -358,27 +407,31 @@ function goBack() {
 
 async function cargarDetalle() {
   loading.value = true;
-  statementLoading.value = true;
   error.value = '';
-  statementError.value = '';
   try {
     const preload = history.state?.client;
     if (preload && preload.condiciones === 'CREDITO') {
       assignCliente(preload);
     }
-    const response = await clientCreditService.fetchCreditStatement(clientId, {});
-    actualizarDesdeEstadoCuenta(response?.data, { incluirDatosEntidad: true });
+    const response = await clientCreditService.fetchCreditClientById(clientId);
+    const body = response?.data ?? {};
+    if (body?.cliente) {
+      assignCliente(body.cliente);
+    } else {
+      assignCliente(body);
+    }
+    if (body?.credito) {
+      assignCredito(body.credito);
+    } else {
+      assignCredito(body);
+    }
   } catch (err) {
     console.error('Error al obtener el crédito del cliente:', err);
     const message =
       err?.response?.data?.message || err?.response?.data?.error || 'No fue posible cargar el crédito del cliente.';
     error.value = message;
-    statementError.value = message;
-    estadoCuenta.pendientes = [];
-    estadoCuenta.pagadas = [];
   } finally {
     loading.value = false;
-    statementLoading.value = false;
   }
 }
 
@@ -433,25 +486,22 @@ function validarFechas() {
 }
 
 function mapStatementItem(item) {
+  const montoTotal = Number(item?.monto_total ?? item?.monto_total_factura ?? 0);
+  const totalPagado = Number(item?.total_pagado ?? item?.monto_pagado ?? 0);
+  const saldoRestante = Number(item?.saldo_restante ?? item?.saldo ?? 0);
+  const ultimaFecha =
+    item?.ultima_fecha_pago ??
+    item?.actualizado_en ??
+    item?.creado_en ??
+    null;
+
   return {
     ...item,
-    monto_total: Number(item?.monto_total ?? 0),
-    total_pagado: Number(item?.total_pagado ?? 0),
-    saldo_restante: Number(item?.saldo_restante ?? 0),
-    ultima_fecha_pago_display: toDisplayDate(item?.ultima_fecha_pago)
+    monto_total: montoTotal,
+    total_pagado: totalPagado,
+    saldo_restante: saldoRestante,
+    ultima_fecha_pago_display: toDisplayDate(ultimaFecha)
   };
-}
-
-function actualizarDesdeEstadoCuenta(body, { incluirDatosEntidad = false } = {}) {
-  const data = body ?? {};
-  if (incluirDatosEntidad) {
-    const clienteData = data?.cliente ?? data;
-    const creditoData = data?.credito ?? data;
-    assignCliente(clienteData);
-    assignCredito(creditoData);
-  }
-  estadoCuenta.pendientes = Array.isArray(data?.pendientes) ? data.pendientes.map(mapStatementItem) : [];
-  estadoCuenta.pagadas = Array.isArray(data?.pagadas) ? data.pagadas.map(mapStatementItem) : [];
 }
 
 async function cargarEstadoCuenta() {
@@ -466,13 +516,15 @@ async function cargarEstadoCuenta() {
     if (hastaApi) params.hasta = hastaApi;
 
     const response = await clientCreditService.fetchCreditStatement(clientId, params);
-    actualizarDesdeEstadoCuenta(response?.data, { incluirDatosEntidad: false });
+    const body = response?.data ?? {};
+    assignStatementResumen(body?.resumen);
+    estadoCuenta.pendientes = Array.isArray(body.pendientes) ? body.pendientes.map(mapStatementItem) : [];
+    estadoCuenta.pagadas = Array.isArray(body.pagadas) ? body.pagadas.map(mapStatementItem) : [];
   } catch (err) {
     console.error('Error al consultar estado de cuenta:', err);
     statementError.value =
       err?.response?.data?.message || err?.response?.data?.error || 'No fue posible obtener el estado de cuenta.';
-    estadoCuenta.pendientes = [];
-    estadoCuenta.pagadas = [];
+    resetStatementData();
   } finally {
     statementLoading.value = false;
   }

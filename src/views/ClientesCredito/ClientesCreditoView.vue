@@ -63,6 +63,7 @@
             <td v-if="showCreditColumns">{{ client.limiteCreditoFormatted }}</td>
             <td v-if="showCreditColumns">{{ client.saldoActualFormatted }}</td>
             <td v-if="showCreditColumns">{{ client.estadoCredito || '—' }}</td>
+            <td v-if="showCreditColumns">{{ client.codigoInterno || '—' }}</td>
             <td>
               <div class="actions-wrapper">
                 <button
@@ -126,7 +127,7 @@ const showCreditColumns = computed(() => filterType.value === 'credit');
 const tableHeaders = computed(() => {
   const baseHeaders = ['Nombre', 'Documento', 'Teléfono', 'Email', 'Condición'];
   if (showCreditColumns.value) {
-    baseHeaders.push('Límite Crédito', 'Saldo Actual', 'Estado Crédito');
+    baseHeaders.push('Límite Crédito', 'Saldo Actual', 'Estado Crédito', 'Codigo Interno');
   }
   baseHeaders.push('Acciones');
   return baseHeaders;
@@ -208,6 +209,7 @@ function mapClient(raw, isCreditList) {
     rowKey: `${clienteId ?? raw?.nro_documento ?? raw?.ruc ?? Math.random()}`,
     clienteId: clienteId,
     creditoId,
+    codigoInterno: raw?.codigo_interno ?? raw?.credito?.codigo_interno ?? 'SIN CODIGO',
     nombre: raw?.nombre_completo ?? raw?.cliente?.nombre_completo ?? '—',
     documento: raw?.nro_documento ?? raw?.ruc ?? raw?.documento_entidad ?? '',
     telefono: raw?.telefono ?? '',
@@ -247,10 +249,21 @@ async function fetchClients() {
   loading.value = true;
   error.value = '';
   try {
+    const trimmedSearch = search.value.trim();
+
+    if (filterType.value === 'credit' && trimmedSearch) {
+      const response = await clientCreditService.searchCreditClients(trimmedSearch);
+      clients.value = parseResponse(response, true);
+      pagination.page = 1;
+      pagination.total = clients.value.length;
+      pagination.totalPages = 1;
+      return;
+    }
+
     const params = {
       page: pagination.page,
       limit: pagination.limit,
-      search: search.value || undefined
+      search: trimmedSearch || undefined
     };
 
     const response =

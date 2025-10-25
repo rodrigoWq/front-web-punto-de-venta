@@ -20,8 +20,16 @@ export default {
     return apiService.get(`${BASE}/credit`, buildParams(params));
   },
 
+  searchCreditClients(query) {
+    return apiService.get(`${BASE}/credit/search`, buildParams({ query }));
+  },
+
   fetchClientById(id) {
     return apiService.get(`${BASE}/${id}`);
+  },
+
+  fetchCreditClientById(id) {
+    return apiService.get(`${BASE}/credit/${id}`);
   },
 
   updateClient(id, payload) {
