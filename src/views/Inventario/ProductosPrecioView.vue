@@ -99,9 +99,11 @@
         <table class="table align-middle">
           <thead class="table-light">
             <tr>
-              <th class="col-nombre">Nombre</th>
+                  <th class="col-barcode">Código de barras</th>
+                  <th class="col-nombre">Nombre</th>
               <th class="text-end col-price-compra">Precio última compra</th>
               <th class="col-categoria">Categoría</th>
+                  <th class="text-end col-stock">Stock disponible</th>
               <th class="text-end col-price">Precio de Venta</th>
               <th v-if="!selectorMode" class="text-end col-actions">Acciones</th>
             </tr>
@@ -113,9 +115,11 @@
               :class="{ 'selectable-row': selectorMode }"
               @click="selectorMode && seleccionarProducto(prod)"
             >
-              <td class="col-nombre">{{ prod.nombre }}</td>
+                  <td class="col-barcode">{{ prod.codigo_barras || 'Sin código' }}</td>
+                  <td class="col-nombre">{{ prod.nombre }}</td>
               <td class="text-end col-price-compra">{{ prod.precio_ultima_compra ? formateaNumero(prod.precio_ultima_compra) : 'Sin precio' }}</td>
               <td class="col-categoria">{{ prod.categoria }}</td>
+                  <td class="text-end col-stock">{{ formateaNumero(prod.stock_disponible) }}</td>
               <td class="text-end col-price">{{ prod.precio_venta ? formateaNumero(prod.precio_venta) : 'Sin precio' }}</td>
               <td v-if="!selectorMode" class="text-end col-actions">
                 <div class="d-inline-flex flex-nowrap gap-1 actions-wrapper">
@@ -751,11 +755,13 @@ export default {
 }
 
 /* Column width control to keep layout stable between filter states */
-.col-nombre { width: 26%; min-width: 200px; }
+.col-barcode { width: 14%; min-width: 150px; }
+.col-nombre { width: 22%; min-width: 200px; }
+.col-price-compra { width: 12%; min-width: 130px; }
+.col-categoria { width: 15%; min-width: 140px; }
+.col-stock { width: 10%; min-width: 110px; }
 .col-price { width: 12%; min-width: 110px; }
-.col-categoria { width: 18%; min-width: 140px; }
-.col-price-compra { width: 15%; min-width: 130px; }
-.col-actions { width: 29%; min-width: 260px; }
+.col-actions { width: 15%; min-width: 260px; }
 
 /* Ensure action buttons stay on one line and wrap gracefully if very narrow */
 .actions-wrapper { white-space: nowrap; }
