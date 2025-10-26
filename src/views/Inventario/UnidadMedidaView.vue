@@ -54,8 +54,7 @@
       id="unidad-modal"
       tabindex="-1"
       role="dialog"
-      aria-modal="true"
-      @click.self="closeModal"
+  aria-modal="true"
     >
       <div class="modal-dialog">
         <div class="modal-content">

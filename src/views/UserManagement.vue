@@ -38,7 +38,14 @@
   <AppPagination :currentPage="currentPage" :totalPages="totalPages" @page-changed="changePage" />
 
       <!-- Modal Crear Usuario -->
-      <div class="modal fade" id="crearUsuarioModal" tabindex="-1" aria-labelledby="crearUsuarioModalLabel">
+      <div
+        class="modal fade"
+        id="crearUsuarioModal"
+        tabindex="-1"
+        aria-labelledby="crearUsuarioModalLabel"
+        data-bs-backdrop="static"
+        data-bs-keyboard="false"
+      >
         <div class="modal-dialog modal-lg">
           <div class="modal-content">
             <div class="modal-header">
@@ -330,7 +337,10 @@
           fecha_nacimiento: ''
         };
         const modalElement = document.getElementById('crearUsuarioModal');
-        const bsModal = new Modal(modalElement, {});
+        const bsModal = new Modal(modalElement, {
+          backdrop: 'static',
+          keyboard: false
+        });
         bsModal.show();
       },
       getRoles() {

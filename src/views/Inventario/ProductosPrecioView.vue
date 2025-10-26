@@ -146,7 +146,13 @@
       @product-registered="handleProductSaved" 
     />
 
-    <div class="modal fade" id="updatePriceModal" tabindex="-1">
+    <div
+      class="modal fade"
+      id="updatePriceModal"
+      tabindex="-1"
+      data-bs-backdrop="static"
+      data-bs-keyboard="false"
+    >
       <div class="modal-dialog modal-lg">
         <div class="modal-content">
           <div class="modal-header">
@@ -505,7 +511,10 @@ export default {
       this.modalData.fechaVigencia = displayDate;
 
       const el = document.getElementById('updatePriceModal');
-      this.priceModalInstance ??= new bootstrap.Modal(el);
+      this.priceModalInstance ??= new bootstrap.Modal(el, {
+        backdrop: 'static',
+        keyboard: false
+      });
 
       this.$nextTick(() => {
         this.ensureVigenciaPicker();

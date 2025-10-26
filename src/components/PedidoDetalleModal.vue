@@ -1,11 +1,10 @@
 <template>
   <div
     v-if="open"
-    class="modal fade show d-block"
-    tabindex="-1"
-    role="dialog"
-    aria-modal="true"
-    @click.self="cerrar"
+  class="modal fade show d-block"
+  tabindex="-1"
+  role="dialog"
+  aria-modal="true"
   >
     <div class="modal-dialog modal-xl modal-dialog-scrollable" role="document">
       <div class="modal-content">

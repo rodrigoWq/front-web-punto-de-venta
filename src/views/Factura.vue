@@ -335,7 +335,7 @@
         @close-all-register-modals="showRegisterModal = false"
       />
 
-      <div v-if="mostrarSelectorProveedor" class="overlay-backdrop" @click.self="cerrarSelectorProveedor">
+  <div v-if="mostrarSelectorProveedor" class="overlay-backdrop">
         <div class="overlay-panel card">
           <div class="overlay-header d-flex justify-content-between align-items-center">
             <h5 class="mb-0">Seleccionar Proveedor</h5>
@@ -351,7 +351,7 @@
           </div>
         </div>
       </div>
-      <div v-if="mostrarSelectorProducto" class="overlay-backdrop" @click.self="cerrarSelectorProducto">
+  <div v-if="mostrarSelectorProducto" class="overlay-backdrop">
         <div class="overlay-panel card">
           <div class="overlay-header d-flex justify-content-between align-items-center">
             <h5 class="mb-0">Seleccionar Producto</h5>

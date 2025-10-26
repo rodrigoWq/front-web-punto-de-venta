@@ -90,10 +90,9 @@
       <!-- Overlay de selección de cliente -->
       <div
         v-if="mostrarSelectorCliente"
-        class="overlay-backdrop"
-        role="dialog"
-        aria-modal="true"
-        @click.self="cerrarSelectorCliente"
+  class="overlay-backdrop"
+  role="dialog"
+  aria-modal="true"
       >
         <div class="overlay-panel card">
           <div class="overlay-header d-flex justify-content-between align-items-center">
@@ -113,10 +112,9 @@
       <!-- Overlay de selección de producto -->
       <div
         v-if="mostrarSelectorProducto"
-        class="overlay-backdrop"
-        role="dialog"
-        aria-modal="true"
-        @click.self="cerrarSelectorProducto"
+  class="overlay-backdrop"
+  role="dialog"
+  aria-modal="true"
       >
         <div class="overlay-panel card">
           <div class="overlay-header d-flex justify-content-between align-items-center">

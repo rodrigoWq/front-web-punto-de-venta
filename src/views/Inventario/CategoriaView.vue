@@ -52,12 +52,11 @@
     <div v-if="showModal" class="modal-backdrop fade show"></div>
     <div
       v-if="showModal"
-      class="modal fade show d-block"
-      id="categoria-modal"
-      tabindex="-1"
-      role="dialog"
-      aria-modal="true"
-      @click.self="closeModal"
+  class="modal fade show d-block"
+  id="categoria-modal"
+  tabindex="-1"
+  role="dialog"
+  aria-modal="true"
     >
       <div class="modal-dialog">
         <div class="modal-content">

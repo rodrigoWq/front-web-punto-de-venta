@@ -1,7 +1,7 @@
 <template>
   <teleport to="body">
     <transition name="app-confirm-fade">
-      <div v-if="current" class="app-confirm-overlay" @click.self="handleCancel">
+  <div v-if="current" class="app-confirm-overlay">
         <article class="app-confirm" role="alertdialog" aria-modal="true" :aria-labelledby="titleId" :aria-describedby="messageId">
           <header v-if="current.title" :id="titleId" class="app-confirm__title">
             {{ current.title }}

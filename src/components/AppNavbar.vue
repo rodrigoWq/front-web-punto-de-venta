@@ -98,7 +98,15 @@
       </div>
     </nav>
     <!-- Modal Buscar Producto -->
-    <div class="modal fade" id="searchProductModal" tabindex="-1" aria-labelledby="searchProductModalLabel" aria-hidden="true">
+    <div
+      class="modal fade"
+      id="searchProductModal"
+      tabindex="-1"
+      aria-labelledby="searchProductModalLabel"
+      aria-hidden="true"
+      data-bs-backdrop="static"
+      data-bs-keyboard="false"
+    >
       <div class="modal-dialog">
         <div class="modal-content">
           <div class="modal-header">

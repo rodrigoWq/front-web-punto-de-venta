@@ -1,5 +1,11 @@
 <template>
-  <div class="modal fade" ref="modalEl" tabindex="-1">
+  <div
+    class="modal fade"
+    ref="modalEl"
+    tabindex="-1"
+    data-bs-backdrop="static"
+    data-bs-keyboard="false"
+  >
     <div class="modal-dialog modal-xl">
       <div class="modal-content">
         <div class="modal-header bg-primary text-white">
@@ -425,7 +431,12 @@ export default {
   },
   methods: {
     show() {
-      if (!this.bsModal) this.bsModal = new Modal(this.$refs.modalEl);
+      if (!this.bsModal) {
+        this.bsModal = new Modal(this.$refs.modalEl, {
+          backdrop: 'static',
+          keyboard: false
+        });
+      }
       
       if (this.editMode && this.clienteData) {
         // Modo edición: precargar datos del cliente
