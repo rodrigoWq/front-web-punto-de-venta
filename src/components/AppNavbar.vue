@@ -277,8 +277,14 @@ export default {
           alert('No se pudo retomar la venta.');
         }
       },
-      confirmarEliminar(pedidoId) {
-        if (confirm('¿Estás seguro de que deseas eliminar esta venta pendiente?')) {
+      async confirmarEliminar(pedidoId) {
+        const confirmed = await confirm({
+          message: '¿Estás seguro de que deseas eliminar esta venta pendiente?',
+          title: 'Eliminar venta pendiente',
+          confirmText: 'Eliminar',
+          cancelText: 'Cancelar'
+        })
+        if (confirmed) {
           this.eliminarVenta(pedidoId);
         }
       },

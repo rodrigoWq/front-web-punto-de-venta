@@ -349,13 +349,20 @@ async function saveDeposit() {
 
 // Eliminar
 async function deleteDeposit(id) {
-  if (!confirm('¿Está seguro de eliminar este depósito?')) return
+  const confirmed = await confirm({
+    message: '¿Está seguro de eliminar este depósito?',
+    title: 'Eliminar depósito',
+    confirmText: 'Eliminar',
+    cancelText: 'Cancelar'
+  })
+  if (!confirmed) return
   try {
     await apiService.delete(`/api/inventory/warehouse/${id}`)
     await loadDeposits()
-    alert('Depósito eliminado')
+    alert.success('Depósito eliminado')
   } catch (err) {
     console.error('Error eliminando depósito', err)
+    alert.error('No se pudo eliminar el depósito. Revisa la consola.')
   }
 }
 

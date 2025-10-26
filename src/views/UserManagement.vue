@@ -507,15 +507,22 @@
             console.error('Error al editar usuario:', error);
           });
       },
-      eliminarUsuario(id) {
-        if (confirm('¿Estás seguro de cambiar el estado de este usuario a inactivo?')) {
-          apiService.put('/api/auth/desactivate', { id })
-            .then(() => {
-              this.getUsuarios();  // recargamos la lista actualizada
-            })
-            .catch(error => {
-              console.error('Error al desactivar usuario:', error);
-            });
+      async eliminarUsuario(id) {
+        const confirmed = await confirm({
+          message: '¿Estás seguro de cambiar el estado de este usuario a inactivo?',
+          title: 'Desactivar usuario',
+          confirmText: 'Desactivar',
+          cancelText: 'Cancelar'
+        });
+        if (!confirmed) return;
+
+        try {
+          await apiService.put('/api/auth/desactivate', { id });
+          this.getUsuarios();
+          alert.success('Usuario desactivado correctamente.');
+        } catch (error) {
+          console.error('Error al desactivar usuario:', error);
+          alert.error('No se pudo desactivar el usuario. Intente nuevamente.');
         }
       }
 

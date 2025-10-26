@@ -122,14 +122,22 @@ export default {
       this.showProviderModal = true;
     },
     async eliminarProveedor(id) {
-      if (confirm('¿Estás seguro de eliminar este proveedor?')) {
-        try {
-          const url = `${process.env.VUE_APP_API_BASE_URL}/api/providers/${id}`;
-          await apiService.delete(url);
-          this.providers = this.providers.filter(p => p.proveedor_id !== id);
-        } catch (error) {
-          console.error('Error al eliminar proveedor:', error);
-        }
+      const confirmed = await confirm({
+        message: '¿Estás seguro de eliminar este proveedor?',
+        title: 'Eliminar proveedor',
+        confirmText: 'Eliminar',
+        cancelText: 'Cancelar'
+      });
+      if (!confirmed) return;
+
+      try {
+        const url = `${process.env.VUE_APP_API_BASE_URL}/api/providers/${id}`;
+        await apiService.delete(url);
+        this.providers = this.providers.filter(p => p.proveedor_id !== id);
+        alert.success('Proveedor eliminado correctamente.');
+      } catch (error) {
+        console.error('Error al eliminar proveedor:', error);
+        alert.error('No se pudo eliminar el proveedor. Revisa la consola.');
       }
     },
   },

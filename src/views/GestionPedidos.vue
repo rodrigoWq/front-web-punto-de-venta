@@ -267,10 +267,13 @@ export default {
     },
     async cancelarPedido(pedidoId) {
       // Confirmación con advertencia
-      const confirmado = window.confirm(
-        `⚠️ ADVERTENCIA\n\n¿Estás seguro de que deseas CANCELAR el pedido #${pedidoId}?\n\nEsta acción cambiará el estado del pedido a "cancelado".`
-      );
-      
+      const confirmado = await confirm({
+        message: `¿Estás seguro de que deseas CANCELAR el pedido #${pedidoId}?\n\nEsta acción cambiará el estado del pedido a "cancelado".`,
+        title: 'Cancelar pedido',
+        confirmText: 'Cancelar pedido',
+        cancelText: 'Mantener pedido'
+      });
+
       if (!confirmado) return;
 
       try {
@@ -286,7 +289,7 @@ export default {
             this.pedidos[pedidoIndex].estado = data.data.estado || 'cancelado';
           }
           
-          alert(`✅ Pedido #${pedidoId} cancelado correctamente.`);
+          alert.success(`✅ Pedido #${pedidoId} cancelado correctamente.`);
           
           // Recargar la lista completa para asegurar sincronización
           const paginaParaActualizar = this.pedidos.length === 1 && this.paginaActual > 1
@@ -298,7 +301,7 @@ export default {
         }
       } catch (error) {
         console.error('Error al cancelar pedido:', error);
-        alert('❌ Error al cancelar el pedido. Por favor, intente nuevamente.');
+  alert.error('❌ Error al cancelar el pedido. Por favor, intente nuevamente.');
       }
     },
     formatearMonto(monto) {

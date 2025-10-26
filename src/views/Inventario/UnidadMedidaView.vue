@@ -253,12 +253,20 @@ export default {
     async remove(u) {
       const id = this.unitId(u);
       if (!id) return;
-      if (!confirm('¿Eliminar esta unidad?')) return;
+      const confirmed = await confirm({
+        message: '¿Eliminar esta unidad?',
+        title: 'Eliminar unidad de medida',
+        confirmText: 'Eliminar',
+        cancelText: 'Cancelar'
+      });
+      if (!confirmed) return;
       try {
         await api.delete(`/api/measure-units/${id}`);
         await this.fetchUnits();
+        alert.success('Unidad de medida eliminada.');
       } catch (e) {
         console.error(e);
+        alert.error('No se pudo eliminar la unidad. Intente nuevamente.');
       }
     }
   }

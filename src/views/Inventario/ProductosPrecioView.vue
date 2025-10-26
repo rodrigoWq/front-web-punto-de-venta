@@ -479,13 +479,19 @@ export default {
     },
 
     async deleteProduct(product) {                                             
-      if (!confirm(`¿Eliminar “${product.nombre}”?`)) return;
+      const confirmed = await confirm({
+        message: `¿Eliminar “${product.nombre}”?`,
+        title: 'Eliminar precio programado',
+        confirmText: 'Eliminar',
+        cancelText: 'Cancelar'
+      })
+      if (!confirmed) return;
       try {
         await apiService.delete(`/api/products/${product.producto_id}`);
         await this.loadProducts({ suppressAlert: true, page: this.currentPage });
       } catch (err) {
         console.error('Error eliminando producto:', err);
-        alert('Error al eliminar el producto. Revise la consola.');
+        alert.error('Error al eliminar el producto. Revise la consola.');
       }
     },
 

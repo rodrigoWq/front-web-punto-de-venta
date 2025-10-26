@@ -314,7 +314,12 @@ async function handlePedidoConvertido() {
 
 // Función para cancelar factura
 async function cancelarFactura(inv) {
-  const confirmacion = confirm(`¿Está seguro que desea CANCELAR la factura ${inv.number}?\n\nEsta acción no se puede deshacer.`)
+  const confirmacion = await confirm({
+    message: `¿Está seguro que desea CANCELAR la factura ${inv.number}?\n\nEsta acción no se puede deshacer.`,
+    title: 'Cancelar factura',
+    confirmText: 'Cancelar factura',
+    cancelText: 'Mantener'
+  })
   
   if (!confirmacion) return
 

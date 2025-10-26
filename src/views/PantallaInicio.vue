@@ -364,7 +364,12 @@ export default {
           const sel = mapToSelected(product);
           if (!sel.precio || sel.precio <= 0) {
             const msg = `El producto "${sel.nombre}" no tiene un precio de venta asignado.\n\n¿Deseas ir a la pantalla de Gestión de Precios para asignarlo ahora?`;
-            const irGestionPrecios = window.confirm(msg);
+            const irGestionPrecios = await confirm({
+              message: msg,
+              title: 'Precio no asignado',
+              confirmText: 'Ir a Gestión de Precios',
+              cancelText: 'Mantenerme aquí'
+            });
             if (irGestionPrecios) this.$router.push({ name: 'ProductosPrecio' });
           } else {
             this.selectedProduct = sel;
@@ -589,18 +594,29 @@ export default {
         alert(mensajeError);
       }
     },
-    eliminarProducto(index) {
-      if (confirm("¿Estás seguro de que deseas eliminar este producto?")) {
+    async eliminarProducto(index) {
+      const confirmed = await confirm({
+        message: '¿Estás seguro de que deseas eliminar este producto?',
+        title: 'Eliminar producto del pedido',
+        confirmText: 'Eliminar',
+        cancelText: 'Cancelar'
+      });
+      if (confirmed) {
         this.productos.splice(index, 1);
       }
     },
-    cancelarVenta() {
+    async cancelarVenta() {
       const mensaje = this.modoEdicion
         ? '¿Seguro que deseas cancelar la edición y volver a la lista de pedidos?'
         : (this.modoRetomar 
           ? '¿Seguro que deseas cancelar y volver a la lista de pedidos?'
           : '¿Seguro que deseas cancelar la venta y limpiar todos los campos?');
-      const confirmado = window.confirm(mensaje);
+      const confirmado = await confirm({
+        message: mensaje,
+        title: 'Confirmar cancelación',
+        confirmText: 'Sí, cancelar',
+        cancelText: 'Continuar'
+      });
       if (!confirmado) return;
       
       // Si estamos en modo edición o retomar, volver a GestionPedidos

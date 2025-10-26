@@ -216,16 +216,24 @@ export default {
     },
 
     async eliminarCliente(clienteId) {
-      if (confirm('¿Estás seguro de que deseas eliminar este cliente?')) {
-        try {
-          await apiService.delete(`${process.env.VUE_APP_API_BASE_URL}/api/clients/${clienteId}`);
-          // Actualiza la lista local eliminando el cliente borrado
-          this.clientes = this.clientes.filter(cliente => cliente.id !== clienteId);
-        } catch (error) {
-          console.error('Error al eliminar el cliente:', error);
-        }
-        this.cargarClientes();
+      const confirmed = await confirm({
+        message: '¿Estás seguro de que deseas eliminar este cliente?',
+        title: 'Eliminar cliente',
+        confirmText: 'Eliminar',
+        cancelText: 'Cancelar'
+      });
+      if (!confirmed) return;
+
+      try {
+        await apiService.delete(`${process.env.VUE_APP_API_BASE_URL}/api/clients/${clienteId}`);
+        // Actualiza la lista local eliminando el cliente borrado
+        this.clientes = this.clientes.filter(cliente => cliente.id !== clienteId);
+        alert.success('Cliente eliminado correctamente.');
+      } catch (error) {
+        console.error('Error al eliminar el cliente:', error);
+        alert.error('Error al eliminar el cliente. Revise la consola.');
       }
+      this.cargarClientes();
     },
     setFiltro(tipo) {
       this.filtroTipo = tipo;

@@ -145,18 +145,23 @@
           return `${dia}/${mes}/${anio}`;
         },
         async anularComprobante(comprobante) {
-          if (!confirm('¿Está seguro de que desea anular esta nota de remisión?')) return;
-          
+          const confirmed = await confirm({
+            message: '¿Está seguro de que desea anular esta nota de remisión?',
+            title: 'Anular nota de remisión',
+            confirmText: 'Anular',
+            cancelText: 'Cancelar'
+          });
+          if (!confirmed) return;
+
           try {
              await ApiServices.delete(
                `${process.env.VUE_APP_API_BASE_URL}/api/purchases/delivery-notes/${comprobante.nro_nota_remision}`
              );
-             alert('Nota de remisión anulada correctamente.');
-            // Recarga la página actual de notas
+             alert.success('Nota de remisión anulada correctamente.');
             await this.cargarComprobantes(this.paginaActual);
           } catch (error) {
             console.error('Error al anular nota de remisión:', error);
-            alert('No se pudo anular la nota de remisión. Intente de nuevo.');
+            alert.error('No se pudo anular la nota de remisión. Intente de nuevo.');
           }
         },
         verDetalleComprobante(comprobante) {

@@ -126,18 +126,24 @@ export default {
       this.paginaActual = 1;
     },
     async anularComprobante(comprobante) {
-      if (!confirm('¿Está seguro de que desea anular este comprobante?')) return;
+      const confirmed = await confirm({
+        message: '¿Está seguro de que desea anular este comprobante?',
+        title: 'Anular comprobante',
+        confirmText: 'Anular',
+        cancelText: 'Cancelar'
+      });
+      if (!confirmed) return;
 
       try {
         await ApiServices.delete(
           `${process.env.VUE_APP_API_BASE_URL}/api/purchases/invoices/${comprobante.nro_comprobante}`
         );
         comprobante.estado = 'anulado';
-        alert('Comprobante anulado correctamente.');
+  alert.success('Comprobante anulado correctamente.');
         await this.cargarComprobantes();
       } catch (error) {
         console.error('Error al anular comprobante:', error);
-        alert('No se pudo anular el comprobante. Por favor, intente de nuevo.');
+  alert.error('No se pudo anular el comprobante. Por favor, intente de nuevo.');
       }
     },
     verDetalleComprobante(comprobante) {

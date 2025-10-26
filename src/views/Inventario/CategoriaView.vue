@@ -262,7 +262,13 @@ export default {
     async remove(cat) {
       const id = this.catId(cat);
       if (!id) return;
-      if (!confirm('¿Eliminar esta categoría?')) return;
+      const confirmed = await confirm({
+        message: '¿Eliminar esta categoría?',
+        title: 'Eliminar categoría',
+        confirmText: 'Eliminar',
+        cancelText: 'Cancelar'
+      });
+      if (!confirmed) return;
       try {
         await api.delete(`/api/categories/${id}`);
         await this.fetchCategories();

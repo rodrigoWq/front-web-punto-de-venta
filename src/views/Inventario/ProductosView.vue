@@ -396,16 +396,22 @@ async function loadProducts(options = {}) {
 
 // Eliminar producto
 async function deleteProduct(id) {
-  if (!confirm('¿Está seguro de que desea eliminar este producto?')) return
+  const confirmed = await confirm({
+    message: '¿Está seguro de que desea eliminar este producto?',
+    title: 'Eliminar producto',
+    confirmText: 'Eliminar',
+    cancelText: 'Cancelar'
+  })
+  if (!confirmed) return
   
   try {
     await apiService.delete(`/api/products/${id}`)
     console.log('Producto eliminado:', id)
     await loadProducts() // Recargar lista
-    alert('Producto eliminado correctamente.')
+  alert.success('Producto eliminado correctamente.')
   } catch (error) {
     console.error('Error eliminando producto:', error)
-    alert('Error al eliminar el producto. Revise la consola.')
+  alert.error('Error al eliminar el producto. Revise la consola.')
   }
 }
 

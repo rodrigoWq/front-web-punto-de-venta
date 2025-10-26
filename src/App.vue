@@ -1,13 +1,22 @@
 <template>
   <div id="app">
-    <router-view /> <!-- Aquí se mostrarán las diferentes pantallas -->
+    <router-view />
+    <AppNotifications />
+    <AppConfirmDialog />
   </div>
 </template>
 
 <script>
+import AppNotifications from '@/components/AppNotifications.vue'
+import AppConfirmDialog from '@/components/AppConfirmDialog.vue'
+
 export default {
-  name: 'App'
-};
+  name: 'App',
+  components: {
+    AppNotifications,
+    AppConfirmDialog
+  }
+}
 </script>
 
 <style>

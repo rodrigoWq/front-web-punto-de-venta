@@ -111,13 +111,22 @@ export default {
       this.fetchPermissions()
       this.showModal = false;
     },
-    deletePermission(id) {
-      if (!confirm('¿Eliminar este permiso?')) return;
-      apiService
-        .delete(`/api/permissions/${id}`)
-        .then(() => {
-          this.permissions = this.permissions.filter(p => p.permiso_id !== id);
-        });
+    async deletePermission(id) {
+      const confirmed = await confirm({
+        message: '¿Eliminar este permiso?',
+        title: 'Eliminar permiso',
+        confirmText: 'Eliminar',
+        cancelText: 'Cancelar'
+      });
+      if (!confirmed) return;
+      try {
+        await apiService.delete(`/api/permissions/${id}`);
+        this.permissions = this.permissions.filter(p => p.permiso_id !== id);
+        alert.success('Permiso eliminado correctamente.');
+      } catch (error) {
+        console.error('Error al eliminar permiso:', error);
+        alert.error('No se pudo eliminar el permiso. Intente nuevamente.');
+      }
     }
   },
   mounted() {

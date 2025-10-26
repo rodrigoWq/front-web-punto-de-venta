@@ -195,7 +195,12 @@ async function volverAPedido() {
     return
   }
   
-  const confirmacion = confirm('¿Está seguro que desea volver esta factura a pedido?')
+  const confirmacion = await confirm({
+    message: '¿Está seguro que desea volver esta factura a pedido?',
+    title: 'Volver factura a pedido',
+    confirmText: 'Convertir',
+    cancelText: 'Cancelar'
+  })
   if (!confirmacion) return
 
   loadingVolverPedido.value = true
