@@ -3,8 +3,8 @@
     <!-- Título y botón «Nuevo» (oculto en modo selector) -->
     <div class="row" v-if="!hideHeader">
       <div class="col-12">
-        <div class="d-flex justify-content-between align-items-center mb-4 mt-2">
-          <h2 class="fw-bold mb-0">{{ selectorMode ? 'Seleccionar Producto' : 'Gestión Precios de Productos' }}</h2>
+        <div class="d-flex justify-content-between align-items-center mb-3 mt-2">
+          <h2 class="fw-bold mb-0" style="font-size: 1.75rem;">{{ selectorMode ? 'Seleccionar Producto' : 'Gestión Precios de Productos' }}</h2>
           <button v-if="!selectorMode" class="btn btn-dark d-flex align-items-center" @click="openProductModal()">
             <i class="bi bi-plus-lg me-2"></i> Nuevo Producto
           </button>
@@ -15,23 +15,23 @@
     <!-- Buscador y filtro por categoría (como en ProductosView.vue) -->
     <div class="row">
       <div class="col-12">
-        <div class="card p-4">
-          <div class="d-flex justify-content-between align-items-center mb-3">
-            <div class="d-flex gap-3 flex-grow-1">
+        <div class="card p-3">
+          <div class="d-flex justify-content-between align-items-center mb-0 gap-2 flex-wrap">
+            <div class="d-flex gap-2 flex-grow-1" style="min-width: 0;">
               <input
                 v-model="searchTerm"
                 type="text"
-                class="form-control"
-                style="max-width: 350px"
+                class="form-control form-control-sm"
+                style="max-width: 300px; flex: 0 0 auto;"
                 placeholder="Buscar por nombre..."
               />
 
               <!-- Select con búsqueda para categorías -->
-              <div class="position-relative" style="max-width: 250px; width: 250px;">
+              <div class="position-relative" style="max-width: 220px; width: 220px; flex: 0 0 auto;">
                 <input
                   v-model="categorySearchTerm"
                   type="text"
-                  class="form-control"
+                  class="form-control form-control-sm"
                   placeholder="Filtrar por categoría..."
                   @focus="showCategoryDropdown = true"
                   @blur="handleCategoryBlur"
@@ -61,10 +61,10 @@
                 </div>
               </div>
               <!-- Filtro: Con precio / Sin precio (oculto en modo selector) -->
-              <div v-if="!selectorMode" class="d-flex align-items-center gap-2">
+              <div v-if="!selectorMode" class="d-flex align-items-center gap-1 flex-wrap">
                 <button
                   type="button"
-                  class="btn"
+                  class="btn btn-sm"
                   :class="priceFilter === 'true' ? 'btn-success' : 'btn-outline-success'"
                   @click="setPriceFilter('true')"
                 >
@@ -72,7 +72,7 @@
                 </button>
                 <button
                   type="button"
-                  class="btn"
+                  class="btn btn-sm"
                   :class="priceFilter === 'false' ? 'btn-danger' : 'btn-outline-danger'"
                   @click="setPriceFilter('false')"
                 >
@@ -81,12 +81,12 @@
               </div>
             </div>
             <button 
-              class="btn btn-outline-danger d-flex align-items-center"
+              class="btn btn-outline-danger btn-sm d-flex align-items-center flex-shrink-0"
               @click="clearFilters"
               :disabled="!searchTerm && !selectedCategory && (!selectorMode && priceFilter === 'all')"
             >
-              <i class="bi bi-arrow-counterclockwise me-2"></i> 
-              Limpiar Filtros
+              <i class="bi bi-arrow-counterclockwise me-1"></i> 
+              Limpiar
             </button>
           </div>
         </div>
@@ -94,7 +94,7 @@
     </div>
 
     <!-- Tabla -->
-    <div class="bg-white rounded shadow-sm p-3">
+    <div class="bg-white rounded shadow-sm p-2">
       <div class="table-responsive">
         <table class="table align-middle">
           <thead class="table-light">
@@ -123,9 +123,9 @@
               <td class="text-end col-price">{{ prod.precio_venta ? formateaNumero(prod.precio_venta) : 'Sin precio' }}</td>
               <td v-if="!selectorMode" class="text-end col-actions">
                 <div class="d-inline-flex flex-nowrap gap-1 actions-wrapper">
-                  <button class="btn btn-success btn-sm" @click="openPriceModal(prod)">$ Precio Venta</button>
-                  <button class="btn btn-warning btn-sm" @click="openProductModal(prod)"><i class="bi bi-pencil-fill"></i> Editar</button>
-                  <button class="btn btn-danger btn-sm" @click="deleteProduct(prod)"><i class="bi bi-trash-fill"></i> Eliminar</button>
+                  <button class="btn btn-success btn-sm px-2 py-1" @click="openPriceModal(prod)" title="Establecer precio de venta">$ Precio</button>
+                  <button class="btn btn-warning btn-sm px-2 py-1" @click="openProductModal(prod)" title="Editar producto"><i class="bi bi-pencil-fill"></i></button>
+                  <button class="btn btn-danger btn-sm px-2 py-1" @click="deleteProduct(prod)" title="Eliminar"><i class="bi bi-trash-fill"></i></button>
                 </div>
               </td>
             </tr>
@@ -135,7 +135,7 @@
 
       <!-- paginación -->
       <AppPagination
-        class="mt-3"
+        class="mt-2"
         :total-pages="totalPages"
         :current-page="currentPage"
         @page-changed="changePage"
@@ -713,13 +713,70 @@ export default {
 .selectable-row:hover {
   background-color: #f8f9fa;
 }
+
+/* Tabla responsive optimizada */
+.table {
+  margin-bottom: 0;
+  font-size: 0.9rem;
+}
+
+.table thead th {
+  white-space: nowrap;
+  padding: 0.6rem 0.4rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  vertical-align: middle;
+}
+
+.table tbody td {
+  padding: 0.5rem 0.4rem;
+  vertical-align: middle;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.table tbody tr {
+  border-bottom: 1px solid #dee2e6;
+}
+
+/* Limitar altura del texto largo */
+.col-nombre {
+  max-width: 150px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.text-end {
+  text-align: right;
+}
+
+/* Contenedor de tabla scrollable en pantallas pequeñas */
+.table-responsive {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+@media (max-width: 1366px) {
+  .table {
+    font-size: 0.85rem;
+  }
+  .table thead th,
+  .table tbody td {
+    padding: 0.4rem 0.3rem;
+  }
+}
 </style>
 /* Estilos para el dropdown de categorías */
 <style scoped>
-.category-dropdown { background: white; }
+.category-dropdown { 
+  background: white; 
+  font-size: 0.9rem;
+}
 .dropdown-item {
   transition: background-color 0.15s ease-in-out;
   border-bottom: 1px solid #f8f9fa;
+  padding: 0.4rem 0.6rem !important;
 }
 .dropdown-item:last-child { border-bottom: none; }
 .dropdown-item:hover,
@@ -755,18 +812,33 @@ export default {
 }
 
 /* Column width control to keep layout stable between filter states */
-.col-barcode { width: 14%; min-width: 150px; }
-.col-nombre { width: 22%; min-width: 200px; }
-.col-price-compra { width: 12%; min-width: 130px; }
-.col-categoria { width: 15%; min-width: 140px; }
-.col-stock { width: 10%; min-width: 110px; }
-.col-price { width: 12%; min-width: 110px; }
-.col-actions { width: 15%; min-width: 260px; }
+.col-barcode { width: 11%; min-width: 110px; }
+.col-nombre { width: 18%; min-width: 140px; }
+.col-price-compra { width: 11%; min-width: 105px; }
+.col-categoria { width: 12%; min-width: 105px; }
+.col-stock { width: 8%; min-width: 85px; }
+.col-price { width: 10%; min-width: 90px; }
+.col-actions { width: 20%; min-width: 180px; }
 
 /* Ensure action buttons stay on one line and wrap gracefully if very narrow */
-.actions-wrapper { white-space: nowrap; }
+.actions-wrapper { 
+  white-space: nowrap; 
+  gap: 0.3rem !important;
+}
+
+.actions-wrapper .btn-sm {
+  padding: 0.25rem 0.35rem;
+  font-size: 0.7rem;
+  line-height: 1;
+  white-space: nowrap;
+}
+
 @media (max-width: 1200px) {
-  .col-actions { width: 34%; }
+  .col-actions { width: 22%; }
+  .actions-wrapper .btn-sm {
+    padding: 0.2rem 0.3rem;
+    font-size: 0.65rem;
+  }
 }
 @media (max-width: 992px) {
   .actions-wrapper { flex-wrap: wrap; white-space: normal; }
