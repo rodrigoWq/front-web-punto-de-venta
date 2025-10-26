@@ -1,9 +1,12 @@
 /* eslint-disable no-undef */
 <template>
     <AppNavbar v-if="!selectorMode" />
-  <div :class="['container', (selectorMode && hideHeader) ? 'mt-2' : 'mt-5']">
+  <div :class="['container clientes-module', (selectorMode && hideHeader) ? 'mt-2' : 'mt-5']">
       <AppHeader v-if="!hideHeader" :title="selectorMode ? 'Seleccionar Cliente' : 'Gestión de Clientes'">
         <template #buttons>
+          <router-link v-if="!selectorMode" class="btn btn-outline-primary me-2" :to="{ name: 'ClientesCredito' }">
+            Gestión Crédito
+          </router-link>
           <button v-if="!selectorMode" class="btn btn-success" @click="abrirModalCrear">Registrar Cliente</button>
         </template>
       </AppHeader>
@@ -16,9 +19,13 @@
         <AppButton variant="outline-secondary" customClass="me-2" :class="{ active: filtroTipo === 'CREDITO' }" @click="setFiltro('CREDITO')">Crédito</AppButton>
       </AppFilter>
 
-  
-      <!-- Tabla de Clientes -->
-      <h2>Lista de Clientes</h2>
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="fw-bold mb-0">Lista de Clientes</h2>
+        <span class="badge bg-secondary-subtle text-dark" v-if="clientesFiltrados.length">
+          {{ clientesFiltrados.length }} registros
+        </span>
+      </div>
+
       <AppTable :headers="tableHeaders">
         <tr
           v-for="cliente in clientesFiltradosPaginados"
@@ -32,8 +39,14 @@
           <td>{{ cliente.email }}</td>
           <td>{{ cliente.condiciones_pago }}</td>
           <td v-if="!selectorMode">
-            <button class="btn btn-primary btn-sm" @click.stop="editarCliente(cliente)">✏️</button>
-            <button class="btn btn-danger btn-sm" @click.stop="eliminarCliente(cliente.cliente_id)">🗑️</button>
+            <div class="actions-wrapper">
+              <button class="btn btn-primary btn-sm me-1" @click.stop="editarCliente(cliente)">
+                ✏️ Editar
+              </button>
+              <button class="btn btn-danger btn-sm me-1" @click.stop="eliminarCliente(cliente.cliente_id)">
+                🗑️ Eliminar
+              </button>
+            </div>
           </td>
         </tr>
       </AppTable>
@@ -286,48 +299,32 @@ export default {
   
 
 <style scoped>
-/* Estilos de clientes.css */
-body {
-  font-family: Arial, sans-serif;
+.clientes-module {
+  background-color: #ffffff;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
-h1 {
-  text-align: center;
+.clientes-module h1,
+.clientes-module h2 {
+  color: #343a40;
 }
 
-.filter-section {
-  margin-bottom: 20px;
-}
-
-.filters .btn {
-  margin-right: 10px;
-}
-
-.table {
-  margin-top: 20px;
-}
-
-.modal-header {
-  background-color: #007bff;
-  color: white;
-}
-
-.header-buttons {
+.actions-wrapper {
   display: flex;
-  justify-content: flex-end;
+  gap: 0.5rem;
 }
 
-/* Alineación del campo de búsqueda a la izquierda */
-.d-flex.justify-content-start {
-  justify-content: flex-start !important;
+.actions-wrapper .btn {
+  min-width: 90px;
 }
 
-/* Color verde para el botón de registrar cliente */
-.btn-success {
-  background-color: #28a745;
-  border-color: #28a745;
+.selectable-row {
+  cursor: pointer;
 }
 
-.selectable-row { cursor: pointer; }
-.selectable-row:hover { background-color: #f5f5f5; }
+.selectable-row:hover {
+  background-color: #f8f9fa;
+}
 </style>

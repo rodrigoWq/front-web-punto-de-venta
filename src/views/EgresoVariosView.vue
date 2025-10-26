@@ -95,6 +95,8 @@ import apiService from '@/services/apiService.js'
 const categories = [
   'Gastos Operativos',
   'Pago a Proveedores',
+  'Extracción de Efectivo acumulado en caja',
+  'Extracción por diferencia en caja',
   'Otros Egresos'
 ]
 const paymentTypes = ['Efectivo', 'Tarjeta', 'Cheque', 'Transferencia']

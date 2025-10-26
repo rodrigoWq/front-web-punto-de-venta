@@ -62,6 +62,9 @@ export default {
   put(url, data) {
     return apiService.put(url, data);
   },
+  patch(url, data) {
+    return apiService.patch(url, data);
+  },
   delete(url, data) {
     return apiService.delete(url, { data });
   }
