@@ -170,10 +170,14 @@
                   <div class="col-md-6">
                     <label for="newPrice" class="form-label">Nuevo Precio</label>
                     <input
-                      type="number"
+                      type="text"
+                      inputmode="numeric"
                       id="newPrice"
                       class="form-control"
-                      v-model.number="modalData.nuevoPrecio"
+                      v-model="modalData.nuevoPrecioStr"
+                      @input="onNuevoPrecioInput"
+                      @blur="onNuevoPrecioBlur"
+                      placeholder="0"
                       required
                     />
                   </div>
@@ -267,6 +271,7 @@ export default {
       modalData: {
         productId:    null,
         nuevoPrecio:  0,
+        nuevoPrecioStr: '',
         fechaVigencia: this.formatDateDisplay(new Date())
       }
     };
@@ -509,6 +514,7 @@ export default {
     openPriceModal(product) {                                                 
       this.modalData.productId     = product.producto_id;
       this.modalData.nuevoPrecio   = product.precio_venta ?? 0;
+      this.modalData.nuevoPrecioStr = product.precio_venta ? this.formateaNumero(product.precio_venta) : '';
 
       this.modalData.fechaVigencia = this.formatDateDisplay(new Date());
 
@@ -643,6 +649,25 @@ export default {
     formateaNumero(n) {
       if (n === null || n === undefined) return '';
       return Number(Math.round(n)).toLocaleString('es-PY', { minimumFractionDigits: 0 });
+    },
+
+    // Formateo del input de precio con separador de miles
+    onNuevoPrecioInput(e) {
+      const raw = String(e?.target?.value ?? '');
+      // Mantener solo dígitos
+      const digits = raw.replace(/\D/g, '');
+      if (!digits) {
+        this.modalData.nuevoPrecio = 0;
+        this.modalData.nuevoPrecioStr = '';
+        return;
+      }
+      const num = Number(digits);
+      this.modalData.nuevoPrecio = num;
+      this.modalData.nuevoPrecioStr = this.formateaNumero(num);
+    },
+    onNuevoPrecioBlur() {
+      const num = Number(this.modalData.nuevoPrecio || 0);
+      this.modalData.nuevoPrecioStr = num ? this.formateaNumero(num) : '';
     },
 
     clearFilters() {
