@@ -510,9 +510,7 @@ export default {
       this.modalData.productId     = product.producto_id;
       this.modalData.nuevoPrecio   = product.precio_venta ?? 0;
 
-      const baseDate = product?.vigencia_desde || new Date();
-      const displayDate = this.formatDateDisplay(baseDate) || this.formatDateDisplay(new Date());
-      this.modalData.fechaVigencia = displayDate;
+      this.modalData.fechaVigencia = this.formatDateDisplay(new Date());
 
       const el = document.getElementById('updatePriceModal');
       this.priceModalInstance ??= new bootstrap.Modal(el, {
