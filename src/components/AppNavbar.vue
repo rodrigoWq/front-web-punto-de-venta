@@ -341,6 +341,8 @@ export default {
   <style scoped>
   .navbar {
     background-color: #343a40; /* Dark background for consistency */
+    position: relative;
+    z-index: 2500;
   }
   
   .navbar-brand i {
@@ -357,6 +359,8 @@ export default {
     background-color: #2c3237;
     border: 1px solid rgba(255, 255, 255, 0.1);
     min-width: 14rem;
+    margin-top: 0;
+    z-index: 2550;
   }
 
   .navbar-nav .dropdown-item {
@@ -376,7 +380,6 @@ export default {
   .navbar-nav .dropdown:hover > .dropdown-menu,
   .navbar-nav .dropdown:focus-within > .dropdown-menu {
     display: block;
-    margin-top: 0.35rem;
   }
 
   .navbar-nav .dropdown:hover > .nav-link,
