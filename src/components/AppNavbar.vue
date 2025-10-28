@@ -342,7 +342,7 @@ export default {
   .navbar {
     background-color: #343a40; /* Dark background for consistency */
     position: relative;
-    z-index: 2500;
+    z-index: 1030; /* Above page content, below modals/overlays */
   }
   
   .navbar-brand i {
@@ -360,7 +360,7 @@ export default {
     border: 1px solid rgba(255, 255, 255, 0.1);
     min-width: 14rem;
     margin-top: 0;
-    z-index: 2550;
+    z-index: 1040;
   }
 
   .navbar-nav .dropdown-item {
