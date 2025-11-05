@@ -189,6 +189,14 @@ const totalPages = ref(1)
 const pagination = ref({})
 const itemsPerPage = 10 // Para paginación local cuando usamos búsqueda o filtro de categoría
 
+// Función helper para mapear tipo_iva a descripción
+function getTipoIvaDescripcion(tipo_iva) {
+  if (tipo_iva === 1) return 'IVA 10%'
+  if (tipo_iva === 2) return 'IVA 5%'
+  if (tipo_iva === 3) return 'Exenta'
+  return ''
+}
+
 // Función para mapear productos del backend
 function mapProduct(item) {
   return {
@@ -199,7 +207,7 @@ function mapProduct(item) {
     stock: item.stock_disponible || 0,
     minStock: 5, // valor por defecto ya que no viene del backend
     unit: item.unidad_medida_nombre || '',
-    iva: item.tipo_iva_descripcion || '',
+    iva: item.tipo_iva_descripcion || getTipoIvaDescripcion(item.tipo_iva),
     activo: item.activo,
     categoria_id: item.categoria_id,
     unidad_medida_id: item.unidad_medida_id,
