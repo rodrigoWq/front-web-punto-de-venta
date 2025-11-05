@@ -589,7 +589,7 @@ export default {
           // Asignar totales (si tu modelo Factura los utiliza)
           this.factura.totalIva10 = cabecera.iva_detalle && cabecera.iva_detalle['iva_10.00'] ? cabecera.iva_detalle['iva_10.00'] : 0;
           this.factura.totalIva5 = cabecera.iva_detalle && cabecera.iva_detalle['iva_5.00'] ? cabecera.iva_detalle['iva_5.00'] : 0;
-          this.factura.totalFactura = cabecera.total_iva_incluido || 0;
+          this.factura.totalFactura = Number(cabecera.total_iva) || 0;
           this.factura.totalSinIva = cabecera.total_sin_iva || 0;
           console.log('Factura CABECERA :', this.factura);
           // Mapear los detalles a productos
