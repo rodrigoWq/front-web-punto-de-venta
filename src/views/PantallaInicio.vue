@@ -159,12 +159,12 @@
       </h4>
       <!-- Reemplazo en la sección de Total y Acciones -->
       <div class="button-container">
-        <button v-if="!modoEdicion && !modoRetomar" type="button" class="btn btn-warning" @click="ponerVentaEnEspera">Poner Venta en Espera</button>
+        <button v-if="!modoEdicion && !modoRetomar" type="button" class="btn btn-warning" @click="ponerVentaEnEspera">Dejar Pedido en Espera</button>
         <button type="button" class="btn btn-danger" @click="cancelarVenta">
-          {{ modoEdicion ? 'Cancelar Edición' : (modoRetomar ? 'Cancelar' : 'Cancelar Venta') }}
+          {{ modoEdicion ? 'Cancelar Edición' : (modoRetomar ? 'Cancelar' : 'Cancelar Pedido') }}
         </button>
         <button type="button" class="btn btn-success" @click="confirmarVenta">
-          {{ modoEdicion ? 'Confirmar Edición' : (modoRetomar ? 'Completar Pedido' : 'Confirmar Venta') }}
+          {{ modoEdicion ? 'Confirmar Edición' : (modoRetomar ? 'Completar Pedido' : 'Confirmar Pedido') }}
         </button>
       </div>
 
