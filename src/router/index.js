@@ -32,6 +32,7 @@ import ControlInventarioView from '@/views/Inventario/ControlInventarioView.vue'
 import DepositosView from '@/views/Inventario/DepositosView.vue';
 import CategoriaView from '@/views/Inventario/CategoriaView.vue';
 import UnidadMedidaView from '@/views/Inventario/UnidadMedidaView.vue';
+import VentasFacturasView from '@/views/VentasFacturasView.vue';
 // Vista de impresión (carga perezosa)
 const FacturaPrint = () => import('@/views/FacturaPrint.vue');
 const ClientesCreditoView = () => import('@/views/ClientesCredito/ClientesCreditoView.vue');
@@ -198,6 +199,11 @@ const routes = [
     path: '/gestion-pedidos',
     name: 'GestionPedidos',
     component: GestionPedidos
+  },
+  {
+    path: '/ventas-facturas',
+    name: 'VentasFacturas',
+    component: VentasFacturasView
   },
   {
     path: '/listar-notas-remision',

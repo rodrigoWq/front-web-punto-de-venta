@@ -46,7 +46,7 @@
             <tr>
               <th>ID</th>
               <th>Tipo Movimiento</th>
-              <th>Tipo Operación</th>
+              <th>Estado</th>
               <th>Forma</th>
               <th class="text-end">Monto</th>
               <th>Descripción</th>
@@ -62,7 +62,7 @@
               <td>
                 <span :class="['badge', getBadgeClass(mov.tipo_movimiento)]">{{ getDisplayMovementType(mov.tipo_movimiento) }}</span>
               </td>
-              <td>{{ mov.tipo_operacion }}</td>
+              <td>{{ mov.estado }}</td>
               <td>{{ mov.forma || '-' }}</td>
               <td class="text-end" :class="getMontoClass(mov)">{{ getMontoPrefix(mov) }}Gs. {{ formateaNumero(mov.monto) }}</td>
               <td>{{ mov.descripcion }}</td>

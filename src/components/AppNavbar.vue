@@ -32,6 +32,11 @@
                     <i class="bi bi-list-ul"></i> Pedidos
                   </router-link>
                 </li>
+                <li>
+                  <router-link class="dropdown-item" to="/ventas-facturas">
+                    <i class="bi bi-receipt-cutoff"></i> Facturas Ventas
+                  </router-link>
+                </li>
               </ul>
             </li>
             <!--<li class="nav-item" v-if="$route.path === '/pantalla-inicio'">
@@ -56,8 +61,8 @@
               </a>
               <ul class="dropdown-menu dropdown-menu-dark">
                 <li>
-                  <router-link class="dropdown-item" to="/listar-comprobantes">
-                    <i class="bi bi-receipt"></i> Facturas
+                  <router-link class="dropdown-item" to="/listar-proveedores">
+                    <i class="bi bi-truck"></i> Proveedores
                   </router-link>
                 </li>
                 <li>
@@ -66,8 +71,8 @@
                   </router-link>
                 </li>
                 <li>
-                  <router-link class="dropdown-item" to="/listar-proveedores">
-                    <i class="bi bi-truck"></i> Proveedores
+                  <router-link class="dropdown-item" to="/listar-comprobantes">
+                    <i class="bi bi-receipt"></i> Facturas Compras
                   </router-link>
                 </li>
               </ul>
